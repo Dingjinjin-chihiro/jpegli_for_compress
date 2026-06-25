@@ -5,8 +5,8 @@
  * https://developers.google.com/open-source/licenses/bsd
  */
 
-#ifndef JPEGLI_CMS_INTERFACE_H_
-#define JPEGLI_CMS_INTERFACE_H_
+#ifndef PDFCORE_CMS_INTERFACE_H_
+#define PDFCORE_CMS_INTERFACE_H_
 
 #include <stddef.h>
 #include <stdint.h>
@@ -20,16 +20,16 @@ extern "C" {
 
 /** Parses an ICC profile and populates @p c and @p cmyk with the data.
  *
- * @param user_data @ref JpegliCmsInterface::set_fields_data passed as-is.
+ * @param user_data @ref PdfcoreCmsInterface::set_fields_data passed as-is.
  * @param icc_data the ICC data to parse.
  * @param icc_size how many bytes of icc_data are valid.
- * @param c a @ref JpegliColorEncoding to populate if applicable.
+ * @param c a @ref PdfcoreColorEncoding to populate if applicable.
  * @param cmyk a boolean to set to whether the colorspace is a CMYK colorspace.
  * @return Whether the relevant fields in @p c were successfully populated.
  */
-typedef JPEGLI_BOOL (*jpegli_cms_set_fields_from_icc_func)(
+typedef PDFCORE_BOOL (*pdfcore_jpegli_cms_set_fields_from_icc_func)(
     void* user_data, const uint8_t* icc_data, size_t icc_size,
-    JpegliColorEncoding* c, JPEGLI_BOOL* cmyk);
+    PdfcoreColorEncoding* c, PDFCORE_BOOL* cmyk);
 
 /** Represents an input or output colorspace to a color transform, as a
  * serialized ICC profile. */
@@ -45,32 +45,32 @@ typedef struct {
    * ICC representation of the colorspace. If some are "unknown", those that are
    * not are still valid and can still be used on their own if they are useful.
    */
-  JpegliColorEncoding color_encoding;
+  PdfcoreColorEncoding color_encoding;
 
   /** Number of components per pixel. This can be deduced from the other
    * representations of the colorspace but is provided for convenience and
    * validation. */
   size_t num_channels;
-} JpegliColorProfile;
+} PdfcoreColorProfile;
 
 /** Allocates and returns the data needed for @p num_threads parallel transforms
  * from the @p input colorspace to @p output, with up to @p pixels_per_thread
- * pixels to transform per call to @ref JpegliCmsInterface::run. @p init_data
- * comes directly from the @ref JpegliCmsInterface instance. Since @c run only
+ * pixels to transform per call to @ref PdfcoreCmsInterface::run. @p init_data
+ * comes directly from the @ref PdfcoreCmsInterface instance. Since @c run only
  * receives the data returned by @c init, a reference to @p init_data should be
  * kept there if access to it is desired in @c run. Likewise for @ref
- * JpegliCmsInterface::destroy.
+ * PdfcoreCmsInterface::destroy.
  *
  * The ICC data in @p input and @p output is guaranteed to outlive the @c init /
  * @c run / @c destroy cycle.
  *
- * @param init_data @ref JpegliCmsInterface::init_data passed as-is.
+ * @param init_data @ref PdfcoreCmsInterface::init_data passed as-is.
  * @param num_threads the maximum number of threads from which
- *        @ref JpegliCmsInterface::run will be called.
+ *        @ref PdfcoreCmsInterface::run will be called.
  * @param pixels_per_thread the maximum number of pixels that each call to
- *        @ref JpegliCmsInterface::run will have to transform.
+ *        @ref PdfcoreCmsInterface::run will have to transform.
  * @param input_profile the input colorspace for the transform.
- * @param output_profile the colorspace to which @ref JpegliCmsInterface::run
+ * @param output_profile the colorspace to which @ref PdfcoreCmsInterface::run
  * should convert the input data.
  * @param intensity_target for colorspaces where luminance is relative
  *        (essentially: not PQ), indicates the luminance at which (1, 1, 1) will
@@ -89,10 +89,10 @@ typedef struct {
  * @return The data needed for the transform, or @c NULL in case of failure.
  *         This will be passed to the other functions as @c user_data.
  */
-typedef void* (*jpegli_cms_init_func)(void* init_data, size_t num_threads,
+typedef void* (*pdfcore_jpegli_cms_init_func)(void* init_data, size_t num_threads,
                                       size_t pixels_per_thread,
-                                      const JpegliColorProfile* input_profile,
-                                      const JpegliColorProfile* output_profile,
+                                      const PdfcoreColorProfile* input_profile,
+                                      const PdfcoreColorProfile* output_profile,
                                       float intensity_target);
 
 /** Returns a buffer that can be used by callers of the interface to store the
@@ -102,7 +102,7 @@ typedef void* (*jpegli_cms_init_func)(void* init_data, size_t num_threads,
  * @param thread the index of the thread for which to return a buffer.
  * @return A buffer that can be used by the caller for passing to @c run.
  */
-typedef float* (*jpegli_cms_get_buffer_func)(void* user_data, size_t thread);
+typedef float* (*pdfcore_jpegli_cms_get_buffer_func)(void* user_data, size_t thread);
 
 /** Executes one transform and returns true on success or false on error. It
  * must be possible to call this from different threads with different values
@@ -125,9 +125,9 @@ typedef float* (*jpegli_cms_get_buffer_func)(void* user_data, size_t thread);
  * @param output_buffer the buffer receiving the transformed pixel data.
  * @param num_pixels the number of pixels to transform from @p input to
  * @p output.
- * @return ::JPEGLI_TRUE on success, ::JPEGLI_FALSE on failure.
+ * @return ::PDFCORE_TRUE on success, ::PDFCORE_FALSE on failure.
  */
-typedef JPEGLI_BOOL (*jpegli_cms_run_func)(void* user_data, size_t thread,
+typedef PDFCORE_BOOL (*pdfcore_jpegli_cms_run_func)(void* user_data, size_t thread,
                                            const float* input_buffer,
                                            float* output_buffer,
                                            size_t num_pixels);
@@ -135,7 +135,7 @@ typedef JPEGLI_BOOL (*jpegli_cms_run_func)(void* user_data, size_t thread,
 /** Performs the necessary clean-up and frees the memory allocated for user
  * data.
  */
-typedef void (*jpegli_cms_destroy_func)(void*);
+typedef void (*pdfcore_jpegli_cms_destroy_func)(void*);
 
 /**
  * Interface for performing colorspace transforms. The @c init function can be
@@ -216,27 +216,27 @@ typedef void (*jpegli_cms_destroy_func)(void*);
 typedef struct {
   /** CMS-specific data that will be passed to @ref set_fields_from_icc. */
   void* set_fields_data;
-  /** Populates a @ref JpegliColorEncoding from an ICC profile. */
-  jpegli_cms_set_fields_from_icc_func set_fields_from_icc;
+  /** Populates a @ref PdfcoreColorEncoding from an ICC profile. */
+  pdfcore_jpegli_cms_set_fields_from_icc_func set_fields_from_icc;
 
   /** CMS-specific data that will be passed to @ref init. */
   void* init_data;
   /** Prepares a colorspace transform as described in the documentation of @ref
-   * jpegli_cms_init_func. */
-  jpegli_cms_init_func init;
+   * pdfcore_jpegli_cms_init_func. */
+  pdfcore_jpegli_cms_init_func init;
   /** Returns a buffer that can be used as input to @c run. */
-  jpegli_cms_get_buffer_func get_src_buf;
+  pdfcore_jpegli_cms_get_buffer_func get_src_buf;
   /** Returns a buffer that can be used as output from @c run. */
-  jpegli_cms_get_buffer_func get_dst_buf;
-  /** Executes the transform on a batch of pixels, per @ref jpegli_cms_run_func.
+  pdfcore_jpegli_cms_get_buffer_func get_dst_buf;
+  /** Executes the transform on a batch of pixels, per @ref pdfcore_jpegli_cms_run_func.
    */
-  jpegli_cms_run_func run;
+  pdfcore_jpegli_cms_run_func run;
   /** Cleans up the transform. */
-  jpegli_cms_destroy_func destroy;
-} JpegliCmsInterface;
+  pdfcore_jpegli_cms_destroy_func destroy;
+} PdfcoreCmsInterface;
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* JPEGLI_CMS_INTERFACE_H_ */
+#endif /* PDFCORE_CMS_INTERFACE_H_ */

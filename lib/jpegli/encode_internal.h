@@ -4,8 +4,8 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
-#ifndef JPEGLI_LIB_JPEGLI_ENCODE_INTERNAL_H_
-#define JPEGLI_LIB_JPEGLI_ENCODE_INTERNAL_H_
+#ifndef PDFCORE_LIB_PDFCORE_ENCODE_INTERNAL_H_
+#define PDFCORE_LIB_PDFCORE_ENCODE_INTERNAL_H_
 
 #include <cstddef>
 #include <cstdint>
@@ -15,7 +15,7 @@
 #include "lib/jpegli/common_internal.h"
 #include "lib/jpegli/types.h"
 
-namespace jpegli {
+namespace pdfcore {
 
 constexpr unsigned char kICCSignature[12] = {
     0x49, 0x43, 0x43, 0x5F, 0x50, 0x52, 0x4F, 0x46, 0x49, 0x4C, 0x45, 0x00};
@@ -64,12 +64,12 @@ struct ScanTokenInfo {
   size_t num_blocks;
 };
 
-}  // namespace jpegli
+}  // namespace pdfcore
 
 struct jpeg_comp_master {
-  jpegli::RowBuffer<float> input_buffer[jpegli::kMaxComponents];
-  jpegli::RowBuffer<float>* smooth_input[jpegli::kMaxComponents];
-  jpegli::RowBuffer<float>* raw_data[jpegli::kMaxComponents];
+  pdfcore::RowBuffer<float> input_buffer[pdfcore::kMaxComponents];
+  pdfcore::RowBuffer<float>* smooth_input[pdfcore::kMaxComponents];
+  pdfcore::RowBuffer<float>* raw_data[pdfcore::kMaxComponents];
   bool force_baseline;
   bool xyb_mode;
   uint8_t cicp_transfer_function;
@@ -79,19 +79,19 @@ struct jpeg_comp_master {
   size_t xsize_blocks;
   size_t ysize_blocks;
   size_t blocks_per_iMCU_row;
-  jpegli::ScanTokenInfo* scan_token_info;
-  JpegliDataType data_type;
-  JpegliEndianness endianness;
+  pdfcore::ScanTokenInfo* scan_token_info;
+  PdfcoreDataType data_type;
+  PdfcoreEndianness endianness;
   void (*input_method)(const uint8_t* row_in, size_t len,
-                       float* row_out[jpegli::kMaxComponents]);
-  void (*color_transform)(float* row[jpegli::kMaxComponents], size_t len);
-  void (*downsample_method[jpegli::kMaxComponents])(
+                       float* row_out[pdfcore::kMaxComponents]);
+  void (*color_transform)(float* row[pdfcore::kMaxComponents], size_t len);
+  void (*downsample_method[pdfcore::kMaxComponents])(
       float* rows_in[MAX_SAMP_FACTOR], size_t len, float* row_out);
-  float* quant_mul[jpegli::kMaxComponents];
-  float* zero_bias_offset[jpegli::kMaxComponents];
-  float* zero_bias_mul[jpegli::kMaxComponents];
-  int h_factor[jpegli::kMaxComponents];
-  int v_factor[jpegli::kMaxComponents];
+  float* quant_mul[pdfcore::kMaxComponents];
+  float* zero_bias_offset[pdfcore::kMaxComponents];
+  float* zero_bias_mul[pdfcore::kMaxComponents];
+  int h_factor[pdfcore::kMaxComponents];
+  int v_factor[pdfcore::kMaxComponents];
   // Array of Huffman tables that will be encoded in one or more DHT segments.
   // In progressive mode we compute all Huffman tables that will be used in any
   // of the scans, thus we can have more than 4 tables here.
@@ -113,26 +113,26 @@ struct jpeg_comp_master {
   // id of the first AC component of the ith scan.
   uint8_t* ac_ctx_offset;
   // Array of num_huffman tables derived coding tables.
-  jpegli::HuffmanCodeTable* coding_tables;
+  pdfcore::HuffmanCodeTable* coding_tables;
   float* diff_buffer;
-  jpegli::RowBuffer<float> fuzzy_erosion_tmp;
-  jpegli::RowBuffer<float> pre_erosion;
-  jpegli::RowBuffer<float> quant_field;
+  pdfcore::RowBuffer<float> fuzzy_erosion_tmp;
+  pdfcore::RowBuffer<float> pre_erosion;
+  pdfcore::RowBuffer<float> quant_field;
   jvirt_barray_ptr* coeff_buffers;
   size_t next_input_row;
   size_t next_iMCU_row;
   size_t next_dht_index;
   size_t last_restart_interval;
   JCOEF last_dc_coeff[MAX_COMPS_IN_SCAN];
-  jpegli::JpegBitWriter bw;
+  pdfcore::JpegBitWriter bw;
   float* dct_buffer;
   int32_t* block_tmp;
-  jpegli::TokenArray* token_arrays;
+  pdfcore::TokenArray* token_arrays;
   size_t cur_token_array;
-  jpegli::Token* next_token;
+  pdfcore::Token* next_token;
   size_t num_tokens;
   size_t total_num_tokens;
-  jpegli::RefToken* next_refinement_token;
+  pdfcore::RefToken* next_refinement_token;
   uint8_t* next_refinement_bit;
   float psnr_target;
   float psnr_tolerance;
@@ -140,4 +140,4 @@ struct jpeg_comp_master {
   float max_distance;
 };
 
-#endif  // JPEGLI_LIB_JPEGLI_ENCODE_INTERNAL_H_
+#endif  // PDFCORE_LIB_PDFCORE_ENCODE_INTERNAL_H_

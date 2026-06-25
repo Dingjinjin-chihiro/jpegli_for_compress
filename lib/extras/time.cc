@@ -9,34 +9,34 @@
 #include <cstdlib>
 #include <ctime>
 
-#include "lib/base/os_macros.h"  // for JPEGLI_OS_*
+#include "lib/base/os_macros.h"  // for PDFCORE_OS_*
 
-#if JPEGLI_OS_WIN
+#if PDFCORE_OS_WIN
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif  // NOMINMAX
 #include <windows.h>
-#endif  // JPEGLI_OS_WIN
+#endif  // PDFCORE_OS_WIN
 
-#if JPEGLI_OS_MAC
+#if PDFCORE_OS_MAC
 #include <mach/mach.h>
 #include <mach/mach_time.h>
-#endif  // JPEGLI_OS_MAC
+#endif  // PDFCORE_OS_MAC
 
-#if JPEGLI_OS_HAIKU
+#if PDFCORE_OS_HAIKU
 #include <OS.h>
-#endif  // JPEGLI_OS_HAIKU
+#endif  // PDFCORE_OS_HAIKU
 
-namespace jpegli {
+namespace pdfcore {
 
 double Now() {
-#if JPEGLI_OS_WIN
+#if PDFCORE_OS_WIN
   LARGE_INTEGER counter;
   (void)QueryPerformanceCounter(&counter);
   LARGE_INTEGER freq;
   (void)QueryPerformanceFrequency(&freq);
   return double(counter.QuadPart) / freq.QuadPart;
-#elif JPEGLI_OS_MAC
+#elif PDFCORE_OS_MAC
   const auto t = mach_absolute_time();
   // On OSX/iOS platform the elapsed time is cpu time unit
   // We have to query the time base information to convert it back
@@ -46,7 +46,7 @@ double Now() {
     (void)mach_timebase_info(&timebase);
   }
   return double(t) * timebase.numer / timebase.denom * 1E-9;  // notypo
-#elif JPEGLI_OS_HAIKU
+#elif PDFCORE_OS_HAIKU
   return double(system_time_nsecs()) * 1E-9;
 #else
   timespec t;
@@ -55,4 +55,4 @@ double Now() {
 #endif
 }
 
-}  // namespace jpegli
+}  // namespace pdfcore

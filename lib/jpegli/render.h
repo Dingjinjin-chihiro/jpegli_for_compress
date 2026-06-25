@@ -4,14 +4,14 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
-#ifndef JPEGLI_LIB_JPEGLI_RENDER_H_
-#define JPEGLI_LIB_JPEGLI_RENDER_H_
+#ifndef PDFCORE_LIB_PDFCORE_RENDER_H_
+#define PDFCORE_LIB_PDFCORE_RENDER_H_
 
 #include <cstddef>
 
 #include "lib/jpegli/common.h"
 
-namespace jpegli {
+namespace pdfcore {
 
 void PrepareForOutput(j_decompress_ptr cinfo);
 
@@ -20,6 +20,6 @@ void ProcessOutput(j_decompress_ptr cinfo, size_t* num_output_rows,
 
 void ProcessRawOutput(j_decompress_ptr cinfo, JSAMPIMAGE data);
 
-}  // namespace jpegli
+}  // namespace pdfcore
 
-#endif  // JPEGLI_LIB_JPEGLI_RENDER_H_
+#endif  // PDFCORE_LIB_PDFCORE_RENDER_H_

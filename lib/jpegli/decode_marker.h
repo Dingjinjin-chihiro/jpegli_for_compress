@@ -4,15 +4,15 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
-#ifndef JPEGLI_LIB_JPEGLI_DECODE_MARKER_H_
-#define JPEGLI_LIB_JPEGLI_DECODE_MARKER_H_
+#ifndef PDFCORE_LIB_PDFCORE_DECODE_MARKER_H_
+#define PDFCORE_LIB_PDFCORE_DECODE_MARKER_H_
 
 #include <cstddef>
 #include <cstdint>
 
 #include "lib/jpegli/common.h"
 
-namespace jpegli {
+namespace pdfcore {
 
 // Reads the available input in the source manager's input buffer until either
 // the end of the next SOS marker or the end of the input.
@@ -29,6 +29,6 @@ int ProcessMarkers(j_decompress_ptr cinfo, const uint8_t* data, size_t len,
 
 jpeg_marker_parser_method GetMarkerProcessor(j_decompress_ptr cinfo);
 
-}  // namespace jpegli
+}  // namespace pdfcore
 
-#endif  // JPEGLI_LIB_JPEGLI_DECODE_MARKER_H_
+#endif  // PDFCORE_LIB_PDFCORE_DECODE_MARKER_H_

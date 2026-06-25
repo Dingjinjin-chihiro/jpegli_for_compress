@@ -4,8 +4,8 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
-#ifndef JPEGLI_TOOLS_THREAD_POOL_INTERNAL_H_
-#define JPEGLI_TOOLS_THREAD_POOL_INTERNAL_H_
+#ifndef PDFCORE_TOOLS_THREAD_POOL_INTERNAL_H_
+#define PDFCORE_TOOLS_THREAD_POOL_INTERNAL_H_
 
 #include <cstddef>
 #include <memory>
@@ -16,9 +16,9 @@
 #include "lib/threads/thread_parallel_runner.h"
 #include "lib/threads/thread_parallel_runner_cxx.h"
 
-namespace jpegli_tools {
+namespace pdfcore_jpegli_tools {
 
-using ::jpegli::ThreadPool;
+using ::pdfcore::ThreadPool;
 
 // Helper class to pass an internal ThreadPool-like object using threads.
 class ThreadPoolInternal {
@@ -28,9 +28,9 @@ class ThreadPoolInternal {
   // run on the main thread.
   explicit ThreadPoolInternal(
       size_t num_threads = std::thread::hardware_concurrency()) {
-    runner_ = JpegliThreadParallelRunnerMake(/* memory_manager */ nullptr,
+    runner_ = PdfcoreThreadParallelRunnerMake(/* memory_manager */ nullptr,
                                              num_threads);
-    pool_ = jpegli::make_unique<ThreadPool>(JpegliThreadParallelRunner,
+    pool_ = pdfcore::make_unique<ThreadPool>(PdfcoreThreadParallelRunner,
                                             runner_.get());
   }
 
@@ -39,10 +39,10 @@ class ThreadPoolInternal {
   ThreadPool* get() { return pool_.get(); }
 
  private:
-  JpegliThreadParallelRunnerPtr runner_;
+  PdfcoreThreadParallelRunnerPtr runner_;
   std::unique_ptr<ThreadPool> pool_;
 };
 
-}  // namespace jpegli_tools
+}  // namespace pdfcore_jpegli_tools
 
-#endif  // JPEGLI_TOOLS_THREAD_POOL_INTERNAL_H_
+#endif  // PDFCORE_TOOLS_THREAD_POOL_INTERNAL_H_

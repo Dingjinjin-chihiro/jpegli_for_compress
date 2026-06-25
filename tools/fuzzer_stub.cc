@@ -29,11 +29,11 @@ int main(int argc, const char* argv[]) {
     // No threaded runner for single inputs.
     ProcessInput(argv[1]);
   } else if (argc > 2) {
-    auto runner = JpegliThreadParallelRunnerMake(
-        nullptr, JpegliThreadParallelRunnerDefaultNumWorkerThreads());
-    return JpegliThreadParallelRunner(
+    auto runner = PdfcoreThreadParallelRunnerMake(
+        nullptr, PdfcoreThreadParallelRunnerDefaultNumWorkerThreads());
+    return PdfcoreThreadParallelRunner(
         static_cast<void*>(runner.get()), reinterpret_cast<void*>(argv),
-        /* init= */ +[](void*, size_t) -> JpegliParallelRetCode { return 0; },
+        /* init= */ +[](void*, size_t) -> PdfcoreParallelRetCode { return 0; },
         /* func= */
         +[](void* opaque, uint32_t value, size_t) {
           const char** proc_argv = static_cast<const char**>(opaque);

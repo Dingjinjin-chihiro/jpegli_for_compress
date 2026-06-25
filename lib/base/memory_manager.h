@@ -5,14 +5,14 @@
  * https://developers.google.com/open-source/licenses/bsd
  */
 
-/** @addtogroup libjpegli_common
+/** @addtogroup libpdfcore_jpegli_common
  * @{
  * @file memory_manager.h
  * @brief Abstraction functions used by JPEGLI to allocate memory.
  */
 
-#ifndef JPEGLI_MEMORY_MANAGER_H_
-#define JPEGLI_MEMORY_MANAGER_H_
+#ifndef PDFCORE_MEMORY_MANAGER_H_
+#define PDFCORE_MEMORY_MANAGER_H_
 
 #include <stddef.h>
 
@@ -31,7 +31,7 @@ extern "C" {
  * @return @c NULL if the memory can not be allocated,
  * @return pointer to the memory otherwise.
  */
-typedef void* (*jpegli_alloc_func)(void* opaque, size_t size);
+typedef void* (*pdfcore_jpegli_alloc_func)(void* opaque, size_t size);
 
 /**
  * Deallocating function pointer type.
@@ -39,17 +39,17 @@ typedef void* (*jpegli_alloc_func)(void* opaque, size_t size);
  * This function @b MUST do nothing if @p address is @c NULL.
  *
  * @param opaque custom memory manager handle provided by the caller.
- * @param address memory region pointer returned by ::jpegli_alloc_func, or @c
+ * @param address memory region pointer returned by ::pdfcore_jpegli_alloc_func, or @c
  * NULL.
  */
-typedef void (*jpegli_free_func)(void* opaque, void* address);
+typedef void (*pdfcore_jpegli_free_func)(void* opaque, void* address);
 
 /**
  * Memory Manager struct.
  * These functions, when provided by the caller, will be used to handle memory
  * allocations.
  */
-typedef struct JpegliMemoryManagerStruct {
+typedef struct PdfcoreMemoryManagerStruct {
   /** The opaque pointer that will be passed as the first parameter to all the
    * functions in this struct. */
   void* opaque;
@@ -58,17 +58,17 @@ typedef struct JpegliMemoryManagerStruct {
    * free() member in this class is NULL. All dynamic memory will be allocated
    * and freed with these functions if they are not NULL, otherwise with the
    * standard malloc/free. */
-  jpegli_alloc_func alloc;
+  pdfcore_jpegli_alloc_func alloc;
   /** Free function matching the alloc() member. */
-  jpegli_free_func free;
+  pdfcore_jpegli_free_func free;
 
   /* TODO(deymo): Add cache-aligned alloc/free functions here. */
-} JpegliMemoryManager;
+} PdfcoreMemoryManager;
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* JPEGLI_MEMORY_MANAGER_H_ */
+#endif /* PDFCORE_MEMORY_MANAGER_H_ */
 
 /** @}*/

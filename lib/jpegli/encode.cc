@@ -32,20 +32,20 @@
 #include "lib/jpegli/simd.h"
 #include "lib/jpegli/types.h"
 
-namespace jpegli {
+namespace pdfcore {
 
 constexpr size_t kMaxBytesInMarker = 65533;
 
 void CheckState(j_compress_ptr cinfo, int state) {
   if (cinfo->global_state != state) {
-    JPEGLI_ERROR("Unexpected global state %d [expected %d]",
+    PDFCORE_ERROR("Unexpected global state %d [expected %d]",
                  cinfo->global_state, state);
   }
 }
 
 void CheckState(j_compress_ptr cinfo, int state1, int state2) {
   if (cinfo->global_state != state1 && cinfo->global_state != state2) {
-    JPEGLI_ERROR("Unexpected global state %d [expected %d or %d]",
+    PDFCORE_ERROR("Unexpected global state %d [expected %d or %d]",
                  cinfo->global_state, state1, state2);
   }
 }
@@ -55,7 +55,7 @@ void CheckState(j_compress_ptr cinfo, int state1, int state2) {
 //
 
 // Initialize cinfo fields that are not dependent on input image. This is shared
-// between jpegli_CreateCompress() and jpegli_set_defaults()
+// between pdfcore_jpegli_CreateCompress() and pdfcore_jpegli_set_defaults()
 void InitializeCompressParams(j_compress_ptr cinfo) {
   cinfo->data_precision = 8;
   cinfo->num_scans = 0;
@@ -91,7 +91,7 @@ float LinearQualityToDistance(int scale_factor) {
   scale_factor = std::min(5000, std::max(0, scale_factor));
   int quality =
       scale_factor < 100 ? 100 - scale_factor / 2 : 5000 / scale_factor;
-  return jpegli_quality_to_distance(quality);
+  return pdfcore_jpegli_quality_to_distance(quality);
 }
 
 template <typename T>
@@ -152,7 +152,7 @@ void SetDefaultScanScript(j_compress_ptr cinfo) {
       ++next_scan;
     }
   }
-  JPEGLI_CHECK(next_scan - cinfo->script_space == cinfo->script_space_size);
+  PDFCORE_CHECK(next_scan - cinfo->script_space == cinfo->script_space_size);
   cinfo->scan_info = cinfo->script_space;
   cinfo->num_scans = cinfo->script_space_size;
 }
@@ -166,53 +166,53 @@ void ValidateScanScript(j_compress_ptr cinfo) {
   for (int i = 0; i < cinfo->num_scans; ++i) {
     const jpeg_scan_info& si = cinfo->scan_info[i];
     if (si.comps_in_scan < 1 || si.comps_in_scan > MAX_COMPS_IN_SCAN) {
-      JPEGLI_ERROR("Invalid number of components in scan %d", si.comps_in_scan);
+      PDFCORE_ERROR("Invalid number of components in scan %d", si.comps_in_scan);
     }
     int last_ci = -1;
     for (int j = 0; j < si.comps_in_scan; ++j) {
       int ci = si.component_index[j];
       if (ci < 0 || ci >= cinfo->num_components) {
-        JPEGLI_ERROR("Invalid component index %d in scan", ci);
+        PDFCORE_ERROR("Invalid component index %d in scan", ci);
       } else if (ci == last_ci) {
-        JPEGLI_ERROR("Duplicate component index %d in scan", ci);
+        PDFCORE_ERROR("Duplicate component index %d in scan", ci);
       } else if (ci < last_ci) {
-        JPEGLI_ERROR("Out of order component index %d in scan", ci);
+        PDFCORE_ERROR("Out of order component index %d in scan", ci);
       }
       last_ci = ci;
     }
     if (si.Ss < 0 || si.Se < si.Ss || si.Se >= DCTSIZE2) {
-      JPEGLI_ERROR("Invalid spectral range %d .. %d in scan", si.Ss, si.Se);
+      PDFCORE_ERROR("Invalid spectral range %d .. %d in scan", si.Ss, si.Se);
     }
     if (si.Ah < 0 || si.Al < 0 || si.Al > kMaxRefinementBit) {
-      JPEGLI_ERROR("Invalid refinement bits %d/%d", si.Ah, si.Al);
+      PDFCORE_ERROR("Invalid refinement bits %d/%d", si.Ah, si.Al);
     }
     if (!cinfo->progressive_mode) {
       if (si.Ss != 0 || si.Se != DCTSIZE2 - 1 || si.Ah != 0 || si.Al != 0) {
-        JPEGLI_ERROR("Invalid scan for sequential mode");
+        PDFCORE_ERROR("Invalid scan for sequential mode");
       }
     } else {
       if (si.Ss == 0 && si.Se != 0) {
-        JPEGLI_ERROR("DC and AC together in progressive scan");
+        PDFCORE_ERROR("DC and AC together in progressive scan");
       }
     }
     if (si.Ss != 0 && si.comps_in_scan != 1) {
-      JPEGLI_ERROR("Interleaved AC only scan.");
+      PDFCORE_ERROR("Interleaved AC only scan.");
     }
     for (int j = 0; j < si.comps_in_scan; ++j) {
       int ci = si.component_index[j];
       if (si.Ss != 0 && comp_mask[ci][0] == 0) {
-        JPEGLI_ERROR("AC before DC in component %d of scan", ci);
+        PDFCORE_ERROR("AC before DC in component %d of scan", ci);
       }
       for (int k = si.Ss; k <= si.Se; ++k) {
         if (comp_mask[ci][k] == 0) {
           if (si.Ah != 0) {
-            JPEGLI_ERROR("Invalid first scan refinement bit");
+            PDFCORE_ERROR("Invalid first scan refinement bit");
           }
           comp_mask[ci][k] = ((0xffff << si.Al) & 0xffff);
         } else {
           if (comp_mask[ci][k] != ((0xffff << si.Ah) & 0xffff) ||
               si.Al != si.Ah - 1) {
-            JPEGLI_ERROR("Invalid refinement bit progression.");
+            PDFCORE_ERROR("Invalid refinement bit progression.");
           }
           comp_mask[ci][k] |= 1 << si.Al;
         }
@@ -227,14 +227,14 @@ void ValidateScanScript(j_compress_ptr cinfo) {
             static_cast<size_t>(comp->h_samp_factor) * comp->v_samp_factor;
       }
       if (mcu_size > C_MAX_BLOCKS_IN_MCU) {
-        JPEGLI_ERROR("MCU size too big");
+        PDFCORE_ERROR("MCU size too big");
       }
     }
   }
   for (int c = 0; c < cinfo->num_components; ++c) {
     for (int k = 0; k < DCTSIZE2; ++k) {
       if (comp_mask[c][k] != 0xffff) {
-        JPEGLI_ERROR("Incomplete scan of component %d and frequency %d", c, k);
+        PDFCORE_ERROR("Incomplete scan of component %d and frequency %d", c, k);
       }
     }
   }
@@ -242,52 +242,52 @@ void ValidateScanScript(j_compress_ptr cinfo) {
 
 void ProcessCompressionParams(j_compress_ptr cinfo) {
   if (cinfo->dest == nullptr) {
-    JPEGLI_ERROR("Missing destination.");
+    PDFCORE_ERROR("Missing destination.");
   }
   if (cinfo->image_width < 1 || cinfo->image_height < 1 ||
       cinfo->input_components < 1) {
-    JPEGLI_ERROR("Empty input image.");
+    PDFCORE_ERROR("Empty input image.");
   }
   if (cinfo->image_width > static_cast<int>(JPEG_MAX_DIMENSION) ||
       cinfo->image_height > static_cast<int>(JPEG_MAX_DIMENSION) ||
       cinfo->input_components > static_cast<int>(kMaxComponents)) {
-    JPEGLI_ERROR("Input image too big.");
+    PDFCORE_ERROR("Input image too big.");
   }
   if (cinfo->num_components < 1 ||
       cinfo->num_components > static_cast<int>(kMaxComponents)) {
-    JPEGLI_ERROR("Invalid number of components.");
+    PDFCORE_ERROR("Invalid number of components.");
   }
   if (cinfo->data_precision != kJpegPrecision) {
-    JPEGLI_ERROR("Invalid data precision");
+    PDFCORE_ERROR("Invalid data precision");
   }
   if (cinfo->arith_code) {
-    JPEGLI_ERROR("Arithmetic coding is not implemented.");
+    PDFCORE_ERROR("Arithmetic coding is not implemented.");
   }
   if (cinfo->CCIR601_sampling) {
-    JPEGLI_ERROR("CCIR601 sampling is not implemented.");
+    PDFCORE_ERROR("CCIR601 sampling is not implemented.");
   }
   if (cinfo->restart_interval > 65535u) {
-    JPEGLI_ERROR("Restart interval too big");
+    PDFCORE_ERROR("Restart interval too big");
   }
   if (cinfo->smoothing_factor < 0 || cinfo->smoothing_factor > 100) {
-    JPEGLI_ERROR("Invalid smoothing factor %d", cinfo->smoothing_factor);
+    PDFCORE_ERROR("Invalid smoothing factor %d", cinfo->smoothing_factor);
   }
   jpeg_comp_master* m = cinfo->master;
   cinfo->max_h_samp_factor = cinfo->max_v_samp_factor = 1;
   for (int c = 0; c < cinfo->num_components; ++c) {
     jpeg_component_info* comp = &cinfo->comp_info[c];
     if (comp->component_index != c) {
-      JPEGLI_ERROR("Invalid component index");
+      PDFCORE_ERROR("Invalid component index");
     }
     for (int j = 0; j < c; ++j) {
       if (cinfo->comp_info[j].component_id == comp->component_id) {
-        JPEGLI_ERROR("Duplicate component id %d", comp->component_id);
+        PDFCORE_ERROR("Duplicate component id %d", comp->component_id);
       }
     }
     if (comp->h_samp_factor <= 0 || comp->v_samp_factor <= 0 ||
         comp->h_samp_factor > MAX_SAMP_FACTOR ||
         comp->v_samp_factor > MAX_SAMP_FACTOR) {
-      JPEGLI_ERROR("Invalid sampling factor %d x %d", comp->h_samp_factor,
+      PDFCORE_ERROR("Invalid sampling factor %d x %d", comp->h_samp_factor,
                    comp->v_samp_factor);
     }
     if (cinfo->num_components == 1) {
@@ -312,7 +312,7 @@ void ProcessCompressionParams(j_compress_ptr cinfo) {
     jpeg_component_info* comp = &cinfo->comp_info[c];
     if (cinfo->max_h_samp_factor % comp->h_samp_factor != 0 ||
         cinfo->max_v_samp_factor % comp->v_samp_factor != 0) {
-      JPEGLI_ERROR("Non-integral sampling ratios are not supported.");
+      PDFCORE_ERROR("Non-integral sampling ratios are not supported.");
     }
     m->h_factor[c] = cinfo->max_h_samp_factor / comp->h_samp_factor;
     m->v_factor[c] = cinfo->max_v_samp_factor / comp->v_samp_factor;
@@ -334,7 +334,7 @@ void ProcessCompressionParams(j_compress_ptr cinfo) {
   if (cinfo->scan_info == nullptr) {
     SetDefaultScanScript(cinfo);
   }
-  cinfo->progressive_mode = TO_JPEGLI_BOOL(
+  cinfo->progressive_mode = TO_PDFCORE_BOOL(
       cinfo->scan_info->Ss != 0 || cinfo->scan_info->Se != DCTSIZE2 - 1);
   ValidateScanScript(cinfo);
   m->scan_token_info =
@@ -349,7 +349,7 @@ void ProcessCompressionParams(j_compress_ptr cinfo) {
       num_ac_contexts += scan_info->comps_in_scan;
     }
     if (num_ac_contexts > 252) {
-      JPEGLI_ERROR("Too many AC scans in image");
+      PDFCORE_ERROR("Too many AC scans in image");
     }
     ScanTokenInfo* sti = &m->scan_token_info[i];
     if (scan_info->comps_in_scan == 1) {
@@ -507,7 +507,7 @@ void InitProgressMonitor(j_compress_ptr cinfo) {
 }
 
 // Common setup code between streaming and transcoding code paths. Called in
-// both jpegli_start_compress() and jpegli_write_coefficients().
+// both pdfcore_jpegli_start_compress() and pdfcore_jpegli_write_coefficients().
 void InitCompress(j_compress_ptr cinfo, boolean write_all_tables) {
   jpeg_comp_master* m = cinfo->master;
   (*cinfo->err->reset_error_mgr)(reinterpret_cast<j_common_ptr>(cinfo));
@@ -525,7 +525,7 @@ void InitCompress(j_compress_ptr cinfo, boolean write_all_tables) {
     InitQuantizer(cinfo, pass);
   }
   if (write_all_tables) {
-    jpegli_suppress_tables(cinfo, FALSE);
+    pdfcore_jpegli_suppress_tables(cinfo, FALSE);
   }
   if (!cinfo->optimize_coding && !cinfo->progressive_mode) {
     CopyHuffmanTables(cinfo);
@@ -597,7 +597,7 @@ void PadInputBuffer(j_compress_ptr cinfo, float* row[kMaxComponents]) {
 }
 
 void ProcessiMCURow(j_compress_ptr cinfo) {
-  JPEGLI_CHECK(cinfo->master->next_iMCU_row < cinfo->total_iMCU_rows);
+  PDFCORE_CHECK(cinfo->master->next_iMCU_row < cinfo->total_iMCU_rows);
   if (!cinfo->raw_data_in) {
     ApplyInputSmoothing(cinfo);
     DownsampleInputBuffer(cinfo);
@@ -650,22 +650,22 @@ void ZigZagShuffleBlocks(j_compress_ptr cinfo) {
   }
 }
 
-}  // namespace jpegli
+}  // namespace pdfcore
 
 //
 // Parameter setup
 //
 
-void jpegli_CreateCompress(j_compress_ptr cinfo, int version,
+void pdfcore_jpegli_CreateCompress(j_compress_ptr cinfo, int version,
                            size_t structsize) {
   cinfo->mem = nullptr;
   if (structsize != sizeof(*cinfo)) {
-    JPEGLI_ERROR("jpegli_compress_struct has wrong size.");
+    PDFCORE_ERROR("pdfcore_jpegli_compress_struct has wrong size.");
   }
-  jpegli::InitMemoryManager(reinterpret_cast<j_common_ptr>(cinfo));
+  pdfcore::InitMemoryManager(reinterpret_cast<j_common_ptr>(cinfo));
   cinfo->progress = nullptr;
   cinfo->is_decompressor = FALSE;
-  cinfo->global_state = jpegli::kEncStart;
+  cinfo->global_state = pdfcore::kEncStart;
   cinfo->dest = nullptr;
   cinfo->image_width = 0;
   cinfo->image_height = 0;
@@ -686,50 +686,50 @@ void jpegli_CreateCompress(j_compress_ptr cinfo, int version,
   memset(cinfo->arith_dc_U, 0, sizeof(cinfo->arith_dc_U));
   memset(cinfo->arith_ac_K, 0, sizeof(cinfo->arith_ac_K));
   cinfo->write_Adobe_marker = FALSE;
-  cinfo->master = jpegli::Allocate<jpeg_comp_master>(cinfo, 1);
-  jpegli::InitializeCompressParams(cinfo);
+  cinfo->master = pdfcore::Allocate<jpeg_comp_master>(cinfo, 1);
+  pdfcore::InitializeCompressParams(cinfo);
   cinfo->master->force_baseline = true;
   cinfo->master->xyb_mode = false;
   cinfo->master->cicp_transfer_function = 2;  // unknown transfer function code
   cinfo->master->use_std_tables = false;
   cinfo->master->use_adaptive_quantization = true;
-  cinfo->master->progressive_level = jpegli::kDefaultProgressiveLevel;
-  cinfo->master->data_type = JPEGLI_TYPE_UINT8;
-  cinfo->master->endianness = JPEGLI_NATIVE_ENDIAN;
+  cinfo->master->progressive_level = pdfcore::kDefaultProgressiveLevel;
+  cinfo->master->data_type = PDFCORE_TYPE_UINT8;
+  cinfo->master->endianness = PDFCORE_NATIVE_ENDIAN;
   cinfo->master->coeff_buffers = nullptr;
 }
 
-void jpegli_set_xyb_mode(j_compress_ptr cinfo) {
-  CheckState(cinfo, jpegli::kEncStart);
+void pdfcore_jpegli_set_xyb_mode(j_compress_ptr cinfo) {
+  CheckState(cinfo, pdfcore::kEncStart);
   cinfo->master->xyb_mode = true;
 }
 
-void jpegli_set_cicp_transfer_function(j_compress_ptr cinfo, int code) {
-  CheckState(cinfo, jpegli::kEncStart);
+void pdfcore_jpegli_set_cicp_transfer_function(j_compress_ptr cinfo, int code) {
+  CheckState(cinfo, pdfcore::kEncStart);
   cinfo->master->cicp_transfer_function = code;
 }
 
-void jpegli_set_defaults(j_compress_ptr cinfo) {
-  CheckState(cinfo, jpegli::kEncStart);
-  jpegli::InitializeCompressParams(cinfo);
-  jpegli_default_colorspace(cinfo);
-  jpegli_set_quality(cinfo, 90, TRUE);
-  jpegli_set_progressive_level(cinfo, jpegli::kDefaultProgressiveLevel);
-  jpegli::AddStandardHuffmanTables(reinterpret_cast<j_common_ptr>(cinfo),
+void pdfcore_jpegli_set_defaults(j_compress_ptr cinfo) {
+  CheckState(cinfo, pdfcore::kEncStart);
+  pdfcore::InitializeCompressParams(cinfo);
+  pdfcore_jpegli_default_colorspace(cinfo);
+  pdfcore_jpegli_set_quality(cinfo, 90, TRUE);
+  pdfcore_jpegli_set_progressive_level(cinfo, pdfcore::kDefaultProgressiveLevel);
+  pdfcore::AddStandardHuffmanTables(reinterpret_cast<j_common_ptr>(cinfo),
                                    /*is_dc=*/false);
-  jpegli::AddStandardHuffmanTables(reinterpret_cast<j_common_ptr>(cinfo),
+  pdfcore::AddStandardHuffmanTables(reinterpret_cast<j_common_ptr>(cinfo),
                                    /*is_dc=*/true);
 }
 
-void jpegli_default_colorspace(j_compress_ptr cinfo) {
-  CheckState(cinfo, jpegli::kEncStart);
+void pdfcore_jpegli_default_colorspace(j_compress_ptr cinfo) {
+  CheckState(cinfo, pdfcore::kEncStart);
   if (cinfo->in_color_space == JCS_RGB && cinfo->master->xyb_mode) {
-    jpegli_set_colorspace(cinfo, JCS_RGB);
+    pdfcore_jpegli_set_colorspace(cinfo, JCS_RGB);
     return;
   }
   switch (cinfo->in_color_space) {
     case JCS_GRAYSCALE:
-      jpegli_set_colorspace(cinfo, JCS_GRAYSCALE);
+      pdfcore_jpegli_set_colorspace(cinfo, JCS_GRAYSCALE);
       break;
     case JCS_RGB:
 #ifdef JCS_EXTENSIONS
@@ -746,27 +746,27 @@ void jpegli_default_colorspace(j_compress_ptr cinfo) {
     case JCS_EXT_ARGB:
     case JCS_EXT_ABGR:
 #endif
-      jpegli_set_colorspace(cinfo, JCS_YCbCr);
+      pdfcore_jpegli_set_colorspace(cinfo, JCS_YCbCr);
       break;
     case JCS_YCbCr:
-      jpegli_set_colorspace(cinfo, JCS_YCbCr);
+      pdfcore_jpegli_set_colorspace(cinfo, JCS_YCbCr);
       break;
     case JCS_CMYK:
-      jpegli_set_colorspace(cinfo, JCS_CMYK);
+      pdfcore_jpegli_set_colorspace(cinfo, JCS_CMYK);
       break;
     case JCS_YCCK:
-      jpegli_set_colorspace(cinfo, JCS_YCCK);
+      pdfcore_jpegli_set_colorspace(cinfo, JCS_YCCK);
       break;
     case JCS_UNKNOWN:
-      jpegli_set_colorspace(cinfo, JCS_UNKNOWN);
+      pdfcore_jpegli_set_colorspace(cinfo, JCS_UNKNOWN);
       break;
     default:
-      JPEGLI_ERROR("Unsupported input colorspace %d", cinfo->in_color_space);
+      PDFCORE_ERROR("Unsupported input colorspace %d", cinfo->in_color_space);
   }
 }
 
-void jpegli_set_colorspace(j_compress_ptr cinfo, J_COLOR_SPACE colorspace) {
-  CheckState(cinfo, jpegli::kEncStart);
+void pdfcore_jpegli_set_colorspace(j_compress_ptr cinfo, J_COLOR_SPACE colorspace) {
+  CheckState(cinfo, pdfcore::kEncStart);
   cinfo->jpeg_color_space = colorspace;
   switch (colorspace) {
     case JCS_GRAYSCALE:
@@ -782,20 +782,20 @@ void jpegli_set_colorspace(j_compress_ptr cinfo, J_COLOR_SPACE colorspace) {
       break;
     case JCS_UNKNOWN:
       cinfo->num_components =
-          std::min<int>(jpegli::kMaxComponents, cinfo->input_components);
+          std::min<int>(pdfcore::kMaxComponents, cinfo->input_components);
       break;
     default:
-      JPEGLI_ERROR("Unsupported jpeg colorspace %d", colorspace);
+      PDFCORE_ERROR("Unsupported jpeg colorspace %d", colorspace);
   }
   // Adobe marker is only needed to distinguish CMYK and YCCK JPEGs.
   cinfo->write_Adobe_marker =
-      TO_JPEGLI_BOOL(cinfo->jpeg_color_space == JCS_YCCK);
+      TO_PDFCORE_BOOL(cinfo->jpeg_color_space == JCS_YCCK);
   if (cinfo->comp_info == nullptr) {
     cinfo->comp_info =
-        jpegli::Allocate<jpeg_component_info>(cinfo, MAX_COMPONENTS);
+        pdfcore::Allocate<jpeg_component_info>(cinfo, MAX_COMPONENTS);
   }
   memset(cinfo->comp_info, 0,
-         jpegli::kMaxComponents * sizeof(jpeg_component_info));
+         pdfcore::kMaxComponents * sizeof(jpeg_component_info));
   for (int c = 0; c < cinfo->num_components; ++c) {
     jpeg_component_info* comp = &cinfo->comp_info[c];
     comp->component_index = c;
@@ -838,80 +838,80 @@ void jpegli_set_colorspace(j_compress_ptr cinfo, J_COLOR_SPACE colorspace) {
   }
 }
 
-void jpegli_set_distance(j_compress_ptr cinfo, float distance,
+void pdfcore_jpegli_set_distance(j_compress_ptr cinfo, float distance,
                          boolean force_baseline) {
-  CheckState(cinfo, jpegli::kEncStart);
-  cinfo->master->force_baseline = FROM_JPEGLI_BOOL(force_baseline);
+  CheckState(cinfo, pdfcore::kEncStart);
+  cinfo->master->force_baseline = FROM_PDFCORE_BOOL(force_baseline);
   float distances[NUM_QUANT_TBLS] = {distance, distance, distance};
-  jpegli::SetQuantMatrices(cinfo, distances, /*add_two_chroma_tables=*/true);
+  pdfcore::SetQuantMatrices(cinfo, distances, /*add_two_chroma_tables=*/true);
 }
 
-float jpegli_quality_to_distance(int quality) {
+float pdfcore_jpegli_quality_to_distance(int quality) {
   return (quality >= 100  ? 0.01f
           : quality >= 30 ? 0.1f + (100 - quality) * 0.09f
                           : 53.0f / 3000.0f * quality * quality -
                                 23.0f / 20.0f * quality + 25.0f);
 }
 
-void jpegli_set_psnr(j_compress_ptr cinfo, float psnr, float tolerance,
+void pdfcore_jpegli_set_psnr(j_compress_ptr cinfo, float psnr, float tolerance,
                      float min_distance, float max_distance) {
-  CheckState(cinfo, jpegli::kEncStart);
+  CheckState(cinfo, pdfcore::kEncStart);
   cinfo->master->psnr_target = psnr;
   cinfo->master->psnr_tolerance = tolerance;
   cinfo->master->min_distance = min_distance;
   cinfo->master->max_distance = max_distance;
 }
 
-void jpegli_set_quality(j_compress_ptr cinfo, int quality,
+void pdfcore_jpegli_set_quality(j_compress_ptr cinfo, int quality,
                         boolean force_baseline) {
-  CheckState(cinfo, jpegli::kEncStart);
-  cinfo->master->force_baseline = FROM_JPEGLI_BOOL(force_baseline);
-  float distance = jpegli_quality_to_distance(quality);
+  CheckState(cinfo, pdfcore::kEncStart);
+  cinfo->master->force_baseline = FROM_PDFCORE_BOOL(force_baseline);
+  float distance = pdfcore_jpegli_quality_to_distance(quality);
   float distances[NUM_QUANT_TBLS] = {distance, distance, distance};
-  jpegli::SetQuantMatrices(cinfo, distances, /*add_two_chroma_tables=*/false);
+  pdfcore::SetQuantMatrices(cinfo, distances, /*add_two_chroma_tables=*/false);
 }
 
-void jpegli_set_linear_quality(j_compress_ptr cinfo, int scale_factor,
+void pdfcore_jpegli_set_linear_quality(j_compress_ptr cinfo, int scale_factor,
                                boolean force_baseline) {
-  CheckState(cinfo, jpegli::kEncStart);
-  cinfo->master->force_baseline = FROM_JPEGLI_BOOL(force_baseline);
-  float distance = jpegli::LinearQualityToDistance(scale_factor);
+  CheckState(cinfo, pdfcore::kEncStart);
+  cinfo->master->force_baseline = FROM_PDFCORE_BOOL(force_baseline);
+  float distance = pdfcore::LinearQualityToDistance(scale_factor);
   float distances[NUM_QUANT_TBLS] = {distance, distance, distance};
-  jpegli::SetQuantMatrices(cinfo, distances, /*add_two_chroma_tables=*/false);
+  pdfcore::SetQuantMatrices(cinfo, distances, /*add_two_chroma_tables=*/false);
 }
 
 #if JPEG_LIB_VERSION >= 70
-void jpegli_default_qtables(j_compress_ptr cinfo, boolean force_baseline) {
-  CheckState(cinfo, jpegli::kEncStart);
+void pdfcore_jpegli_default_qtables(j_compress_ptr cinfo, boolean force_baseline) {
+  CheckState(cinfo, pdfcore::kEncStart);
   cinfo->master->force_baseline = force_baseline;
   float distances[NUM_QUANT_TBLS];
   for (int i = 0; i < NUM_QUANT_TBLS; ++i) {
-    distances[i] = jpegli::LinearQualityToDistance(cinfo->q_scale_factor[i]);
+    distances[i] = pdfcore::LinearQualityToDistance(cinfo->q_scale_factor[i]);
   }
-  jpegli::SetQuantMatrices(cinfo, distances, /*add_two_chroma_tables=*/false);
+  pdfcore::SetQuantMatrices(cinfo, distances, /*add_two_chroma_tables=*/false);
 }
 #endif
 
-int jpegli_quality_scaling(int quality) {
+int pdfcore_jpegli_quality_scaling(int quality) {
   quality = std::min(100, std::max(1, quality));
   return quality < 50 ? 5000 / quality : 200 - 2 * quality;
 }
 
-void jpegli_use_standard_quant_tables(j_compress_ptr cinfo) {
-  CheckState(cinfo, jpegli::kEncStart);
+void pdfcore_jpegli_use_standard_quant_tables(j_compress_ptr cinfo) {
+  CheckState(cinfo, pdfcore::kEncStart);
   cinfo->master->use_std_tables = true;
 }
 
-void jpegli_add_quant_table(j_compress_ptr cinfo, int which_tbl,
+void pdfcore_jpegli_add_quant_table(j_compress_ptr cinfo, int which_tbl,
                             const unsigned int* basic_table, int scale_factor,
                             boolean force_baseline) {
-  CheckState(cinfo, jpegli::kEncStart);
+  CheckState(cinfo, pdfcore::kEncStart);
   if (which_tbl < 0 || which_tbl > NUM_QUANT_TBLS) {
-    JPEGLI_ERROR("Invalid quant table index %d", which_tbl);
+    PDFCORE_ERROR("Invalid quant table index %d", which_tbl);
   }
   if (cinfo->quant_tbl_ptrs[which_tbl] == nullptr) {
     cinfo->quant_tbl_ptrs[which_tbl] =
-        jpegli_alloc_quant_table(reinterpret_cast<j_common_ptr>(cinfo));
+        pdfcore_jpegli_alloc_quant_table(reinterpret_cast<j_common_ptr>(cinfo));
   }
   int max_qval = force_baseline ? 255 : 32767U;
   JQUANT_TBL* quant_table = cinfo->quant_tbl_ptrs[which_tbl];
@@ -923,58 +923,58 @@ void jpegli_add_quant_table(j_compress_ptr cinfo, int which_tbl,
   quant_table->sent_table = FALSE;
 }
 
-void jpegli_enable_adaptive_quantization(j_compress_ptr cinfo, boolean value) {
-  CheckState(cinfo, jpegli::kEncStart);
-  cinfo->master->use_adaptive_quantization = FROM_JPEGLI_BOOL(value);
+void pdfcore_jpegli_enable_adaptive_quantization(j_compress_ptr cinfo, boolean value) {
+  CheckState(cinfo, pdfcore::kEncStart);
+  cinfo->master->use_adaptive_quantization = FROM_PDFCORE_BOOL(value);
 }
 
-void jpegli_simple_progression(j_compress_ptr cinfo) {
-  CheckState(cinfo, jpegli::kEncStart);
-  jpegli_set_progressive_level(cinfo, 2);
+void pdfcore_jpegli_simple_progression(j_compress_ptr cinfo) {
+  CheckState(cinfo, pdfcore::kEncStart);
+  pdfcore_jpegli_set_progressive_level(cinfo, 2);
 }
 
-void jpegli_set_progressive_level(j_compress_ptr cinfo, int level) {
-  CheckState(cinfo, jpegli::kEncStart);
+void pdfcore_jpegli_set_progressive_level(j_compress_ptr cinfo, int level) {
+  CheckState(cinfo, pdfcore::kEncStart);
   if (level < 0) {
-    JPEGLI_ERROR("Invalid progressive level %d", level);
+    PDFCORE_ERROR("Invalid progressive level %d", level);
   }
   cinfo->master->progressive_level = level;
 }
 
-void jpegli_set_input_format(j_compress_ptr cinfo, JpegliDataType data_type,
-                             JpegliEndianness endianness) {
-  CheckState(cinfo, jpegli::kEncStart);
+void pdfcore_jpegli_set_input_format(j_compress_ptr cinfo, PdfcoreDataType data_type,
+                             PdfcoreEndianness endianness) {
+  CheckState(cinfo, pdfcore::kEncStart);
   switch (data_type) {
-    case JPEGLI_TYPE_UINT8:
-    case JPEGLI_TYPE_UINT16:
-    case JPEGLI_TYPE_FLOAT:
+    case PDFCORE_TYPE_UINT8:
+    case PDFCORE_TYPE_UINT16:
+    case PDFCORE_TYPE_FLOAT:
       cinfo->master->data_type = data_type;
       break;
     default:
-      JPEGLI_ERROR("Unsupported data type %d", data_type);
+      PDFCORE_ERROR("Unsupported data type %d", data_type);
   }
   switch (endianness) {
-    case JPEGLI_NATIVE_ENDIAN:
-    case JPEGLI_LITTLE_ENDIAN:
-    case JPEGLI_BIG_ENDIAN:
+    case PDFCORE_NATIVE_ENDIAN:
+    case PDFCORE_LITTLE_ENDIAN:
+    case PDFCORE_BIG_ENDIAN:
       cinfo->master->endianness = endianness;
       break;
     default:
-      JPEGLI_ERROR("Unsupported endianness %d", endianness);
+      PDFCORE_ERROR("Unsupported endianness %d", endianness);
   }
 }
 
 #if JPEG_LIB_VERSION >= 70
-void jpegli_calc_jpeg_dimensions(j_compress_ptr cinfo) {
+void pdfcore_jpegli_calc_jpeg_dimensions(j_compress_ptr cinfo) {
   // Since input scaling is not supported, we just copy the image dimensions.
   cinfo->jpeg_width = cinfo->image_width;
   cinfo->jpeg_height = cinfo->image_height;
 }
 #endif
 
-void jpegli_copy_critical_parameters(j_decompress_ptr srcinfo,
+void pdfcore_jpegli_copy_critical_parameters(j_decompress_ptr srcinfo,
                                      j_compress_ptr dstinfo) {
-  CheckState(dstinfo, jpegli::kEncStart);
+  CheckState(dstinfo, pdfcore::kEncStart);
   // Image parameters.
   dstinfo->image_width = srcinfo->image_width;
   dstinfo->image_height = srcinfo->image_height;
@@ -982,11 +982,11 @@ void jpegli_copy_critical_parameters(j_decompress_ptr srcinfo,
   dstinfo->in_color_space = srcinfo->jpeg_color_space;
   dstinfo->input_gamma = srcinfo->output_gamma;
   // Compression parameters.
-  jpegli_set_defaults(dstinfo);
-  jpegli_set_colorspace(dstinfo, srcinfo->jpeg_color_space);
+  pdfcore_jpegli_set_defaults(dstinfo);
+  pdfcore_jpegli_set_colorspace(dstinfo, srcinfo->jpeg_color_space);
   if (dstinfo->num_components != srcinfo->num_components) {
     const auto& cinfo = dstinfo;
-    JPEGLI_ERROR("Mismatch between src colorspace and components");
+    PDFCORE_ERROR("Mismatch between src colorspace and components");
   }
   dstinfo->data_precision = srcinfo->data_precision;
   dstinfo->CCIR601_sampling = srcinfo->CCIR601_sampling;
@@ -1006,7 +1006,7 @@ void jpegli_copy_critical_parameters(j_decompress_ptr srcinfo,
   for (int i = 0; i < NUM_QUANT_TBLS; ++i) {
     if (!srcinfo->quant_tbl_ptrs[i]) continue;
     if (dstinfo->quant_tbl_ptrs[i] == nullptr) {
-      dstinfo->quant_tbl_ptrs[i] = jpegli::Allocate<JQUANT_TBL>(dstinfo, 1);
+      dstinfo->quant_tbl_ptrs[i] = pdfcore::Allocate<JQUANT_TBL>(dstinfo, 1);
     }
     memcpy(dstinfo->quant_tbl_ptrs[i], srcinfo->quant_tbl_ptrs[i],
            sizeof(JQUANT_TBL));
@@ -1014,103 +1014,103 @@ void jpegli_copy_critical_parameters(j_decompress_ptr srcinfo,
   }
 }
 
-void jpegli_suppress_tables(j_compress_ptr cinfo, boolean suppress) {
-  jpegli::SetSentTableFlag(cinfo->quant_tbl_ptrs, NUM_QUANT_TBLS, suppress);
-  jpegli::SetSentTableFlag(cinfo->dc_huff_tbl_ptrs, NUM_HUFF_TBLS, suppress);
-  jpegli::SetSentTableFlag(cinfo->ac_huff_tbl_ptrs, NUM_HUFF_TBLS, suppress);
+void pdfcore_jpegli_suppress_tables(j_compress_ptr cinfo, boolean suppress) {
+  pdfcore::SetSentTableFlag(cinfo->quant_tbl_ptrs, NUM_QUANT_TBLS, suppress);
+  pdfcore::SetSentTableFlag(cinfo->dc_huff_tbl_ptrs, NUM_HUFF_TBLS, suppress);
+  pdfcore::SetSentTableFlag(cinfo->ac_huff_tbl_ptrs, NUM_HUFF_TBLS, suppress);
 }
 
 //
 // Compressor initialization
 //
 
-void jpegli_start_compress(j_compress_ptr cinfo, boolean write_all_tables) {
-  CheckState(cinfo, jpegli::kEncStart);
-  cinfo->global_state = jpegli::kEncHeader;
-  jpegli::InitCompress(cinfo, write_all_tables);
+void pdfcore_jpegli_start_compress(j_compress_ptr cinfo, boolean write_all_tables) {
+  CheckState(cinfo, pdfcore::kEncStart);
+  cinfo->global_state = pdfcore::kEncHeader;
+  pdfcore::InitCompress(cinfo, write_all_tables);
   cinfo->next_scanline = 0;
   cinfo->master->next_input_row = 0;
 }
 
-void jpegli_write_coefficients(j_compress_ptr cinfo,
+void pdfcore_jpegli_write_coefficients(j_compress_ptr cinfo,
                                jvirt_barray_ptr* coef_arrays) {
-  CheckState(cinfo, jpegli::kEncStart);
-  cinfo->global_state = jpegli::kEncWriteCoeffs;
-  jpegli::InitCompress(cinfo, /*write_all_tables=*/TRUE);
+  CheckState(cinfo, pdfcore::kEncStart);
+  cinfo->global_state = pdfcore::kEncWriteCoeffs;
+  pdfcore::InitCompress(cinfo, /*write_all_tables=*/TRUE);
   cinfo->master->coeff_buffers = coef_arrays;
   cinfo->next_scanline = cinfo->image_height;
   cinfo->master->next_input_row = cinfo->image_height;
 }
 
-void jpegli_write_tables(j_compress_ptr cinfo) {
-  CheckState(cinfo, jpegli::kEncStart);
+void pdfcore_jpegli_write_tables(j_compress_ptr cinfo) {
+  CheckState(cinfo, pdfcore::kEncStart);
   if (cinfo->dest == nullptr) {
-    JPEGLI_ERROR("Missing destination.");
+    PDFCORE_ERROR("Missing destination.");
   }
   jpeg_comp_master* m = cinfo->master;
   (*cinfo->err->reset_error_mgr)(reinterpret_cast<j_common_ptr>(cinfo));
   (*cinfo->dest->init_destination)(cinfo);
-  jpegli::WriteOutput(cinfo, {0xFF, 0xD8});  // SOI
-  jpegli::EncodeDQT(cinfo, /*write_all_tables=*/true);
-  jpegli::CopyHuffmanTables(cinfo);
-  jpegli::EncodeDHT(cinfo, 0, m->num_huffman_tables);
-  jpegli::WriteOutput(cinfo, {0xFF, 0xD9});  // EOI
+  pdfcore::WriteOutput(cinfo, {0xFF, 0xD8});  // SOI
+  pdfcore::EncodeDQT(cinfo, /*write_all_tables=*/true);
+  pdfcore::CopyHuffmanTables(cinfo);
+  pdfcore::EncodeDHT(cinfo, 0, m->num_huffman_tables);
+  pdfcore::WriteOutput(cinfo, {0xFF, 0xD9});  // EOI
   (*cinfo->dest->term_destination)(cinfo);
-  jpegli_suppress_tables(cinfo, TRUE);
+  pdfcore_jpegli_suppress_tables(cinfo, TRUE);
 }
 
 //
 // Marker writing
 //
 
-void jpegli_write_m_header(j_compress_ptr cinfo, int marker,
+void pdfcore_jpegli_write_m_header(j_compress_ptr cinfo, int marker,
                            unsigned int datalen) {
-  CheckState(cinfo, jpegli::kEncHeader, jpegli::kEncWriteCoeffs);
-  if (datalen > jpegli::kMaxBytesInMarker) {
-    JPEGLI_ERROR("Invalid marker length %u", datalen);
+  CheckState(cinfo, pdfcore::kEncHeader, pdfcore::kEncWriteCoeffs);
+  if (datalen > pdfcore::kMaxBytesInMarker) {
+    PDFCORE_ERROR("Invalid marker length %u", datalen);
   }
   if (marker != 0xfe && (marker < 0xe0 || marker > 0xef)) {
-    JPEGLI_ERROR(
-        "jpegli_write_m_header: Only APP and COM markers are supported.");
+    PDFCORE_ERROR(
+        "pdfcore_jpegli_write_m_header: Only APP and COM markers are supported.");
   }
   std::vector<uint8_t> marker_data(4 + datalen);
   marker_data[0] = 0xff;
   marker_data[1] = marker;
   marker_data[2] = (datalen + 2) >> 8;
   marker_data[3] = (datalen + 2) & 0xff;
-  jpegli::WriteOutput(cinfo, marker_data.data(), 4);
+  pdfcore::WriteOutput(cinfo, marker_data.data(), 4);
 }
 
-void jpegli_write_m_byte(j_compress_ptr cinfo, int val) {
+void pdfcore_jpegli_write_m_byte(j_compress_ptr cinfo, int val) {
   uint8_t data = val;
-  jpegli::WriteOutput(cinfo, &data, 1);
+  pdfcore::WriteOutput(cinfo, &data, 1);
 }
 
-void jpegli_write_marker(j_compress_ptr cinfo, int marker,
+void pdfcore_jpegli_write_marker(j_compress_ptr cinfo, int marker,
                          const JOCTET* dataptr, unsigned int datalen) {
-  jpegli_write_m_header(cinfo, marker, datalen);
-  jpegli::WriteOutput(cinfo, dataptr, datalen);
+  pdfcore_jpegli_write_m_header(cinfo, marker, datalen);
+  pdfcore::WriteOutput(cinfo, dataptr, datalen);
 }
 
-void jpegli_write_icc_profile(j_compress_ptr cinfo, const JOCTET* icc_data_ptr,
+void pdfcore_jpegli_write_icc_profile(j_compress_ptr cinfo, const JOCTET* icc_data_ptr,
                               unsigned int icc_data_len) {
   constexpr size_t kMaxIccBytesInMarker =
-      jpegli::kMaxBytesInMarker - sizeof jpegli::kICCSignature - 2;
+      pdfcore::kMaxBytesInMarker - sizeof pdfcore::kICCSignature - 2;
   const int num_markers =
-      static_cast<int>(jpegli::DivCeil(icc_data_len, kMaxIccBytesInMarker));
+      static_cast<int>(pdfcore::DivCeil(icc_data_len, kMaxIccBytesInMarker));
   size_t begin = 0;
   for (int current_marker = 0; current_marker < num_markers; ++current_marker) {
     const size_t length = std::min(kMaxIccBytesInMarker, icc_data_len - begin);
-    jpegli_write_m_header(
-        cinfo, jpegli::kICCMarker,
-        static_cast<unsigned int>(length + sizeof jpegli::kICCSignature + 2));
-    for (const unsigned char c : jpegli::kICCSignature) {
-      jpegli_write_m_byte(cinfo, c);
+    pdfcore_jpegli_write_m_header(
+        cinfo, pdfcore::kICCMarker,
+        static_cast<unsigned int>(length + sizeof pdfcore::kICCSignature + 2));
+    for (const unsigned char c : pdfcore::kICCSignature) {
+      pdfcore_jpegli_write_m_byte(cinfo, c);
     }
-    jpegli_write_m_byte(cinfo, current_marker + 1);
-    jpegli_write_m_byte(cinfo, num_markers);
+    pdfcore_jpegli_write_m_byte(cinfo, current_marker + 1);
+    pdfcore_jpegli_write_m_byte(cinfo, num_markers);
     for (size_t i = 0; i < length; ++i) {
-      jpegli_write_m_byte(cinfo, icc_data_ptr[begin]);
+      pdfcore_jpegli_write_m_byte(cinfo, icc_data_ptr[begin]);
       ++begin;
     }
   }
@@ -1120,19 +1120,19 @@ void jpegli_write_icc_profile(j_compress_ptr cinfo, const JOCTET* icc_data_ptr,
 // Input streaming
 //
 
-JDIMENSION jpegli_write_scanlines(j_compress_ptr cinfo, JSAMPARRAY scanlines,
+JDIMENSION pdfcore_jpegli_write_scanlines(j_compress_ptr cinfo, JSAMPARRAY scanlines,
                                   JDIMENSION num_lines) {
-  CheckState(cinfo, jpegli::kEncHeader, jpegli::kEncReadImage);
+  CheckState(cinfo, pdfcore::kEncHeader, pdfcore::kEncReadImage);
   if (cinfo->raw_data_in) {
-    JPEGLI_ERROR("jpegli_write_raw_data() must be called for raw data mode.");
+    PDFCORE_ERROR("pdfcore_jpegli_write_raw_data() must be called for raw data mode.");
   }
-  jpegli::ProgressMonitorInputPass(cinfo);
-  if (cinfo->global_state == jpegli::kEncHeader &&
-      jpegli::IsStreamingSupported(cinfo) && !cinfo->optimize_coding) {
-    jpegli::WriteFrameHeader(cinfo);
-    jpegli::WriteScanHeader(cinfo, 0);
+  pdfcore::ProgressMonitorInputPass(cinfo);
+  if (cinfo->global_state == pdfcore::kEncHeader &&
+      pdfcore::IsStreamingSupported(cinfo) && !cinfo->optimize_coding) {
+    pdfcore::WriteFrameHeader(cinfo);
+    pdfcore::WriteScanHeader(cinfo, 0);
   }
-  cinfo->global_state = jpegli::kEncReadImage;
+  cinfo->global_state = pdfcore::kEncReadImage;
   jpeg_comp_master* m = cinfo->master;
   if (num_lines + cinfo->next_scanline > cinfo->image_height) {
     num_lines = cinfo->image_height - cinfo->next_scanline;
@@ -1141,21 +1141,21 @@ JDIMENSION jpegli_write_scanlines(j_compress_ptr cinfo, JSAMPARRAY scanlines,
   size_t input_lag = (std::min<size_t>(cinfo->image_height, m->next_input_row) -
                       cinfo->next_scanline);
   if (input_lag > num_lines) {
-    JPEGLI_ERROR("Need at least %u lines to continue", input_lag);
+    PDFCORE_ERROR("Need at least %u lines to continue", input_lag);
   }
   if (input_lag > 0) {
-    if (!jpegli::EmptyBitWriterBuffer(&m->bw)) {
+    if (!pdfcore::EmptyBitWriterBuffer(&m->bw)) {
       return 0;
     }
     cinfo->next_scanline += input_lag;
   }
-  float* rows[jpegli::kMaxComponents];
+  float* rows[pdfcore::kMaxComponents];
   for (size_t i = input_lag; i < num_lines; ++i) {
-    jpegli::ReadInputRow(cinfo, scanlines[i], rows);
+    pdfcore::ReadInputRow(cinfo, scanlines[i], rows);
     (*m->color_transform)(rows, cinfo->image_width);
-    jpegli::PadInputBuffer(cinfo, rows);
-    jpegli::ProcessiMCURows(cinfo);
-    if (!jpegli::EmptyBitWriterBuffer(&m->bw)) {
+    pdfcore::PadInputBuffer(cinfo, rows);
+    pdfcore::ProcessiMCURows(cinfo);
+    if (!pdfcore::EmptyBitWriterBuffer(&m->bw)) {
       break;
     }
     ++cinfo->next_scanline;
@@ -1163,37 +1163,37 @@ JDIMENSION jpegli_write_scanlines(j_compress_ptr cinfo, JSAMPARRAY scanlines,
   return cinfo->next_scanline - prev_scanline;
 }
 
-JDIMENSION jpegli_write_raw_data(j_compress_ptr cinfo, JSAMPIMAGE data,
+JDIMENSION pdfcore_jpegli_write_raw_data(j_compress_ptr cinfo, JSAMPIMAGE data,
                                  JDIMENSION num_lines) {
-  CheckState(cinfo, jpegli::kEncHeader, jpegli::kEncReadImage);
+  CheckState(cinfo, pdfcore::kEncHeader, pdfcore::kEncReadImage);
   if (!cinfo->raw_data_in) {
-    JPEGLI_ERROR("jpegli_write_raw_data(): raw data mode was not set");
+    PDFCORE_ERROR("pdfcore_jpegli_write_raw_data(): raw data mode was not set");
   }
-  jpegli::ProgressMonitorInputPass(cinfo);
-  if (cinfo->global_state == jpegli::kEncHeader &&
-      jpegli::IsStreamingSupported(cinfo) && !cinfo->optimize_coding) {
-    jpegli::WriteFrameHeader(cinfo);
-    jpegli::WriteScanHeader(cinfo, 0);
+  pdfcore::ProgressMonitorInputPass(cinfo);
+  if (cinfo->global_state == pdfcore::kEncHeader &&
+      pdfcore::IsStreamingSupported(cinfo) && !cinfo->optimize_coding) {
+    pdfcore::WriteFrameHeader(cinfo);
+    pdfcore::WriteScanHeader(cinfo, 0);
   }
-  cinfo->global_state = jpegli::kEncReadImage;
+  cinfo->global_state = pdfcore::kEncReadImage;
   jpeg_comp_master* m = cinfo->master;
   if (cinfo->next_scanline >= cinfo->image_height) {
     return 0;
   }
   size_t iMCU_height = DCTSIZE * cinfo->max_v_samp_factor;
   if (num_lines < iMCU_height) {
-    JPEGLI_ERROR("Missing input lines, minimum is %u", iMCU_height);
+    PDFCORE_ERROR("Missing input lines, minimum is %u", iMCU_height);
   }
   if (cinfo->next_scanline < m->next_input_row) {
-    JPEGLI_CHECK(m->next_input_row - cinfo->next_scanline == iMCU_height);
-    if (!jpegli::EmptyBitWriterBuffer(&m->bw)) {
+    PDFCORE_CHECK(m->next_input_row - cinfo->next_scanline == iMCU_height);
+    if (!pdfcore::EmptyBitWriterBuffer(&m->bw)) {
       return 0;
     }
     cinfo->next_scanline = m->next_input_row;
     return iMCU_height;
   }
   size_t iMCU_y = m->next_input_row / iMCU_height;
-  float* rows[jpegli::kMaxComponents];
+  float* rows[pdfcore::kMaxComponents];
   for (int c = 0; c < cinfo->num_components; ++c) {
     JSAMPARRAY plane = data[c];
     jpeg_component_info* comp = &cinfo->comp_info[c];
@@ -1213,8 +1213,8 @@ JDIMENSION jpegli_write_raw_data(j_compress_ptr cinfo, JSAMPIMAGE data,
     }
   }
   m->next_input_row += iMCU_height;
-  jpegli::ProcessiMCURows(cinfo);
-  if (!jpegli::EmptyBitWriterBuffer(&m->bw)) {
+  pdfcore::ProcessiMCURows(cinfo);
+  if (!pdfcore::EmptyBitWriterBuffer(&m->bw)) {
     return 0;
   }
   cinfo->next_scanline += iMCU_height;
@@ -1225,61 +1225,61 @@ JDIMENSION jpegli_write_raw_data(j_compress_ptr cinfo, JSAMPIMAGE data,
 // Non-streaming part
 //
 
-void jpegli_finish_compress(j_compress_ptr cinfo) {
-  CheckState(cinfo, jpegli::kEncReadImage, jpegli::kEncWriteCoeffs);
+void pdfcore_jpegli_finish_compress(j_compress_ptr cinfo) {
+  CheckState(cinfo, pdfcore::kEncReadImage, pdfcore::kEncWriteCoeffs);
   jpeg_comp_master* m = cinfo->master;
   if (cinfo->next_scanline < cinfo->image_height) {
-    JPEGLI_ERROR("Incomplete image, expected %d rows, got %d",
+    PDFCORE_ERROR("Incomplete image, expected %d rows, got %d",
                  cinfo->image_height, cinfo->next_scanline);
   }
 
-  if (cinfo->global_state == jpegli::kEncWriteCoeffs) {
+  if (cinfo->global_state == pdfcore::kEncWriteCoeffs) {
     // Zig-zag shuffle all the blocks. For non-transcoding case it was already
     // done in EncodeiMCURow().
-    jpegli::ZigZagShuffleBlocks(cinfo);
+    pdfcore::ZigZagShuffleBlocks(cinfo);
   }
 
   if (m->psnr_target > 0) {
-    jpegli::QuantizetoPSNR(cinfo);
+    pdfcore::QuantizetoPSNR(cinfo);
   }
 
-  const bool tokens_done = jpegli::IsStreamingSupported(cinfo);
+  const bool tokens_done = pdfcore::IsStreamingSupported(cinfo);
   const bool bitstream_done =
-      tokens_done && !FROM_JPEGLI_BOOL(cinfo->optimize_coding);
+      tokens_done && !FROM_PDFCORE_BOOL(cinfo->optimize_coding);
 
   if (!tokens_done) {
-    jpegli::TokenizeJpeg(cinfo);
+    pdfcore::TokenizeJpeg(cinfo);
   }
 
   if (cinfo->optimize_coding || cinfo->progressive_mode) {
-    jpegli::OptimizeHuffmanCodes(cinfo);
-    jpegli::InitEntropyCoder(cinfo);
+    pdfcore::OptimizeHuffmanCodes(cinfo);
+    pdfcore::InitEntropyCoder(cinfo);
   }
 
   if (!bitstream_done) {
-    jpegli::WriteFrameHeader(cinfo);
+    pdfcore::WriteFrameHeader(cinfo);
     for (int i = 0; i < cinfo->num_scans; ++i) {
-      jpegli::WriteScanHeader(cinfo, i);
-      jpegli::WriteScanData(cinfo, i);
+      pdfcore::WriteScanHeader(cinfo, i);
+      pdfcore::WriteScanData(cinfo, i);
     }
   } else {
     JumpToByteBoundary(&m->bw);
     if (!EmptyBitWriterBuffer(&m->bw)) {
-      JPEGLI_ERROR("Output suspension is not supported in finish_compress");
+      PDFCORE_ERROR("Output suspension is not supported in finish_compress");
     }
   }
 
-  jpegli::WriteOutput(cinfo, {0xFF, 0xD9});  // EOI
+  pdfcore::WriteOutput(cinfo, {0xFF, 0xD9});  // EOI
   (*cinfo->dest->term_destination)(cinfo);
 
   // Release memory and reset global state.
-  jpegli_abort_compress(cinfo);
+  pdfcore_jpegli_abort_compress(cinfo);
 }
 
-void jpegli_abort_compress(j_compress_ptr cinfo) {
-  jpegli_abort(reinterpret_cast<j_common_ptr>(cinfo));
+void pdfcore_jpegli_abort_compress(j_compress_ptr cinfo) {
+  pdfcore_jpegli_abort(reinterpret_cast<j_common_ptr>(cinfo));
 }
 
-void jpegli_destroy_compress(j_compress_ptr cinfo) {
-  jpegli_destroy(reinterpret_cast<j_common_ptr>(cinfo));
+void pdfcore_jpegli_destroy_compress(j_compress_ptr cinfo) {
+  pdfcore_jpegli_destroy(reinterpret_cast<j_common_ptr>(cinfo));
 }

@@ -35,24 +35,24 @@
 #include "lib/extras/test_image.h"
 #include "lib/extras/test_utils.h"
 
-namespace jpegli {
+namespace pdfcore {
 namespace extras {
 namespace {
 
-using ::jpegli::Butteraugli3Norm;
-using ::jpegli::ButteraugliDistance;
-using ::jpegli::test::TestImage;
+using ::pdfcore::Butteraugli3Norm;
+using ::pdfcore::ButteraugliDistance;
+using ::pdfcore::test::TestImage;
 
 #define TEST_LIBJPEG_SUPPORT()                                              \
   do {                                                                      \
-    if (!jpegli::extras::CanDecode(jpegli::extras::Codec::kJPG)) {          \
+    if (!pdfcore::extras::CanDecode(pdfcore::extras::Codec::kJPG)) {          \
       fprintf(stderr, "Skipping test because of missing libjpeg codec.\n"); \
       return;                                                               \
     }                                                                       \
   } while (0)
 
 Status ReadTestImage(const std::string& pathname, PackedPixelFile* ppf) {
-  const std::vector<uint8_t> encoded = jpegli::test::ReadTestData(pathname);
+  const std::vector<uint8_t> encoded = pdfcore::test::ReadTestData(pathname);
   ColorHints color_hints;
   if (pathname.find(".ppm") != std::string::npos) {
     color_hints.Add("color_space", "RGB_D65_SRG_Rel_SRG");
@@ -92,13 +92,13 @@ Status EncodeWithLibjpeg(const PackedPixelFile& ppf, int quality,
   std::unique_ptr<Encoder> encoder = GetJPEGEncoder();
   encoder->SetOption("q", std::to_string(quality));
   EncodedImage encoded;
-  JPEGLI_RETURN_IF_ERROR(encoder->Encode(ppf, &encoded, nullptr));
-  JPEGLI_RETURN_IF_ERROR(!encoded.bitstreams.empty());
+  PDFCORE_RETURN_IF_ERROR(encoder->Encode(ppf, &encoded, nullptr));
+  PDFCORE_RETURN_IF_ERROR(!encoded.bitstreams.empty());
   *compressed = std::move(encoded.bitstreams[0]);
   return true;
 }
 
-std::string Description(const JpegliColorEncoding& color_encoding) {
+std::string Description(const PdfcoreColorEncoding& color_encoding) {
   ColorEncoding c_enc;
   EXPECT_TRUE(c_enc.FromExternal(color_encoding));
   return Description(c_enc);
@@ -110,9 +110,9 @@ float BitsPerPixel(const PackedPixelFile& ppf,
   return compressed.size() * 8.0 / num_pixels;
 }
 
-TEST(JpegliTest, JpegliSRGBDecodeTest) {
+TEST(PdfcoreTest, PdfcoreSRGBDecodeTest) {
   TEST_LIBJPEG_SUPPORT();
-  JpegliMemoryManager* memory_manager = jpegli::test::MemoryManager();
+  PdfcoreMemoryManager* memory_manager = pdfcore::test::MemoryManager();
   std::string testimage = "jxl/flower/flower_small.rgb.depth8.ppm";
   PackedPixelFile ppf0;
   ASSERT_TRUE(ReadTestImage(testimage, &ppf0));
@@ -131,9 +131,9 @@ TEST(JpegliTest, JpegliSRGBDecodeTest) {
             ButteraugliDistance(memory_manager, ppf0, ppf1));
 }
 
-TEST(JpegliTest, JpegliGrayscaleDecodeTest) {
+TEST(PdfcoreTest, PdfcoreGrayscaleDecodeTest) {
   TEST_LIBJPEG_SUPPORT();
-  JpegliMemoryManager* memory_manager = jpegli::test::MemoryManager();
+  PdfcoreMemoryManager* memory_manager = pdfcore::test::MemoryManager();
   std::string testimage = "jxl/flower/flower_small.g.depth8.pgm";
   PackedPixelFile ppf0;
   ASSERT_TRUE(ReadTestImage(testimage, &ppf0));
@@ -152,9 +152,9 @@ TEST(JpegliTest, JpegliGrayscaleDecodeTest) {
             ButteraugliDistance(memory_manager, ppf0, ppf1));
 }
 
-TEST(JpegliTest, JpegliXYBEncodeTest) {
+TEST(PdfcoreTest, PdfcoreXYBEncodeTest) {
   TEST_LIBJPEG_SUPPORT();
-  JpegliMemoryManager* memory_manager = jpegli::test::MemoryManager();
+  PdfcoreMemoryManager* memory_manager = pdfcore::test::MemoryManager();
   std::string testimage = "jxl/flower/flower_small.rgb.depth8.ppm";
   PackedPixelFile ppf_in;
   ASSERT_TRUE(ReadTestImage(testimage, &ppf_in));
@@ -173,16 +173,16 @@ TEST(JpegliTest, JpegliXYBEncodeTest) {
                         1.32f);
 }
 
-TEST(JpegliTest, JpegliDecodeTestLargeSmoothArea) {
+TEST(PdfcoreTest, PdfcoreDecodeTestLargeSmoothArea) {
   TEST_LIBJPEG_SUPPORT();
-  JpegliMemoryManager* memory_manager = jpegli::test::MemoryManager();
+  PdfcoreMemoryManager* memory_manager = pdfcore::test::MemoryManager();
   TestImage t;
   const size_t xsize = 2070;
   const size_t ysize = 1063;
   ASSERT_TRUE(t.SetDimensions(xsize, ysize));
   ASSERT_TRUE(t.SetChannels(3));
-  t.SetAllBitDepths(8).SetEndianness(JPEGLI_NATIVE_ENDIAN);
-  JPEGLI_TEST_ASSIGN_OR_DIE(TestImage::Frame frame, t.AddFrame());
+  t.SetAllBitDepths(8).SetEndianness(PDFCORE_NATIVE_ENDIAN);
+  PDFCORE_TEST_ASSIGN_OR_DIE(TestImage::Frame frame, t.AddFrame());
   frame.RandomFill();
   // Create a large smooth area in the top half of the image. This is to test
   // that the bias statistics calculation can handle many blocks with all-zero
@@ -205,9 +205,9 @@ TEST(JpegliTest, JpegliDecodeTestLargeSmoothArea) {
   EXPECT_LT(ButteraugliDistance(memory_manager, ppf0, ppf1), 3.0f);
 }
 
-TEST(JpegliTest, JpegliYUVEncodeTest) {
+TEST(PdfcoreTest, PdfcoreYUVEncodeTest) {
   TEST_LIBJPEG_SUPPORT();
-  JpegliMemoryManager* memory_manager = jpegli::test::MemoryManager();
+  PdfcoreMemoryManager* memory_manager = pdfcore::test::MemoryManager();
   std::string testimage = "jxl/flower/flower_small.rgb.depth8.ppm";
   PackedPixelFile ppf_in;
   ASSERT_TRUE(ReadTestImage(testimage, &ppf_in));
@@ -226,9 +226,9 @@ TEST(JpegliTest, JpegliYUVEncodeTest) {
                         1.32f);
 }
 
-TEST(JpegliTest, JpegliYUVChromaSubsamplingEncodeTest) {
+TEST(PdfcoreTest, PdfcoreYUVChromaSubsamplingEncodeTest) {
   TEST_LIBJPEG_SUPPORT();
-  JpegliMemoryManager* memory_manager = jpegli::test::MemoryManager();
+  PdfcoreMemoryManager* memory_manager = pdfcore::test::MemoryManager();
   std::string testimage = "jxl/flower/flower_small.rgb.depth8.ppm";
   PackedPixelFile ppf_in;
   ASSERT_TRUE(ReadTestImage(testimage, &ppf_in));
@@ -249,9 +249,9 @@ TEST(JpegliTest, JpegliYUVChromaSubsamplingEncodeTest) {
   }
 }
 
-TEST(JpegliTest, JpegliYUVEncodeTestNoAq) {
+TEST(PdfcoreTest, PdfcoreYUVEncodeTestNoAq) {
   TEST_LIBJPEG_SUPPORT();
-  JpegliMemoryManager* memory_manager = jpegli::test::MemoryManager();
+  PdfcoreMemoryManager* memory_manager = pdfcore::test::MemoryManager();
   std::string testimage = "jxl/flower/flower_small.rgb.depth8.ppm";
   PackedPixelFile ppf_in;
   ASSERT_TRUE(ReadTestImage(testimage, &ppf_in));
@@ -271,8 +271,8 @@ TEST(JpegliTest, JpegliYUVEncodeTestNoAq) {
                         1.25f);
 }
 
-TEST(JpegliTest, JpegliHDRRoundtripTest) {
-  JpegliMemoryManager* memory_manager = jpegli::test::MemoryManager();
+TEST(PdfcoreTest, PdfcoreHDRRoundtripTest) {
+  PdfcoreMemoryManager* memory_manager = pdfcore::test::MemoryManager();
   std::string testimage = "jxl/hdr_room.png";
   PackedPixelFile ppf_in;
   ASSERT_TRUE(ReadTestImage(testimage, &ppf_in));
@@ -286,14 +286,14 @@ TEST(JpegliTest, JpegliHDRRoundtripTest) {
 
   PackedPixelFile ppf_out;
   JpegDecompressParams dparams;
-  dparams.output_data_type = JPEGLI_TYPE_UINT16;
+  dparams.output_data_type = PDFCORE_TYPE_UINT16;
   ASSERT_TRUE(DecodeJpeg(compressed, dparams, nullptr, &ppf_out));
   EXPECT_SLIGHTLY_BELOW(BitsPerPixel(ppf_in, compressed), 2.95f);
   EXPECT_SLIGHTLY_BELOW(ButteraugliDistance(memory_manager, ppf_in, ppf_out),
                         1.05f);
 }
 
-TEST(JpegliTest, JpegliSetAppData) {
+TEST(PdfcoreTest, PdfcoreSetAppData) {
   std::string testimage = "jxl/flower/flower_small.rgb.depth8.ppm";
   PackedPixelFile ppf_in;
   ASSERT_TRUE(ReadTestImage(testimage, &ppf_in));
@@ -348,7 +348,7 @@ TEST(JpegliTest, JpegliSetAppData) {
   EXPECT_FALSE(EncodeJpeg(ppf_in, settings, nullptr, &compressed));
 }
 
-TEST(JpegliTest, JpegliEncodeRejectsMismatchedFrameSize) {
+TEST(PdfcoreTest, PdfcoreEncodeRejectsMismatchedFrameSize) {
   std::string testimage = "jxl/flower/flower_small.rgb.depth8.ppm";
   PackedPixelFile ppf_in;
   ASSERT_TRUE(ReadTestImage(testimage, &ppf_in));
@@ -386,12 +386,12 @@ struct TestConfig {
   int dither;
 };
 
-class JpegliColorQuantTestParam : public ::testing::TestWithParam<TestConfig> {
+class PdfcoreColorQuantTestParam : public ::testing::TestWithParam<TestConfig> {
 };
 
-TEST_P(JpegliColorQuantTestParam, JpegliColorQuantizeTest) {
+TEST_P(PdfcoreColorQuantTestParam, PdfcoreColorQuantizeTest) {
   TEST_LIBJPEG_SUPPORT();
-  JpegliMemoryManager* memory_manager = jpegli::test::MemoryManager();
+  PdfcoreMemoryManager* memory_manager = pdfcore::test::MemoryManager();
   TestConfig config = GetParam();
   std::string testimage = "jxl/flower/flower_small.rgb.depth8.ppm";
   PackedPixelFile ppf0;
@@ -416,9 +416,9 @@ TEST_P(JpegliColorQuantTestParam, JpegliColorQuantizeTest) {
   dparams2.dither_mode = config.dither;
   ASSERT_TRUE(DecodeJpeg(compressed, dparams2, nullptr, &ppf2));
 
-  JPEGLI_TEST_ASSIGN_OR_DIE(double dist1,
+  PDFCORE_TEST_ASSIGN_OR_DIE(double dist1,
                             Butteraugli3Norm(memory_manager, ppf0, ppf1));
-  JPEGLI_TEST_ASSIGN_OR_DIE(double dist2,
+  PDFCORE_TEST_ASSIGN_OR_DIE(double dist2,
                             Butteraugli3Norm(memory_manager, ppf0, ppf2));
   printf("distance: %f  vs %f\n", dist2, dist1);
   if (config.passes == 1) {
@@ -468,11 +468,11 @@ std::string TestDescription(const testing::TestParamInfo<TestConfig>& info) {
   return name.str();
 }
 
-JPEGLI_GTEST_INSTANTIATE_TEST_SUITE_P(JpegliColorQuantTest,
-                                      JpegliColorQuantTestParam,
+PDFCORE_GTEST_INSTANTIATE_TEST_SUITE_P(PdfcoreColorQuantTest,
+                                      PdfcoreColorQuantTestParam,
                                       testing::ValuesIn(GenerateTests()),
                                       TestDescription);
 
 }  // namespace
 }  // namespace extras
-}  // namespace jpegli
+}  // namespace pdfcore

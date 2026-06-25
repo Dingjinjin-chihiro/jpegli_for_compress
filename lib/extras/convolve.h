@@ -4,8 +4,8 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
-#ifndef JPEGLI_LIB_EXTRAS_CONVOLVE_H_
-#define JPEGLI_LIB_EXTRAS_CONVOLVE_H_
+#ifndef PDFCORE_LIB_EXTRAS_CONVOLVE_H_
+#define PDFCORE_LIB_EXTRAS_CONVOLVE_H_
 
 // 2D convolution.
 
@@ -15,7 +15,7 @@
 #include "lib/base/rect.h"
 #include "lib/extras/image.h"
 
-namespace jpegli {
+namespace pdfcore {
 
 // No valid values outside [0, xsize), but the strategy may still safely load
 // the preceding vector, and/or round xsize up to the vector lane count. This
@@ -41,6 +41,6 @@ Status Separable5(const ImageF& in, const Rect& rect,
                   const WeightsSeparable5& weights, ThreadPool* pool,
                   ImageF* out);
 
-}  // namespace jpegli
+}  // namespace pdfcore
 
-#endif  // JPEGLI_LIB_EXTRAS_CONVOLVE_H_
+#endif  // PDFCORE_LIB_EXTRAS_CONVOLVE_H_

@@ -22,13 +22,13 @@
 #include "tools/file_io.h"
 #include "tools/speed_stats.h"
 
-namespace jpegli_tools {
+namespace pdfcore_jpegli_tools {
 namespace {
 
 struct Args {
   void AddCommandLineOptions(CommandLineParser* cmdline) {
     std::string output_help("The output can be ");
-    output_help.append(jpegli::extras::ListOfEncodeCodecs());
+    output_help.append(pdfcore::extras::ListOfEncodeCodecs());
     cmdline->AddPositionalOption("INPUT", /* required = */ true,
                                  "The JPEG input file.", &file_in);
 
@@ -70,13 +70,13 @@ bool ValidateArgs(const Args& args) {
 }
 
 void SetDecompressParams(const Args& args, const std::string& extension,
-                         jpegli::extras::JpegDecompressParams* params) {
+                         pdfcore::extras::JpegDecompressParams* params) {
   if (extension == ".pfm") {
-    params->output_data_type = JPEGLI_TYPE_FLOAT;
-    params->output_endianness = JPEGLI_BIG_ENDIAN;
+    params->output_data_type = PDFCORE_TYPE_FLOAT;
+    params->output_endianness = PDFCORE_BIG_ENDIAN;
   } else if (args.bitdepth == 16) {
-    params->output_data_type = JPEGLI_TYPE_UINT16;
-    params->output_endianness = JPEGLI_BIG_ENDIAN;
+    params->output_data_type = PDFCORE_TYPE_UINT16;
+    params->output_endianness = PDFCORE_BIG_ENDIAN;
   }
   if (extension == ".pgm") {
     params->force_grayscale = true;
@@ -85,7 +85,7 @@ void SetDecompressParams(const Args& args, const std::string& extension,
   }
 }
 
-int DJpegliMain(int argc, const char* argv[]) {
+int DPdfcoreMain(int argc, const char* argv[]) {
   Args args;
   CommandLineParser cmdline;
   args.AddCommandLineOptions(&cmdline);
@@ -138,18 +138,18 @@ int DJpegliMain(int argc, const char* argv[]) {
     extension = filename_out.substr(pos);
   }
 
-  jpegli::extras::JpegDecompressParams dparams;
+  pdfcore::extras::JpegDecompressParams dparams;
   SetDecompressParams(args, extension, &dparams);
 
-  jpegli::extras::PackedPixelFile ppf;
-  jpegli_tools::SpeedStats stats;
+  pdfcore::extras::PackedPixelFile ppf;
+  pdfcore_jpegli_tools::SpeedStats stats;
   for (size_t num_rep = 0; num_rep < args.num_reps; ++num_rep) {
-    const double t0 = jpegli::Now();
-    if (!jpegli::extras::DecodeJpeg(jpeg_bytes, dparams, nullptr, &ppf)) {
+    const double t0 = pdfcore::Now();
+    if (!pdfcore::extras::DecodeJpeg(jpeg_bytes, dparams, nullptr, &ppf)) {
       fprintf(stderr, "jpegli decoding failed\n");
       return EXIT_FAILURE;
     }
-    const double t1 = jpegli::Now();
+    const double t1 = pdfcore::Now();
     stats.NotifyElapsed(t1 - t0);
     stats.SetImageSize(ppf.info.xsize, ppf.info.ysize);
   }
@@ -166,14 +166,14 @@ int DJpegliMain(int argc, const char* argv[]) {
     extension = ppf.info.num_color_channels == 3 ? ".ppm" : ".pgm";
   }
 
-  std::unique_ptr<jpegli::extras::Encoder> encoder =
-      jpegli::extras::Encoder::FromExtension(extension);
+  std::unique_ptr<pdfcore::extras::Encoder> encoder =
+      pdfcore::extras::Encoder::FromExtension(extension);
   if (encoder == nullptr) {
     fprintf(stderr, "Can't decode to the file extension '%s'\n",
             extension.c_str());
     return EXIT_FAILURE;
   }
-  jpegli::extras::EncodedImage encoded_image;
+  pdfcore::extras::EncodedImage encoded_image;
   if (!encoder->Encode(ppf, &encoded_image, nullptr) ||
       encoded_image.bitstreams.empty()) {
     fprintf(stderr, "Encode failed\n");
@@ -188,8 +188,8 @@ int DJpegliMain(int argc, const char* argv[]) {
 }
 
 }  // namespace
-}  // namespace jpegli_tools
+}  // namespace pdfcore_jpegli_tools
 
 int main(int argc, const char* argv[]) {
-  return jpegli_tools::DJpegliMain(argc, argv);
+  return pdfcore_jpegli_tools::DPdfcoreMain(argc, argv);
 }

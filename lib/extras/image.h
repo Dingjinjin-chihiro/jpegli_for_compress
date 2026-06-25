@@ -4,8 +4,8 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
-#ifndef JPEGLI_LIB_EXTRAS_IMAGE_H_
-#define JPEGLI_LIB_EXTRAS_IMAGE_H_
+#ifndef PDFCORE_LIB_EXTRAS_IMAGE_H_
+#define PDFCORE_LIB_EXTRAS_IMAGE_H_
 
 // SIMD/multicore-friendly planar image representation with row accessors.
 
@@ -25,7 +25,7 @@
 #include "lib/base/status.h"
 #include "lib/extras/memory_manager_internal.h"
 
-namespace jpegli {
+namespace pdfcore {
 
 // DO NOT use PlaneBase outside of image.{h|cc}
 namespace detail {
@@ -61,8 +61,8 @@ struct PlaneBase {
   // un-shrink the image. Caller is responsible for ensuring xsize/ysize are <=
   // the original dimensions.
   Status ShrinkTo(const size_t xsize, const size_t ysize) {
-    JPEGLI_ENSURE(xsize <= orig_xsize_);
-    JPEGLI_ENSURE(ysize <= orig_ysize_);
+    PDFCORE_ENSURE(xsize <= orig_xsize_);
+    PDFCORE_ENSURE(ysize <= orig_ysize_);
     xsize_ = static_cast<uint32_t>(xsize);
     ysize_ = static_cast<uint32_t>(ysize);
     // NOTE: we can't recompute bytes_per_row for more compact storage and
@@ -71,37 +71,37 @@ struct PlaneBase {
   }
 
   // How many pixels.
-  JPEGLI_INLINE size_t xsize() const { return xsize_; }
-  JPEGLI_INLINE size_t ysize() const { return ysize_; }
+  PDFCORE_INLINE size_t xsize() const { return xsize_; }
+  PDFCORE_INLINE size_t ysize() const { return ysize_; }
 
   // NOTE: do not use this for copying rows - the valid xsize may be much less.
-  JPEGLI_INLINE size_t bytes_per_row() const { return bytes_per_row_; }
+  PDFCORE_INLINE size_t bytes_per_row() const { return bytes_per_row_; }
 
-  JPEGLI_INLINE JpegliMemoryManager* memory_manager() const {
+  PDFCORE_INLINE PdfcoreMemoryManager* memory_manager() const {
     return bytes_.memory_manager();
   }
 
   // Raw access to byte contents, for interfacing with other libraries.
   // Unsigned char instead of char to avoid surprises (sign extension).
-  JPEGLI_INLINE uint8_t* bytes() {
+  PDFCORE_INLINE uint8_t* bytes() {
     uint8_t* p = bytes_.address<uint8_t>();
-    return static_cast<uint8_t* JPEGLI_RESTRICT>(JPEGLI_ASSUME_ALIGNED(p, 64));
+    return static_cast<uint8_t* PDFCORE_RESTRICT>(PDFCORE_ASSUME_ALIGNED(p, 64));
   }
-  JPEGLI_INLINE const uint8_t* bytes() const {
+  PDFCORE_INLINE const uint8_t* bytes() const {
     const uint8_t* p = bytes_.address<uint8_t>();
-    return static_cast<const uint8_t* JPEGLI_RESTRICT>(
-        JPEGLI_ASSUME_ALIGNED(p, 64));
+    return static_cast<const uint8_t* PDFCORE_RESTRICT>(
+        PDFCORE_ASSUME_ALIGNED(p, 64));
   }
 
  protected:
   PlaneBase(uint32_t xsize, uint32_t ysize, size_t sizeof_t);
-  Status Allocate(JpegliMemoryManager* memory_manager, size_t pre_padding);
+  Status Allocate(PdfcoreMemoryManager* memory_manager, size_t pre_padding);
 
   // Returns pointer to the start of a row.
-  JPEGLI_INLINE void* VoidRow(const size_t y) const {
-    JPEGLI_DASSERT(y < ysize_);
+  PDFCORE_INLINE void* VoidRow(const size_t y) const {
+    PDFCORE_DASSERT(y < ysize_);
     uint8_t* row = bytes_.address<uint8_t>() + y * bytes_per_row_;
-    return JPEGLI_ASSUME_ALIGNED(row, 64);
+    return PDFCORE_ASSUME_ALIGNED(row, 64);
   }
 
   // (Members are non-const to enable assignment during move-assignment.)
@@ -145,7 +145,7 @@ class Plane : public detail::PlaneBase {
 
   Plane() = default;
 
-  static StatusOr<Plane> Create(JpegliMemoryManager* memory_manager,
+  static StatusOr<Plane> Create(PdfcoreMemoryManager* memory_manager,
                                 const size_t xsize, const size_t ysize,
                                 const size_t pre_padding = 0) {
     static_assert(
@@ -153,29 +153,29 @@ class Plane : public detail::PlaneBase {
         "Only 1/2/4/8-byte samples are supported");
     uint32_t xsize32 = static_cast<uint32_t>(xsize);
     uint32_t ysize32 = static_cast<uint32_t>(ysize);
-    JPEGLI_ENSURE(xsize32 == xsize);
-    JPEGLI_ENSURE(ysize32 == ysize);
+    PDFCORE_ENSURE(xsize32 == xsize);
+    PDFCORE_ENSURE(ysize32 == ysize);
     Plane plane(xsize32, ysize32, sizeof(T));
-    JPEGLI_RETURN_IF_ERROR(plane.Allocate(memory_manager, pre_padding));
+    PDFCORE_RETURN_IF_ERROR(plane.Allocate(memory_manager, pre_padding));
     return plane;
   }
 
-  JPEGLI_INLINE T* Row(const size_t y) { return static_cast<T*>(VoidRow(y)); }
+  PDFCORE_INLINE T* Row(const size_t y) { return static_cast<T*>(VoidRow(y)); }
 
   // Returns pointer to const (see above).
-  JPEGLI_INLINE const T* Row(const size_t y) const {
+  PDFCORE_INLINE const T* Row(const size_t y) const {
     return static_cast<const T*>(VoidRow(y));
   }
 
   // Documents that the access is const.
-  JPEGLI_INLINE const T* ConstRow(const size_t y) const {
+  PDFCORE_INLINE const T* ConstRow(const size_t y) const {
     return static_cast<const T*>(VoidRow(y));
   }
 
   // Returns number of pixels (some of which are padding) per row. Useful for
   // computing other rows via pointer arithmetic. WARNING: this must
   // NOT be used to determine xsize.
-  JPEGLI_INLINE ptrdiff_t PixelsPerRow() const {
+  PDFCORE_INLINE ptrdiff_t PixelsPerRow() const {
     return static_cast<ptrdiff_t>(bytes_per_row_ / sizeof(T));
   }
 
@@ -214,7 +214,7 @@ template <typename ComponentType>
 class Image3 {
  public:
   using T = ComponentType;
-  using PlaneT = jpegli::Plane<T>;
+  using PlaneT = pdfcore::Plane<T>;
   static constexpr size_t kNumPlanes = 3;
 
   Image3() : planes_{PlaneT(), PlaneT(), PlaneT()} {}
@@ -236,45 +236,45 @@ class Image3 {
     return *this;
   }
 
-  static StatusOr<Image3> Create(JpegliMemoryManager* memory_manager,
+  static StatusOr<Image3> Create(PdfcoreMemoryManager* memory_manager,
                                  const size_t xsize, const size_t ysize) {
-    JPEGLI_ASSIGN_OR_RETURN(PlaneT plane0,
+    PDFCORE_ASSIGN_OR_RETURN(PlaneT plane0,
                             PlaneT::Create(memory_manager, xsize, ysize));
-    JPEGLI_ASSIGN_OR_RETURN(PlaneT plane1,
+    PDFCORE_ASSIGN_OR_RETURN(PlaneT plane1,
                             PlaneT::Create(memory_manager, xsize, ysize));
-    JPEGLI_ASSIGN_OR_RETURN(PlaneT plane2,
+    PDFCORE_ASSIGN_OR_RETURN(PlaneT plane2,
                             PlaneT::Create(memory_manager, xsize, ysize));
     return Image3(std::move(plane0), std::move(plane1), std::move(plane2));
   }
 
   // Returns row pointer; usage: PlaneRow(idx_plane, y)[x] = val.
-  JPEGLI_INLINE T* PlaneRow(const size_t c, const size_t y) {
+  PDFCORE_INLINE T* PlaneRow(const size_t c, const size_t y) {
     // Custom implementation instead of calling planes_[c].Row ensures only a
     // single multiplication is needed for PlaneRow(0..2, y).
     PlaneRowBoundsCheck(c, y);
     const size_t row_offset = y * planes_[0].bytes_per_row();
     void* row = planes_[c].bytes() + row_offset;
-    return static_cast<T * JPEGLI_RESTRICT>(JPEGLI_ASSUME_ALIGNED(row, 64));
+    return static_cast<T * PDFCORE_RESTRICT>(PDFCORE_ASSUME_ALIGNED(row, 64));
   }
 
   // Returns const row pointer; usage: val = PlaneRow(idx_plane, y)[x].
-  JPEGLI_INLINE const T* PlaneRow(const size_t c, const size_t y) const {
+  PDFCORE_INLINE const T* PlaneRow(const size_t c, const size_t y) const {
     PlaneRowBoundsCheck(c, y);
     const size_t row_offset = y * planes_[0].bytes_per_row();
     const void* row = planes_[c].bytes() + row_offset;
-    return static_cast<const T * JPEGLI_RESTRICT>(
-        JPEGLI_ASSUME_ALIGNED(row, 64));
+    return static_cast<const T * PDFCORE_RESTRICT>(
+        PDFCORE_ASSUME_ALIGNED(row, 64));
   }
 
   // Returns const row pointer, even if called from a non-const Image3.
-  JPEGLI_INLINE const T* ConstPlaneRow(const size_t c, const size_t y) const {
+  PDFCORE_INLINE const T* ConstPlaneRow(const size_t c, const size_t y) const {
     PlaneRowBoundsCheck(c, y);
     return PlaneRow(c, y);
   }
 
-  JPEGLI_INLINE const PlaneT& Plane(size_t idx) const { return planes_[idx]; }
+  PDFCORE_INLINE const PlaneT& Plane(size_t idx) const { return planes_[idx]; }
 
-  JPEGLI_INLINE PlaneT& Plane(size_t idx) { return planes_[idx]; }
+  PDFCORE_INLINE PlaneT& Plane(size_t idx) { return planes_[idx]; }
 
   void Swap(Image3& other) {
     for (size_t c = 0; c < 3; ++c) {
@@ -288,27 +288,27 @@ class Image3 {
   // the original dimensions.
   Status ShrinkTo(const size_t xsize, const size_t ysize) {
     for (PlaneT& plane : planes_) {
-      JPEGLI_RETURN_IF_ERROR(plane.ShrinkTo(xsize, ysize));
+      PDFCORE_RETURN_IF_ERROR(plane.ShrinkTo(xsize, ysize));
     }
     return true;
   }
 
   // Sizes of all three images are guaranteed to be equal.
-  JPEGLI_INLINE JpegliMemoryManager* memory_manager() const {
+  PDFCORE_INLINE PdfcoreMemoryManager* memory_manager() const {
     return planes_[0].memory_manager();
   }
-  JPEGLI_INLINE size_t xsize() const { return planes_[0].xsize(); }
-  JPEGLI_INLINE size_t ysize() const { return planes_[0].ysize(); }
+  PDFCORE_INLINE size_t xsize() const { return planes_[0].xsize(); }
+  PDFCORE_INLINE size_t ysize() const { return planes_[0].ysize(); }
   // Returns offset [bytes] from one row to the next row of the same plane.
   // WARNING: this must NOT be used to determine xsize, nor for copying rows -
   // the valid xsize may be much less.
-  JPEGLI_INLINE size_t bytes_per_row() const {
+  PDFCORE_INLINE size_t bytes_per_row() const {
     return planes_[0].bytes_per_row();
   }
   // Returns number of pixels (some of which are padding) per row. Useful for
   // computing other rows via pointer arithmetic. WARNING: this must NOT be used
   // to determine xsize.
-  JPEGLI_INLINE ptrdiff_t PixelsPerRow() const {
+  PDFCORE_INLINE ptrdiff_t PixelsPerRow() const {
     return planes_[0].PixelsPerRow();
   }
 
@@ -320,7 +320,7 @@ class Image3 {
   }
 
   void PlaneRowBoundsCheck(const size_t c, const size_t y) const {
-    JPEGLI_DASSERT(c < kNumPlanes && y < ysize());
+    PDFCORE_DASSERT(c < kNumPlanes && y < ysize());
   }
 
   PlaneT planes_[kNumPlanes];
@@ -333,6 +333,6 @@ using Image3I = Image3<int32_t>;
 using Image3F = Image3<float>;
 using Image3D = Image3<double>;
 
-}  // namespace jpegli
+}  // namespace pdfcore
 
-#endif  // JPEGLI_LIB_EXTRAS_IMAGE_H_
+#endif  // PDFCORE_LIB_EXTRAS_IMAGE_H_

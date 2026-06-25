@@ -4,8 +4,8 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
-#ifndef JPEGLI_LIB_JPEGLI_DECODE_INTERNAL_H_
-#define JPEGLI_LIB_JPEGLI_DECODE_INTERNAL_H_
+#ifndef PDFCORE_LIB_PDFCORE_DECODE_INTERNAL_H_
+#define PDFCORE_LIB_PDFCORE_DECODE_INTERNAL_H_
 
 #include <cstddef>
 #include <cstdint>
@@ -17,7 +17,7 @@
 #include "lib/jpegli/huffman.h"
 #include "lib/jpegli/types.h"
 
-namespace jpegli {
+namespace pdfcore {
 
 static constexpr int kNeedMoreInput = 100;
 static constexpr int kHandleRestart = 101;
@@ -35,7 +35,7 @@ struct MCUCodingState {
   coeff_t coeffs[D_MAX_BLOCKS_IN_MCU * DCTSIZE2];
 };
 
-}  // namespace jpegli
+}  // namespace pdfcore
 
 // Use this forward-declared libjpeg struct to hold all our private variables.
 // TODO(szabadka) Remove variables that have a corresponding version in cinfo.
@@ -50,7 +50,7 @@ struct jpeg_decomp_master {
 
   // Coefficient buffers
   jvirt_barray_ptr* coef_arrays;
-  JBLOCKARRAY coeff_rows[jpegli::kMaxComponents];
+  JBLOCKARRAY coeff_rows[pdfcore::kMaxComponents];
 
   bool streaming_mode_;
 
@@ -70,19 +70,19 @@ struct jpeg_decomp_master {
   size_t icc_index_;
   size_t icc_total_;
   std::vector<uint8_t> icc_profile_;
-  jpegli::HuffmanTableEntry dc_huff_lut_[jpegli::kAllHuffLutSize];
-  jpegli::HuffmanTableEntry ac_huff_lut_[jpegli::kAllHuffLutSize];
+  pdfcore::HuffmanTableEntry dc_huff_lut_[pdfcore::kAllHuffLutSize];
+  pdfcore::HuffmanTableEntry ac_huff_lut_[pdfcore::kAllHuffLutSize];
   uint8_t markers_to_save_[32];
   jpeg_marker_parser_method app_marker_parsers[16];
   jpeg_marker_parser_method com_marker_parser;
 
   // Fields defined by SOF marker.
   size_t iMCU_cols_;
-  int h_factor[jpegli::kMaxComponents];
-  int v_factor[jpegli::kMaxComponents];
+  int h_factor[pdfcore::kMaxComponents];
+  int v_factor[pdfcore::kMaxComponents];
 
   // Initialized at start of frame.
-  uint16_t scan_progression_[jpegli::kMaxComponents][DCTSIZE2];
+  uint16_t scan_progression_[pdfcore::kMaxComponents][DCTSIZE2];
 
   //
   // Per scan state.
@@ -90,18 +90,18 @@ struct jpeg_decomp_master {
   size_t scan_mcu_row_;
   size_t scan_mcu_col_;
   size_t mcu_rows_per_iMCU_row_;
-  jpegli::coeff_t last_dc_coeff_[jpegli::kMaxComponents];
+  pdfcore::coeff_t last_dc_coeff_[pdfcore::kMaxComponents];
   int eobrun_;
   int restarts_to_go_;
   int next_restart_marker_;
 
-  jpegli::MCUCodingState mcu_;
+  pdfcore::MCUCodingState mcu_;
 
   //
   // Rendering state.
   //
   int output_passes_done_;
-  JpegliDataType output_data_type_ = JPEGLI_TYPE_UINT8;
+  PdfcoreDataType output_data_type_ = PDFCORE_TYPE_UINT8;
   size_t xoffset_;
   bool swap_endianness_ = false;
   bool need_context_rows_;
@@ -109,19 +109,19 @@ struct jpeg_decomp_master {
   bool apply_smoothing;
 
   int min_scaled_dct_size;
-  int scaled_dct_size[jpegli::kMaxComponents];
+  int scaled_dct_size[pdfcore::kMaxComponents];
 
-  size_t raw_height_[jpegli::kMaxComponents];
-  jpegli::RowBuffer<float> raw_output_[jpegli::kMaxComponents];
-  jpegli::RowBuffer<float> render_output_[jpegli::kMaxComponents];
+  size_t raw_height_[pdfcore::kMaxComponents];
+  pdfcore::RowBuffer<float> raw_output_[pdfcore::kMaxComponents];
+  pdfcore::RowBuffer<float> render_output_[pdfcore::kMaxComponents];
 
-  void (*inverse_transform[jpegli::kMaxComponents])(
-      const int16_t* JPEGLI_RESTRICT qblock,
-      const float* JPEGLI_RESTRICT dequant, const float* JPEGLI_RESTRICT biases,
-      float* JPEGLI_RESTRICT scratch_space, float* JPEGLI_RESTRICT output,
+  void (*inverse_transform[pdfcore::kMaxComponents])(
+      const int16_t* PDFCORE_RESTRICT qblock,
+      const float* PDFCORE_RESTRICT dequant, const float* PDFCORE_RESTRICT biases,
+      float* PDFCORE_RESTRICT scratch_space, float* PDFCORE_RESTRICT output,
       size_t output_stride, size_t dctsize);
 
-  void (*color_transform)(float* row[jpegli::kMaxComponents], size_t len);
+  void (*color_transform)(float* row[pdfcore::kMaxComponents], size_t len);
 
   float* idct_scratch_;
   float* upsample_scratch_;
@@ -131,13 +131,13 @@ struct jpeg_decomp_master {
   // 1 = 1pass, 2 = 2pass, 3 = external
   int quant_mode_;
   int quant_pass_;
-  int num_colors_[jpegli::kMaxComponents];
+  int num_colors_[pdfcore::kMaxComponents];
   uint8_t* colormap_lut_;
   uint8_t* pixels_;
   JSAMPARRAY scanlines_;
   std::vector<std::vector<uint8_t>> candidate_lists_;
-  float* dither_[jpegli::kMaxComponents];
-  float* error_row_[2 * jpegli::kMaxComponents];
+  float* dither_[pdfcore::kMaxComponents];
+  float* error_row_[2 * pdfcore::kMaxComponents];
   size_t dither_size_;
   size_t dither_mask_;
 
@@ -146,7 +146,7 @@ struct jpeg_decomp_master {
   // computation.
   int* nonzeros_;
   int* sumabs_;
-  size_t num_processed_blocks_[jpegli::kMaxComponents];
+  size_t num_processed_blocks_[pdfcore::kMaxComponents];
   float* biases_;
 #define SAVED_COEFS 10
   // This holds the coef_bits of the scan before the current scan,
@@ -155,4 +155,4 @@ struct jpeg_decomp_master {
   int (*prev_coef_bits_latch)[SAVED_COEFS];
 };
 
-#endif  // JPEGLI_LIB_JPEGLI_DECODE_INTERNAL_H_
+#endif  // PDFCORE_LIB_PDFCORE_DECODE_INTERNAL_H_

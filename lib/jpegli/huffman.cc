@@ -19,7 +19,7 @@
 #include "lib/jpegli/common_internal.h"
 #include "lib/jpegli/error.h"
 
-namespace jpegli {
+namespace pdfcore {
 
 // Returns the table width of the next 2nd level table, count is the histogram
 // of bit lengths for the remaining symbols, len is the code length of the next
@@ -132,7 +132,7 @@ void SetDepth(const HuffmanTree& p, HuffmanTree* pool, uint8_t* depth,
 
 // Compare the root nodes, least popular first; indices are in decreasing order
 // before sorting is applied.
-static JPEGLI_INLINE bool Compare(const HuffmanTree& v0,
+static PDFCORE_INLINE bool Compare(const HuffmanTree& v0,
                                   const HuffmanTree& v1) {
   return v0.total_count != v1.total_count
              ? v0.total_count < v1.total_count
@@ -222,7 +222,7 @@ void CreateHuffmanTree(const uint32_t* data, const size_t length,
       // Add back the last sentinel node.
       tree.push_back(sentinel);
     }
-    JPEGLI_DASSERT(tree.size() == 2 * n + 1);
+    PDFCORE_DASSERT(tree.size() == 2 * n + 1);
     SetDepth(tree[2 * n - 1], tree.data(), depth, 0);
 
     // We need to pack the Huffman tree in tree_limit bits.
@@ -249,19 +249,19 @@ void ValidateHuffmanTable(j_common_ptr cinfo, const JHUFF_TBL* table,
   }
   total_p += 1u << (kJpegHuffmanMaxBitLength - max_depth);  // sentinel symbol
   if (total_symbols == 0) {
-    JPEGLI_ERROR("Empty Huffman table");
+    PDFCORE_ERROR("Empty Huffman table");
   }
   if (total_symbols > kJpegHuffmanAlphabetSize) {
-    JPEGLI_ERROR("Too many symbols in Huffman table");
+    PDFCORE_ERROR("Too many symbols in Huffman table");
   }
   if (total_p != (1u << kJpegHuffmanMaxBitLength)) {
-    JPEGLI_ERROR("Invalid bit length distribution");
+    PDFCORE_ERROR("Invalid bit length distribution");
   }
   uint8_t symbol_seen[kJpegHuffmanAlphabetSize] = {};
   for (size_t i = 0; i < total_symbols; ++i) {
     uint8_t symbol = table->huffval[i];
     if (symbol_seen[symbol]) {
-      JPEGLI_ERROR("Duplicate symbol %d in Huffman table", symbol);
+      PDFCORE_ERROR("Duplicate symbol %d in Huffman table", symbol);
     }
     symbol_seen[symbol] = 1;
   }
@@ -324,11 +324,11 @@ void AddStandardHuffmanTables(j_common_ptr cinfo, bool is_dc) {
   }
   for (int i = 0; i < 2; ++i) {
     if (tables[i] == nullptr) {
-      tables[i] = jpegli_alloc_huff_table(cinfo);
+      tables[i] = pdfcore_jpegli_alloc_huff_table(cinfo);
       memcpy(tables[i], &std_tables[i], sizeof(JHUFF_TBL));
       ValidateHuffmanTable(cinfo, tables[i], is_dc);
     }
   }
 }
 
-}  // namespace jpegli
+}  // namespace pdfcore

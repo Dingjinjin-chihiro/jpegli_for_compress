@@ -4,8 +4,8 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
-#ifndef JPEGLI_LIB_JPEGLI_LIBJPEG_TEST_UTIL_H_
-#define JPEGLI_LIB_JPEGLI_LIBJPEG_TEST_UTIL_H_
+#ifndef PDFCORE_LIB_PDFCORE_LIBJPEG_TEST_UTIL_H_
+#define PDFCORE_LIB_PDFCORE_LIBJPEG_TEST_UTIL_H_
 
 #include <stddef.h>
 #include <stdint.h>
@@ -14,7 +14,7 @@
 
 #include "lib/jpegli/test_params.h"
 
-namespace jpegli {
+namespace pdfcore {
 
 // Verifies that an image encoded with libjpegli can be decoded with libjpeg,
 // and checks that the jpeg coding metadata matches jparams.
@@ -33,6 +33,6 @@ void DecodeWithLibjpeg(const CompressParams& jparams,
                        const std::vector<uint8_t>& compressed,
                        TestImage* output);
 
-}  // namespace jpegli
+}  // namespace pdfcore
 
-#endif  // JPEGLI_LIB_JPEGLI_LIBJPEG_TEST_UTIL_H_
+#endif  // PDFCORE_LIB_PDFCORE_LIBJPEG_TEST_UTIL_H_

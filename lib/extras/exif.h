@@ -4,18 +4,18 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
-#ifndef JPEGLI_LIB_EXTRAS_EXIF_H_
-#define JPEGLI_LIB_EXTRAS_EXIF_H_
+#ifndef PDFCORE_LIB_EXTRAS_EXIF_H_
+#define PDFCORE_LIB_EXTRAS_EXIF_H_
 
 #include <stdint.h>
 
 #include <vector>
 
-namespace jpegli {
+namespace pdfcore {
 
 // Sets the Exif orientation to the identity, to avoid repeated orientation
 void ResetExifOrientation(std::vector<uint8_t>& exif);
 
-}  // namespace jpegli
+}  // namespace pdfcore
 
-#endif  // JPEGLI_LIB_EXTRAS_EXIF_H_
+#endif  // PDFCORE_LIB_EXTRAS_EXIF_H_

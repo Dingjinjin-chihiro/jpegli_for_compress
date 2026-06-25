@@ -14,20 +14,20 @@
 @addtogroup libjpegli
 @{
 
-@defgroup libjpegli_decoder JPEGLI Decoder API
+@defgroup libpdfcore_jpegli_decoder JPEGLI Decoder API
 
-@defgroup libjpegli_encoder JPEGLI Encoder API
+@defgroup libpdfcore_jpegli_encoder JPEGLI Encoder API
 
-@defgroup libjpegli_common Common API concepts
+@defgroup libpdfcore_jpegli_common Common API concepts
 
-@defgroup libjpegli_metadata Image and frame metadata
+@defgroup libpdfcore_jpegli_metadata Image and frame metadata
 
-@defgroup libjpegli_color Color encoding and conversion
+@defgroup libpdfcore_jpegli_color Color encoding and conversion
 
-@defgroup libjpegli_cpp C++ helpers
+@defgroup libpdfcore_jpegli_cpp C++ helpers
 
 @}
 
-@defgroup libjpegli_threads JPEGLI Multi-thread library (libjpegli_threads)
+@defgroup libpdfcore_jpegli_threads JPEGLI Multi-thread library (libpdfcore_jpegli_threads)
 @brief Additional multi-threaded implementations for the parallel runner.
 */

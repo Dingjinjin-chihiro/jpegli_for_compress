@@ -14,7 +14,7 @@
 
 #include "lib/jpegli/common.h"
 
-namespace jpegli {
+namespace pdfcore {
 
 const char* const kErrorMessageTable[] = {
     "Message codes are not supported, error message is in msg_parm.s string",
@@ -30,7 +30,7 @@ bool FormatString(char* buffer, const char* format, ...) {
 
 void ExitWithAbort(j_common_ptr cinfo) {
   (*cinfo->err->output_message)(cinfo);
-  jpegli_destroy(cinfo);
+  pdfcore_jpegli_destroy(cinfo);
   exit(EXIT_FAILURE);
 }
 
@@ -79,14 +79,14 @@ void ResetErrorManager(j_common_ptr cinfo) {
   cinfo->err->num_warnings = 0;
 }
 
-}  // namespace jpegli
+}  // namespace pdfcore
 
-struct jpeg_error_mgr* jpegli_std_error(struct jpeg_error_mgr* err) {
-  err->error_exit = jpegli::ExitWithAbort;
-  err->emit_message = jpegli::EmitMessage;
-  err->output_message = jpegli::OutputMessage;
-  err->format_message = jpegli::FormatMessage;
-  err->reset_error_mgr = jpegli::ResetErrorManager;
+struct jpeg_error_mgr* pdfcore_jpegli_std_error(struct jpeg_error_mgr* err) {
+  err->error_exit = pdfcore::ExitWithAbort;
+  err->emit_message = pdfcore::EmitMessage;
+  err->output_message = pdfcore::OutputMessage;
+  err->format_message = pdfcore::FormatMessage;
+  err->reset_error_mgr = pdfcore::ResetErrorManager;
   memset(err->msg_parm.s, 0, JMSG_STR_PARM_MAX);
   err->trace_level = 0;
   err->num_warnings = 0;
@@ -94,7 +94,7 @@ struct jpeg_error_mgr* jpegli_std_error(struct jpeg_error_mgr* err) {
   // in case the application has a custom format_message and tries to access
   // these fields there.
   err->msg_code = 0;
-  err->jpeg_message_table = jpegli::kErrorMessageTable;
+  err->jpeg_message_table = pdfcore::kErrorMessageTable;
   err->last_jpeg_message = 0;
   err->addon_message_table = nullptr;
   err->first_addon_message = 0;

@@ -4,8 +4,8 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
-#ifndef JPEGLI_TOOLS_FILE_IO_H_
-#define JPEGLI_TOOLS_FILE_IO_H_
+#ifndef PDFCORE_TOOLS_FILE_IO_H_
+#define PDFCORE_TOOLS_FILE_IO_H_
 
 #include <sys/stat.h>
 
@@ -25,7 +25,7 @@
 #include <io.h>
 #endif
 
-namespace jpegli_tools {
+namespace pdfcore_jpegli_tools {
 
 // RAII, ensures files are closed even when returning early.
 class FileWrapper {
@@ -80,7 +80,7 @@ class FileWrapper {
 
 template <typename ContainerType>
 static inline bool ReadFile(FileWrapper& f,
-                            ContainerType* JPEGLI_RESTRICT bytes) {
+                            ContainerType* PDFCORE_RESTRICT bytes) {
   if (!f) return false;
 
   // Get size of file in bytes
@@ -126,7 +126,7 @@ static inline bool ReadFile(FileWrapper& f,
 
 template <typename ContainerType>
 static inline bool ReadFile(const std::string& filename,
-                            ContainerType* JPEGLI_RESTRICT bytes) {
+                            ContainerType* PDFCORE_RESTRICT bytes) {
   FileWrapper f(filename, "rb");
   return ReadFile(f, bytes);
 }
@@ -152,6 +152,6 @@ static inline bool WriteFile(const std::string& filename,
   return true;
 }
 
-}  // namespace jpegli_tools
+}  // namespace pdfcore_jpegli_tools
 
-#endif  // JPEGLI_TOOLS_FILE_IO_H_
+#endif  // PDFCORE_TOOLS_FILE_IO_H_

@@ -11,51 +11,51 @@
 #include "lib/jpegli/memory_manager.h"
 #include "lib/jpegli/types.h"
 
-void jpegli_abort(j_common_ptr cinfo) {
+void pdfcore_jpegli_abort(j_common_ptr cinfo) {
   if (cinfo->mem == nullptr) return;
   for (int pool_id = 0; pool_id < JPOOL_NUMPOOLS; ++pool_id) {
     if (pool_id == JPOOL_PERMANENT) continue;
     (*cinfo->mem->free_pool)(cinfo, pool_id);
   }
   if (cinfo->is_decompressor) {
-    cinfo->global_state = jpegli::kDecStart;
+    cinfo->global_state = pdfcore::kDecStart;
   } else {
-    cinfo->global_state = jpegli::kEncStart;
+    cinfo->global_state = pdfcore::kEncStart;
   }
 }
 
-void jpegli_destroy(j_common_ptr cinfo) {
+void pdfcore_jpegli_destroy(j_common_ptr cinfo) {
   if (cinfo->mem == nullptr) return;
   (*cinfo->mem->self_destruct)(cinfo);
   if (cinfo->is_decompressor) {
-    cinfo->global_state = jpegli::kDecNull;
+    cinfo->global_state = pdfcore::kDecNull;
     jpeg_decomp_master* master =
         reinterpret_cast<j_decompress_ptr>(cinfo)->master;
     delete master;
   } else {
-    cinfo->global_state = jpegli::kEncNull;
+    cinfo->global_state = pdfcore::kEncNull;
   }
 }
 
-JQUANT_TBL* jpegli_alloc_quant_table(j_common_ptr cinfo) {
-  JQUANT_TBL* table = jpegli::Allocate<JQUANT_TBL>(cinfo, 1);
+JQUANT_TBL* pdfcore_jpegli_alloc_quant_table(j_common_ptr cinfo) {
+  JQUANT_TBL* table = pdfcore::Allocate<JQUANT_TBL>(cinfo, 1);
   table->sent_table = FALSE;
   return table;
 }
 
-JHUFF_TBL* jpegli_alloc_huff_table(j_common_ptr cinfo) {
-  JHUFF_TBL* table = jpegli::Allocate<JHUFF_TBL>(cinfo, 1);
+JHUFF_TBL* pdfcore_jpegli_alloc_huff_table(j_common_ptr cinfo) {
+  JHUFF_TBL* table = pdfcore::Allocate<JHUFF_TBL>(cinfo, 1);
   table->sent_table = FALSE;
   return table;
 }
 
-int jpegli_bytes_per_sample(JpegliDataType data_type) {
+int pdfcore_jpegli_bytes_per_sample(PdfcoreDataType data_type) {
   switch (data_type) {
-    case JPEGLI_TYPE_UINT8:
+    case PDFCORE_TYPE_UINT8:
       return 1;
-    case JPEGLI_TYPE_UINT16:
+    case PDFCORE_TYPE_UINT16:
       return 2;
-    case JPEGLI_TYPE_FLOAT:
+    case PDFCORE_TYPE_FLOAT:
       return 4;
     default:
       return 0;

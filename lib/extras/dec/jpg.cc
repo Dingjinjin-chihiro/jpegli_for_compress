@@ -14,9 +14,9 @@
 #include "lib/extras/packed_image.h"
 #include "lib/extras/size_constraints.h"
 
-#if !JPEGLI_ENABLE_JPEG
+#if !PDFCORE_ENABLE_JPEG
 
-namespace jpegli {
+namespace pdfcore {
 namespace extras {
 bool CanDecodeJPG() { return false; }
 Status DecodeImageJPG(const Span<const uint8_t> bytes,
@@ -26,9 +26,9 @@ Status DecodeImageJPG(const Span<const uint8_t> bytes,
   return false;
 }
 }  // namespace extras
-}  // namespace jpegli
+}  // namespace pdfcore
 
-#else  // JPEGLI_ENABLE_JPEG
+#else  // PDFCORE_ENABLE_JPEG
 
 #include <algorithm>
 #include <cstring>
@@ -45,7 +45,7 @@ Status DecodeImageJPG(const Span<const uint8_t> bytes,
 #include "lib/cms/color_encoding.h"
 #include "lib/extras/codestream_header.h"
 
-namespace jpegli {
+namespace pdfcore {
 namespace extras {
 
 namespace {
@@ -98,15 +98,15 @@ Status ReadICCProfile(jpeg_decompress_struct* const cinfo,
 
     const int current_marker = marker->data[kICCSignatureSize];
     if (current_marker == 0) {
-      return JPEGLI_FAILURE("inconsistent JPEG ICC marker numbering");
+      return PDFCORE_FAILURE("inconsistent JPEG ICC marker numbering");
     }
     const int current_num_markers = marker->data[kICCSignatureSize + 1];
     if (current_marker > current_num_markers) {
-      return JPEGLI_FAILURE("inconsistent JPEG ICC marker numbering");
+      return PDFCORE_FAILURE("inconsistent JPEG ICC marker numbering");
     }
     if (has_num_markers) {
       if (current_num_markers != num_markers) {
-        return JPEGLI_FAILURE("inconsistent numbers of JPEG ICC markers");
+        return PDFCORE_FAILURE("inconsistent numbers of JPEG ICC markers");
       }
     } else {
       num_markers = current_num_markers;
@@ -118,11 +118,11 @@ Status ReadICCProfile(jpeg_decompress_struct* const cinfo,
 
     if (marker_length == 0) {
       // NB: if we allow empty chunks, then the next check is incorrect.
-      return JPEGLI_FAILURE("Empty ICC chunk");
+      return PDFCORE_FAILURE("Empty ICC chunk");
     }
 
     if (marker_lengths[current_marker] != 0) {
-      return JPEGLI_FAILURE("duplicate JPEG ICC marker number");
+      return PDFCORE_FAILURE("duplicate JPEG ICC marker number");
     }
     marker_lengths[current_marker] = marker_length;
     seen_markers_count++;
@@ -134,8 +134,8 @@ Status ReadICCProfile(jpeg_decompress_struct* const cinfo,
   }
 
   if (seen_markers_count != num_markers) {
-    JPEGLI_ENSURE(has_num_markers);
-    return JPEGLI_FAILURE("Incomplete set of ICC chunks");
+    PDFCORE_ENSURE(has_num_markers);
+    return PDFCORE_FAILURE("Incomplete set of ICC chunks");
   }
 
   std::vector<size_t> offsets = std::move(marker_lengths);
@@ -180,20 +180,20 @@ void MyErrorExit(j_common_ptr cinfo) {
 }
 
 void MyOutputMessage(j_common_ptr cinfo) {
-  if (JPEGLI_IS_DEBUG_BUILD) {
+  if (PDFCORE_IS_DEBUG_BUILD) {
     char buf[JMSG_LENGTH_MAX + 1];
     (*cinfo->err->format_message)(cinfo, buf);
     buf[JMSG_LENGTH_MAX] = 0;
-    JPEGLI_WARNING("%s", buf);
+    PDFCORE_WARNING("%s", buf);
   }
 }
 
 Status UnmapColors(uint8_t* row, size_t xsize, int components,
                    JSAMPARRAY colormap, size_t num_colors) {
-  JPEGLI_ENSURE(colormap != nullptr);
+  PDFCORE_ENSURE(colormap != nullptr);
   std::vector<uint8_t> tmp(xsize * components);
   for (size_t x = 0; x < xsize; ++x) {
-    JPEGLI_ENSURE(row[x] < num_colors);
+    PDFCORE_ENSURE(row[x] < num_colors);
     for (int c = 0; c < components; ++c) {
       tmp[x * components + c] = colormap[c][row[x]];
     }
@@ -241,7 +241,7 @@ Status DecodeImageJPG(const Span<const uint8_t> bytes,
     const auto failure = [&cinfo](const char* str) -> Status {
       jpeg_abort_decompress(&cinfo);
       jpeg_destroy_decompress(&cinfo);
-      return JPEGLI_FAILURE("%s", str);
+      return PDFCORE_FAILURE("%s", str);
     };
     int read_header_result = jpeg_read_header(&cinfo, TRUE);
     // TODO(eustas): what about JPEG_HEADER_TABLES_ONLY?
@@ -269,11 +269,11 @@ Status DecodeImageJPG(const Span<const uint8_t> bytes,
       // Actually, (cinfo.output_components == nbcomp) will be checked after
       // `jpeg_start_decompress`.
       ppf->color_encoding.color_space =
-          (nbcomp == 1) ? JPEGLI_COLOR_SPACE_GRAY : JPEGLI_COLOR_SPACE_RGB;
-      ppf->color_encoding.white_point = JPEGLI_WHITE_POINT_D65;
-      ppf->color_encoding.primaries = JPEGLI_PRIMARIES_SRGB;
-      ppf->color_encoding.transfer_function = JPEGLI_TRANSFER_FUNCTION_SRGB;
-      ppf->color_encoding.rendering_intent = JPEGLI_RENDERING_INTENT_PERCEPTUAL;
+          (nbcomp == 1) ? PDFCORE_COLOR_SPACE_GRAY : PDFCORE_COLOR_SPACE_RGB;
+      ppf->color_encoding.white_point = PDFCORE_WHITE_POINT_D65;
+      ppf->color_encoding.primaries = PDFCORE_PRIMARIES_SRGB;
+      ppf->color_encoding.transfer_function = PDFCORE_TRANSFER_FUNCTION_SRGB;
+      ppf->color_encoding.rendering_intent = PDFCORE_RENDERING_INTENT_PERCEPTUAL;
     }
     ReadExif(&cinfo, &ppf->metadata.exif);
     if (!ApplyColorHints(color_hints, /*color_already_set=*/true,
@@ -288,14 +288,14 @@ Status DecodeImageJPG(const Span<const uint8_t> bytes,
     static_assert(BITS_IN_JSAMPLE == 8 || BITS_IN_JSAMPLE == 16,
                   "Only 8/16 bit samples are supported");
     ppf->info.exponent_bits_per_sample = 0;
-    ppf->info.uses_original_profile = JPEGLI_TRUE;
+    ppf->info.uses_original_profile = PDFCORE_TRUE;
 
     // No alpha in JPG
     ppf->info.alpha_bits = 0;
     ppf->info.alpha_exponent_bits = 0;
 
     ppf->info.num_color_channels = nbcomp;
-    ppf->info.orientation = JPEGLI_ORIENT_IDENTITY;
+    ppf->info.orientation = PDFCORE_ORIENT_IDENTITY;
 
     if (dparams && dparams->num_colors > 0) {
       cinfo.quantize_colors = TRUE;
@@ -305,42 +305,42 @@ Status DecodeImageJPG(const Span<const uint8_t> bytes,
     }
 
     jpeg_start_decompress(&cinfo);
-    JPEGLI_ENSURE(cinfo.out_color_components == nbcomp);
-    JpegliDataType data_type =
-        ppf->info.bits_per_sample <= 8 ? JPEGLI_TYPE_UINT8 : JPEGLI_TYPE_UINT16;
+    PDFCORE_ENSURE(cinfo.out_color_components == nbcomp);
+    PdfcoreDataType data_type =
+        ppf->info.bits_per_sample <= 8 ? PDFCORE_TYPE_UINT8 : PDFCORE_TYPE_UINT16;
 
-    const JpegliPixelFormat format{
+    const PdfcorePixelFormat format{
         /*num_channels=*/static_cast<uint32_t>(nbcomp),
         data_type,
-        /*endianness=*/JPEGLI_NATIVE_ENDIAN,
+        /*endianness=*/PDFCORE_NATIVE_ENDIAN,
         /*align=*/0,
     };
     ppf->frames.clear();
     // Allocates the frame buffer.
     {
-      JPEGLI_ASSIGN_OR_RETURN(
+      PDFCORE_ASSIGN_OR_RETURN(
           PackedFrame frame,
           PackedFrame::Create(cinfo.image_width, cinfo.image_height, format));
       ppf->frames.emplace_back(std::move(frame));
     }
     const auto& frame = ppf->frames.back();
-    JPEGLI_ENSURE(sizeof(JSAMPLE) * cinfo.out_color_components *
+    PDFCORE_ENSURE(sizeof(JSAMPLE) * cinfo.out_color_components *
                       cinfo.image_width <=
                   frame.color.stride);
 
     if (cinfo.quantize_colors) {
       JSAMPLE** colormap = cinfo.colormap;
-      jpegli::msan::UnpoisonMemory(
+      pdfcore::msan::UnpoisonMemory(
           reinterpret_cast<void*>(colormap),
           cinfo.out_color_components * sizeof(JSAMPLE*));
       for (int c = 0; c < cinfo.out_color_components; ++c) {
-        jpegli::msan::UnpoisonMemory(
+        pdfcore::msan::UnpoisonMemory(
             reinterpret_cast<void*>(colormap[c]),
             cinfo.actual_number_of_colors * sizeof(JSAMPLE));
       }
     }
     if (dparams && dparams->num_colors > 0) {
-      JPEGLI_ENSURE(cinfo.colormap != nullptr);
+      PDFCORE_ENSURE(cinfo.colormap != nullptr);
     }
     for (size_t y = 0; y < cinfo.image_height; ++y) {
       JSAMPROW rows[] = {reinterpret_cast<JSAMPLE*>(
@@ -350,7 +350,7 @@ Status DecodeImageJPG(const Span<const uint8_t> bytes,
       msan::UnpoisonMemory(rows[0], sizeof(JSAMPLE) * cinfo.output_components *
                                         cinfo.image_width);
       if (dparams && dparams->num_colors > 0) {
-        JPEGLI_RETURN_IF_ERROR(
+        PDFCORE_RETURN_IF_ERROR(
             UnmapColors(rows[0], cinfo.output_width, cinfo.out_color_components,
                         cinfo.colormap, cinfo.actual_number_of_colors));
       }
@@ -365,6 +365,6 @@ Status DecodeImageJPG(const Span<const uint8_t> bytes,
 }
 
 }  // namespace extras
-}  // namespace jpegli
+}  // namespace pdfcore
 
-#endif  // JPEGLI_ENABLE_JPEG
+#endif  // PDFCORE_ENABLE_JPEG

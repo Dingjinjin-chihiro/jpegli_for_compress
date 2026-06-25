@@ -4,8 +4,8 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
-#ifndef JPEGLI_LIB_JPEGLI_TEST_PARAMS_H_
-#define JPEGLI_LIB_JPEGLI_TEST_PARAMS_H_
+#ifndef PDFCORE_LIB_PDFCORE_TEST_PARAMS_H_
+#define PDFCORE_LIB_PDFCORE_TEST_PARAMS_H_
 
 #include <stddef.h>
 #include <stdint.h>
@@ -16,7 +16,7 @@
 #include "lib/base/common.h"
 #include "lib/jpegli/types.h"
 
-namespace jpegli {
+namespace pdfcore {
 
 #define ARRAY_SIZE(X) (sizeof(X) / sizeof((X)[0]))
 
@@ -58,14 +58,14 @@ struct TestImage {
   size_t ysize = 1512;
   int color_space = 2;  // JCS_RGB
   size_t components = 3;
-  JpegliDataType data_type = JPEGLI_TYPE_UINT8;
-  JpegliEndianness endianness = JPEGLI_NATIVE_ENDIAN;
+  PdfcoreDataType data_type = PDFCORE_TYPE_UINT8;
+  PdfcoreEndianness endianness = PDFCORE_NATIVE_ENDIAN;
   std::vector<uint8_t> pixels;
   std::vector<std::vector<uint8_t>> raw_data;
   std::vector<std::vector<int16_t>> coeffs;
   void AllocatePixels() {
     pixels.resize(ysize * xsize * components *
-                  jpegli_bytes_per_sample(data_type));
+                  pdfcore_jpegli_bytes_per_sample(data_type));
   }
   void Clear() {
     pixels.clear();
@@ -88,7 +88,7 @@ struct CompressParams {
   bool add_marker = false;
   bool simple_progression = false;
   // -1 is library default
-  // 0, 1, 2 is set through jpegli_set_progressive_level()
+  // 0, 1, 2 is set through pdfcore_jpegli_set_progressive_level()
   // 2 + N is kScriptN
   int progressive_mode = -1;
   unsigned int restart_interval = 0;
@@ -138,8 +138,8 @@ struct DecompressParams {
   size_t chunk_size = 65536;
   size_t max_output_lines = 16;
   JpegIOMode output_mode = PIXELS;
-  JpegliDataType data_type = JPEGLI_TYPE_UINT8;
-  JpegliEndianness endianness = JPEGLI_NATIVE_ENDIAN;
+  PdfcoreDataType data_type = PDFCORE_TYPE_UINT8;
+  PdfcoreEndianness endianness = PDFCORE_NATIVE_ENDIAN;
   bool set_out_color_space = false;
   int out_color_space = 0;  // JCS_UNKNOWN
   bool crop_output = false;
@@ -153,6 +153,6 @@ struct DecompressParams {
   std::vector<ScanDecompressParams> scan_params;
 };
 
-}  // namespace jpegli
+}  // namespace pdfcore
 
-#endif  // JPEGLI_LIB_JPEGLI_TEST_PARAMS_H_
+#endif  // PDFCORE_LIB_PDFCORE_TEST_PARAMS_H_

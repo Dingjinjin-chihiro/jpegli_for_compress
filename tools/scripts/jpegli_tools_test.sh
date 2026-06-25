@@ -12,7 +12,7 @@ set -eux
 
 SELF=$(realpath "$0")
 MYDIR=$(dirname "${SELF}")
-JPEGLI_TEST_DATA_PATH="${MYDIR}/../../testdata"
+PDFCORE_TEST_DATA_PATH="${MYDIR}/../../testdata"
 
 # Temporary files cleanup hooks.
 CLEANUP_FILES=()
@@ -38,8 +38,8 @@ verify_max_bpp() {
 }
 
 # Test that jpeg files created with cjpegli can be decoded with normal djpeg.
-cjpegli_test() {
-  local infn="${JPEGLI_TEST_DATA_PATH}/$1"
+cpdfcore_jpegli_test() {
+  local infn="${PDFCORE_TEST_DATA_PATH}/$1"
   local encargs="$2"
   local minscore="$3"
   local maxbpp="$4"
@@ -54,8 +54,8 @@ cjpegli_test() {
 }
 
 # Test full cjpegli/djpegli roundtrip.
-cjpegli_djpegli_test() {
-  local infn="${JPEGLI_TEST_DATA_PATH}/$1"
+cpdfcore_jpegli_dpdfcore_jpegli_test() {
+  local infn="${PDFCORE_TEST_DATA_PATH}/$1"
   local encargs="$2"
   local minscore="$3"
   local maxbpp="$4"
@@ -70,8 +70,8 @@ cjpegli_djpegli_test() {
 }
 
 # Test the --target_size command line argument of cjpegli.
-cjpegli_test_target_size() {
-  local infn="${JPEGLI_TEST_DATA_PATH}/$1"
+cpdfcore_jpegli_test_target_size() {
+  local infn="${PDFCORE_TEST_DATA_PATH}/$1"
   local encargs="$2"
   local target_size="$3"
   local jpgfn="$(mktemp -p "$tmpdir")"
@@ -85,7 +85,7 @@ cjpegli_test_target_size() {
 # Test that jpeg files created with cjpeg binary + jpegli library can be decoded
 # with normal libjpeg.
 cjpeg_test() {
-  local infn="${JPEGLI_TEST_DATA_PATH}/$1"
+  local infn="${PDFCORE_TEST_DATA_PATH}/$1"
   local encargs="$2"
   local minscore="$3"
   local maxbpp="$4"
@@ -101,8 +101,8 @@ cjpeg_test() {
 }
 
 # Test decoding of jpeg files with the djpegli binary.
-djpegli_test() {
-  local infn="${JPEGLI_TEST_DATA_PATH}/$1"
+dpdfcore_jpegli_test() {
+  local infn="${PDFCORE_TEST_DATA_PATH}/$1"
   local encargs="$2"
   local minscore="$3"
   local jpgfn="$(mktemp -p "$tmpdir")"
@@ -143,7 +143,7 @@ djpegli_test() {
 
 # Test decoding of jpeg files with the djpeg binary + jpegli library.
 djpeg_test() {
-  local infn="${JPEGLI_TEST_DATA_PATH}/$1"
+  local infn="${PDFCORE_TEST_DATA_PATH}/$1"
   local encargs="$2"
   local minscore="$3"
   local jpgfn="$(mktemp -p "$tmpdir")"
@@ -206,38 +206,38 @@ main() {
   local ppm_rgb="jxl/flower/flower_small.rgb.depth8.ppm"
   local ppm_gray="jxl/flower/flower_small.g.depth8.pgm"
 
-  cjpegli_test "${rgb_in}" "" 88.5 1.7
-  cjpegli_test "${rgb_in}" "-q 80" 84 1.2
-  cjpegli_test "${rgb_in}" "-q 95" 91.5 2.4
-  cjpegli_test "${rgb_in}" "-d 0.5" 92 2.6
-  cjpegli_test "${rgb_in}" "--chroma_subsampling 420" 87 1.5
-  cjpegli_test "${rgb_in}" "--chroma_subsampling 440" 87 1.6
-  cjpegli_test "${rgb_in}" "--chroma_subsampling 422" 87 1.6
-  cjpegli_test "${rgb_in}" "--std_quant" 91 2.2
-  cjpegli_test "${rgb_in}" "--noadaptive_quantization" 88.5 1.85
-  cjpegli_test "${rgb_in}" "-p 1" 88.5 1.72
-  cjpegli_test "${rgb_in}" "-p 0" 88.5 1.75
-  cjpegli_test "${rgb_in}" "-p 0 --fixed_code" 88.5 1.8
-  cjpegli_test "${gray_in}" "" 92 1.4
+  cpdfcore_jpegli_test "${rgb_in}" "" 88.5 1.7
+  cpdfcore_jpegli_test "${rgb_in}" "-q 80" 84 1.2
+  cpdfcore_jpegli_test "${rgb_in}" "-q 95" 91.5 2.4
+  cpdfcore_jpegli_test "${rgb_in}" "-d 0.5" 92 2.6
+  cpdfcore_jpegli_test "${rgb_in}" "--chroma_subsampling 420" 87 1.5
+  cpdfcore_jpegli_test "${rgb_in}" "--chroma_subsampling 440" 87 1.6
+  cpdfcore_jpegli_test "${rgb_in}" "--chroma_subsampling 422" 87 1.6
+  cpdfcore_jpegli_test "${rgb_in}" "--std_quant" 91 2.2
+  cpdfcore_jpegli_test "${rgb_in}" "--noadaptive_quantization" 88.5 1.85
+  cpdfcore_jpegli_test "${rgb_in}" "-p 1" 88.5 1.72
+  cpdfcore_jpegli_test "${rgb_in}" "-p 0" 88.5 1.75
+  cpdfcore_jpegli_test "${rgb_in}" "-p 0 --fixed_code" 88.5 1.8
+  cpdfcore_jpegli_test "${gray_in}" "" 92 1.4
 
-  cjpegli_test_target_size "${rgb_in}" "" 10000
-  cjpegli_test_target_size "${rgb_in}" "" 50000
-  cjpegli_test_target_size "${rgb_in}" "" 100000
-  cjpegli_test_target_size "${rgb_in}" "--chroma_subsampling 420" 20000
-  cjpegli_test_target_size "${rgb_in}" "--xyb" 20000
-  cjpegli_test_target_size "${rgb_in}" "-p 0 --fixed_code" 20000
+  cpdfcore_jpegli_test_target_size "${rgb_in}" "" 10000
+  cpdfcore_jpegli_test_target_size "${rgb_in}" "" 50000
+  cpdfcore_jpegli_test_target_size "${rgb_in}" "" 100000
+  cpdfcore_jpegli_test_target_size "${rgb_in}" "--chroma_subsampling 420" 20000
+  cpdfcore_jpegli_test_target_size "${rgb_in}" "--xyb" 20000
+  cpdfcore_jpegli_test_target_size "${rgb_in}" "-p 0 --fixed_code" 20000
 
-  cjpegli_test "jxl/flower/flower_small.rgb.depth8.ppm" "" 88.5 1.7
-  cjpegli_test "jxl/flower/flower_small.rgb.depth16.ppm" "" 89 1.7
-  cjpegli_test "jxl/flower/flower_small.g.depth8.pgm" "" 89 1.7
-  cjpegli_test "jxl/flower/flower_small.g.depth16.pgm" "" 89 1.7
+  cpdfcore_jpegli_test "jxl/flower/flower_small.rgb.depth8.ppm" "" 88.5 1.7
+  cpdfcore_jpegli_test "jxl/flower/flower_small.rgb.depth16.ppm" "" 89 1.7
+  cpdfcore_jpegli_test "jxl/flower/flower_small.g.depth8.pgm" "" 89 1.7
+  cpdfcore_jpegli_test "jxl/flower/flower_small.g.depth16.pgm" "" 89 1.7
 
-  cjpegli_djpegli_test "${rgb_in}" "" 89 1.7
-  cjpegli_djpegli_test "${rgb_in}" "--xyb" 87 1.5
+  cpdfcore_jpegli_dpdfcore_jpegli_test "${rgb_in}" "" 89 1.7
+  cpdfcore_jpegli_dpdfcore_jpegli_test "${rgb_in}" "--xyb" 87 1.5
 
-  djpegli_test "${ppm_rgb}" "-q 95" 92
-  djpegli_test "${ppm_rgb}" "-q 95 -sample 1x1" 93
-  #djpegli_test "${ppm_gray}" "-q 95 -gray" 94
+  dpdfcore_jpegli_test "${ppm_rgb}" "-q 95" 92
+  dpdfcore_jpegli_test "${ppm_rgb}" "-q 95 -sample 1x1" 93
+  #dpdfcore_jpegli_test "${ppm_gray}" "-q 95 -gray" 94
 
   cjpeg_test "${ppm_rgb}" "" 83 1.65
   cjpeg_test "${ppm_rgb}" "-optimize" 83 1.6

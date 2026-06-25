@@ -4,8 +4,8 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
-#ifndef JPEGLI_LIB_CMS_TONE_MAPPING_H_
-#define JPEGLI_LIB_CMS_TONE_MAPPING_H_
+#ifndef PDFCORE_LIB_CMS_TONE_MAPPING_H_
+#define PDFCORE_LIB_CMS_TONE_MAPPING_H_
 
 #include <algorithm>
 #include <array>
@@ -17,7 +17,7 @@
 #include "lib/base/matrix_ops.h"
 #include "lib/cms/transfer_functions.h"
 
-namespace jpegli {
+namespace pdfcore {
 
 using Range = std::array<float, 2>;
 
@@ -130,7 +130,7 @@ class HlgOOTF_Base {
   const float blue_Y_;
 };
 
-static JPEGLI_MAYBE_UNUSED void GamutMapScalar(
+static PDFCORE_MAYBE_UNUSED void GamutMapScalar(
     Color& rgb, const Vector3& primaries_luminances,
     float preserve_saturation = 0.1f) {
   const float luminance = primaries_luminances[0] * rgb[0] +
@@ -178,6 +178,6 @@ static JPEGLI_MAYBE_UNUSED void GamutMapScalar(
   }
 }
 
-}  // namespace jpegli
+}  // namespace pdfcore
 
-#endif  // JPEGLI_LIB_CMS_TONE_MAPPING_H_
+#endif  // PDFCORE_LIB_CMS_TONE_MAPPING_H_

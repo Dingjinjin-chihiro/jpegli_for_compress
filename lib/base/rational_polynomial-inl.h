@@ -6,12 +6,12 @@
 
 // Fast SIMD evaluation of rational polynomials for approximating functions.
 
-#if defined(JPEGLI_LIB_BASE_RATIONAL_POLYNOMIAL_INL_H_) == \
+#if defined(PDFCORE_LIB_BASE_RATIONAL_POLYNOMIAL_INL_H_) == \
     defined(HWY_TARGET_TOGGLE)
-#ifdef JPEGLI_LIB_BASE_RATIONAL_POLYNOMIAL_INL_H_
-#undef JPEGLI_LIB_BASE_RATIONAL_POLYNOMIAL_INL_H_
+#ifdef PDFCORE_LIB_BASE_RATIONAL_POLYNOMIAL_INL_H_
+#undef PDFCORE_LIB_BASE_RATIONAL_POLYNOMIAL_INL_H_
 #else
-#define JPEGLI_LIB_BASE_RATIONAL_POLYNOMIAL_INL_H_
+#define PDFCORE_LIB_BASE_RATIONAL_POLYNOMIAL_INL_H_
 #endif
 
 #include <stddef.h>
@@ -20,7 +20,7 @@
 
 #include "lib/base/types.h"
 HWY_BEFORE_NAMESPACE();
-namespace jpegli {
+namespace pdfcore {
 namespace HWY_NAMESPACE {
 namespace {
 
@@ -46,7 +46,7 @@ struct FastDivision<float, V> {
   }
 
   V operator()(const V n, const V d) const {
-#if JPEGLI_TRUE  // Faster on SKX
+#if PDFCORE_TRUE  // Faster on SKX
     return Div(n, d);
 #else
     return n * ReciprocalNR(d);
@@ -101,6 +101,6 @@ HWY_INLINE HWY_MAYBE_UNUSED V EvalRationalPolynomial(const D d, const V x,
 }  // namespace
 // NOLINTNEXTLINE(google-readability-namespace-comments)
 }  // namespace HWY_NAMESPACE
-}  // namespace jpegli
+}  // namespace pdfcore
 HWY_AFTER_NAMESPACE();
-#endif  // JPEGLI_LIB_BASE_RATIONAL_POLYNOMIAL_INL_H_
+#endif  // PDFCORE_LIB_BASE_RATIONAL_POLYNOMIAL_INL_H_

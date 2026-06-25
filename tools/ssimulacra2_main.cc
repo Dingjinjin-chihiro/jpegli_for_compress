@@ -71,16 +71,16 @@ int PrintUsage(char** argv) {
 int main(int argc, char** argv) {
   if (argc != 3) return PrintUsage(argv);
 
-  std::vector<jpegli::extras::PackedPixelFile> ppf(2);
+  std::vector<pdfcore::extras::PackedPixelFile> ppf(2);
   const char* purpose[] = {"original", "distorted"};
   for (size_t i = 0; i < 2; ++i) {
     std::vector<uint8_t> encoded;
-    if (!jpegli_tools::ReadFile(argv[1 + i], &encoded)) {
+    if (!pdfcore_jpegli_tools::ReadFile(argv[1 + i], &encoded)) {
       fprintf(stderr, "Could not load %s image: %s\n", purpose[i], argv[1 + i]);
       return 1;
     }
-    if (!jpegli::extras::DecodeBytes(jpegli::Bytes(encoded),
-                                     jpegli::extras::ColorHints(), &ppf[i])) {
+    if (!pdfcore::extras::DecodeBytes(pdfcore::Bytes(encoded),
+                                     pdfcore::extras::ColorHints(), &ppf[i])) {
       fprintf(stderr, "Could not decode %s image: %s\n", purpose[i],
               argv[1 + i]);
       return 1;
@@ -89,14 +89,14 @@ int main(int argc, char** argv) {
       QUIT("Minimum image size is 8x8 pixels\n");
     }
   }
-  jpegli::extras::PackedPixelFile& ppf1 = ppf[0];
-  jpegli::extras::PackedPixelFile& ppf2 = ppf[1];
+  pdfcore::extras::PackedPixelFile& ppf1 = ppf[0];
+  pdfcore::extras::PackedPixelFile& ppf2 = ppf[1];
 
   if (ppf1.xsize() != ppf2.xsize() || ppf1.ysize() != ppf2.ysize()) {
     QUIT("Image size mismatch\n");
   }
 
-  JPEGLI_ASSIGN_OR_QUIT(Msssim msssim, ComputeSSIMULACRA2(ppf1, ppf2),
+  PDFCORE_ASSIGN_OR_QUIT(Msssim msssim, ComputeSSIMULACRA2(ppf1, ppf2),
                         "ComputeSSIMULACRA2 failed.");
   printf("%.8f\n", msssim.Score());
   return EXIT_SUCCESS;

@@ -14,12 +14,12 @@
 #include "lib/base/status.h"
 #include "lib/extras/memory_manager_internal.h"
 
-namespace jpegli_tools {
+namespace pdfcore_jpegli_tools {
 
 TrackingMemoryManager::TrackingMemoryManager(uint64_t cap, uint64_t total_cap)
     : cap_(cap), total_cap_(total_cap) {
-  jpegli::Status status = jpegli::MemoryManagerInit(&default_, nullptr);
-  JPEGLI_DASSERT(status);
+  pdfcore::Status status = pdfcore::MemoryManagerInit(&default_, nullptr);
+  PDFCORE_DASSERT(status);
   (void)status;
   inner_ = &default_;
 
@@ -30,7 +30,7 @@ TrackingMemoryManager::TrackingMemoryManager(uint64_t cap, uint64_t total_cap)
 
 void* TrackingMemoryManager::Alloc(void* opaque, size_t size) {
   if (opaque == nullptr) {
-    JPEGLI_DEBUG_ABORT("Internal logic error");
+    PDFCORE_DEBUG_ABORT("Internal logic error");
     return nullptr;
   }
   TrackingMemoryManager* self =
@@ -74,7 +74,7 @@ void* TrackingMemoryManager::Alloc(void* opaque, size_t size) {
 
 void TrackingMemoryManager::Free(void* opaque, void* address) {
   if (opaque == nullptr) {
-    JPEGLI_DEBUG_ABORT("Internal logic error");
+    PDFCORE_DEBUG_ABORT("Internal logic error");
     return;
   }
   if (address == nullptr) return;
@@ -90,7 +90,7 @@ void TrackingMemoryManager::Free(void* opaque, void* address) {
       size = entry->second;
       self->allocations_.erase(entry);
     } else {
-      JPEGLI_DEBUG_ABORT("Internal logic error");
+      PDFCORE_DEBUG_ABORT("Internal logic error");
     }
   }
 
@@ -102,15 +102,15 @@ void TrackingMemoryManager::Free(void* opaque, void* address) {
   self->inner_->free(self->inner_->opaque, address);
 }
 
-jpegli::Status TrackingMemoryManager::Reset() {
+pdfcore::Status TrackingMemoryManager::Reset() {
   if (num_allocations_ != 0) {
-    return JPEGLI_FAILURE("Memory leak");
+    return PDFCORE_FAILURE("Memory leak");
   }
   if (!allocations_.empty()) {
-    return JPEGLI_FAILURE("Internal logic error");
+    return PDFCORE_FAILURE("Internal logic error");
   }
   if (bytes_in_use_ != 0) {
-    return JPEGLI_FAILURE("Internal logic error");
+    return PDFCORE_FAILURE("Internal logic error");
   }
   seen_oom = false;
   max_bytes_in_use = 0;
@@ -119,4 +119,4 @@ jpegli::Status TrackingMemoryManager::Reset() {
   return true;
 }
 
-}  // namespace jpegli_tools
+}  // namespace pdfcore_jpegli_tools

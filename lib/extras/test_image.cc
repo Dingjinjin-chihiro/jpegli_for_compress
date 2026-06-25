@@ -29,23 +29,23 @@
 #include "lib/extras/packed_image.h"
 #include "lib/extras/test_utils.h"
 
-namespace jpegli {
+namespace pdfcore {
 namespace test {
 
 namespace {
 
-void StoreValue(float val, size_t bits_per_sample, JpegliPixelFormat format,
+void StoreValue(float val, size_t bits_per_sample, PdfcorePixelFormat format,
                 uint8_t** out) {
   const float mul = (1u << bits_per_sample) - 1;
-  if (format.data_type == JPEGLI_TYPE_UINT8) {
+  if (format.data_type == PDFCORE_TYPE_UINT8) {
     **out = val * mul;
-  } else if (format.data_type == JPEGLI_TYPE_UINT16) {
+  } else if (format.data_type == PDFCORE_TYPE_UINT16) {
     uint16_t uval = val * mul;
     if (SwapEndianness(format.endianness)) {
-      uval = JPEGLI_BSWAP16(uval);
+      uval = PDFCORE_BSWAP16(uval);
     }
     memcpy(*out, &uval, 2);
-  } else if (format.data_type == JPEGLI_TYPE_FLOAT) {
+  } else if (format.data_type == PDFCORE_TYPE_FLOAT) {
     // TODO(szabadka) Add support for custom bits / exponent bits floats.
     if (SwapEndianness(format.endianness)) {
       val = BSwapFloat(val);
@@ -61,7 +61,7 @@ void FillPackedImage(size_t bits_per_sample, uint16_t seed,
                      extras::PackedImage* image) {
   const size_t xsize = image->xsize;
   const size_t ysize = image->ysize;
-  const JpegliPixelFormat format = image->format;
+  const PdfcorePixelFormat format = image->format;
 
   // Cause more significant image difference for successive seeds.
   Rng generator(seed);
@@ -231,10 +231,10 @@ TestImage::TestImage() {
 
 Status TestImage::DecodeFromBytes(const std::vector<uint8_t>& bytes) {
   ColorEncoding c_enc;
-  JPEGLI_RETURN_IF_ERROR(c_enc.FromExternal(ppf_.color_encoding));
+  PDFCORE_RETURN_IF_ERROR(c_enc.FromExternal(ppf_.color_encoding));
   extras::ColorHints color_hints;
   color_hints.Add("color_space", Description(c_enc));
-  JPEGLI_RETURN_IF_ERROR(extras::DecodeBytes(Bytes(bytes), color_hints, &ppf_));
+  PDFCORE_RETURN_IF_ERROR(extras::DecodeBytes(Bytes(bytes), color_hints, &ppf_));
   return true;
 }
 
@@ -253,21 +253,21 @@ Status TestImage::SetDimensions(size_t xsize, size_t ysize) {
       }
     }
   } else {
-    JPEGLI_ENSURE(ppf_.info.xsize == 0 && ppf_.info.ysize == 0);
+    PDFCORE_ENSURE(ppf_.info.xsize == 0 && ppf_.info.ysize == 0);
   }
   ppf_.info.xsize = xsize;
   ppf_.info.ysize = ysize;
   return true;
 }
 
-void JpegliEncoderInitExtraChannelInfo(JpegliExtraChannelType type,
-                                       JpegliExtraChannelInfo* info) {
+void PdfcoreEncoderInitExtraChannelInfo(PdfcoreExtraChannelType type,
+                                       PdfcoreExtraChannelInfo* info) {
   info->type = type;
   info->bits_per_sample = 8;
   info->exponent_bits_per_sample = 0;
   info->dim_shift = 0;
   info->name_length = 0;
-  info->alpha_premultiplied = JPEGLI_FALSE;
+  info->alpha_premultiplied = PDFCORE_FALSE;
   info->spot_color[0] = 0;
   info->spot_color[1] = 0;
   info->spot_color[2] = 0;
@@ -276,8 +276,8 @@ void JpegliEncoderInitExtraChannelInfo(JpegliExtraChannelType type,
 }
 
 Status TestImage::SetChannels(size_t num_channels) {
-  JPEGLI_ENSURE(ppf_.frames.empty());
-  JPEGLI_ENSURE(!ppf_.preview_frame);
+  PDFCORE_ENSURE(ppf_.frames.empty());
+  PDFCORE_ENSURE(!ppf_.preview_frame);
   ppf_.info.num_color_channels = num_channels < 3 ? 1 : 3;
   ppf_.info.num_extra_channels = num_channels - ppf_.info.num_color_channels;
   if (ppf_.info.num_extra_channels > 0 && ppf_.info.alpha_bits == 0) {
@@ -288,7 +288,7 @@ Status TestImage::SetChannels(size_t num_channels) {
   for (size_t i = 1; i < ppf_.info.num_extra_channels; ++i) {
     extras::PackedExtraChannel ec;
     ec.index = i;
-    JpegliEncoderInitExtraChannelInfo(JPEGLI_CHANNEL_ALPHA, &ec.ec_info);
+    PdfcoreEncoderInitExtraChannelInfo(PDFCORE_CHANNEL_ALPHA, &ec.ec_info);
     if (ec.ec_info.bits_per_sample == 0) {
       ec.ec_info.bits_per_sample = ppf_.info.bits_per_sample;
       ec.ec_info.exponent_bits_per_sample = ppf_.info.exponent_bits_per_sample;
@@ -297,8 +297,8 @@ Status TestImage::SetChannels(size_t num_channels) {
   }
   format_.num_channels = std::min(static_cast<size_t>(4), num_channels);
   if (ppf_.info.num_color_channels == 1 &&
-      ppf_.color_encoding.color_space != JPEGLI_COLOR_SPACE_GRAY) {
-    JPEGLI_RETURN_IF_ERROR(SetColorEncoding("Gra_D65_Rel_SRG"));
+      ppf_.color_encoding.color_space != PDFCORE_COLOR_SPACE_GRAY) {
+    PDFCORE_RETURN_IF_ERROR(SetColorEncoding("Gra_D65_Rel_SRG"));
   }
   return true;
 }
@@ -320,12 +320,12 @@ TestImage& TestImage::SetAllBitDepths(uint32_t bits_per_sample,
   return *this;
 }
 
-TestImage& TestImage::SetDataType(JpegliDataType data_type) {
+TestImage& TestImage::SetDataType(PdfcoreDataType data_type) {
   format_.data_type = data_type;
   return *this;
 }
 
-TestImage& TestImage::SetEndianness(JpegliEndianness endianness) {
+TestImage& TestImage::SetEndianness(PdfcoreEndianness endianness) {
   format_.endianness = endianness;
   return *this;
 }
@@ -336,25 +336,25 @@ TestImage& TestImage::SetRowAlignment(size_t align) {
 }
 
 Status TestImage::SetColorEncoding(const std::string& description) {
-  JPEGLI_RETURN_IF_ERROR(ParseDescription(description, &ppf_.color_encoding));
+  PDFCORE_RETURN_IF_ERROR(ParseDescription(description, &ppf_.color_encoding));
   ColorEncoding c_enc;
-  JPEGLI_RETURN_IF_ERROR(c_enc.FromExternal(ppf_.color_encoding));
+  PDFCORE_RETURN_IF_ERROR(c_enc.FromExternal(ppf_.color_encoding));
   IccBytes icc = c_enc.ICC();
-  JPEGLI_ENSURE(!icc.empty());
+  PDFCORE_ENSURE(!icc.empty());
   ppf_.icc.assign(icc.begin(), icc.end());
   return true;
 }
 
 Status TestImage::CoalesceGIFAnimationWithAlpha() {
-  JPEGLI_ASSIGN_OR_RETURN(extras::PackedFrame canvas, ppf_.frames[0].Copy());
-  JPEGLI_ENSURE(canvas.color.format.num_channels == 3);
-  JPEGLI_ENSURE(canvas.color.format.data_type == JPEGLI_TYPE_UINT8);
-  JPEGLI_ENSURE(canvas.extra_channels.size() == 1);
+  PDFCORE_ASSIGN_OR_RETURN(extras::PackedFrame canvas, ppf_.frames[0].Copy());
+  PDFCORE_ENSURE(canvas.color.format.num_channels == 3);
+  PDFCORE_ENSURE(canvas.color.format.data_type == PDFCORE_TYPE_UINT8);
+  PDFCORE_ENSURE(canvas.extra_channels.size() == 1);
   for (size_t i = 1; i < ppf_.frames.size(); i++) {
     const extras::PackedFrame& frame = ppf_.frames[i];
-    JPEGLI_ENSURE(frame.extra_channels.size() == 1);
-    const JpegliLayerInfo& layer_info = frame.frame_info.layer_info;
-    JPEGLI_ASSIGN_OR_RETURN(extras::PackedFrame rendered, canvas.Copy());
+    PDFCORE_ENSURE(frame.extra_channels.size() == 1);
+    const PdfcoreLayerInfo& layer_info = frame.frame_info.layer_info;
+    PDFCORE_ASSIGN_OR_RETURN(extras::PackedFrame rendered, canvas.Copy());
     uint8_t* pixels_rendered =
         reinterpret_cast<uint8_t*>(rendered.color.pixels());
     const uint8_t* pixels_frame =
@@ -376,7 +376,7 @@ Status TestImage::CoalesceGIFAnimationWithAlpha() {
       }
     }
     if (layer_info.save_as_reference != 0) {
-      JPEGLI_ASSIGN_OR_RETURN(canvas, rendered.Copy());
+      PDFCORE_ASSIGN_OR_RETURN(canvas, rendered.Copy());
     }
     ppf_.frames[i] = std::move(rendered);
   }
@@ -403,10 +403,10 @@ void TestImage::Frame::RandomFill(uint16_t seed) {
 
 Status TestImage::Frame::SetValue(size_t y, size_t x, size_t c, float val) {
   const extras::PackedImage& color = frame().color;
-  JpegliPixelFormat format = color.format;
-  JPEGLI_ENSURE(y < ppf().info.ysize);
-  JPEGLI_ENSURE(x < ppf().info.xsize);
-  JPEGLI_ENSURE(c < format.num_channels);
+  PdfcorePixelFormat format = color.format;
+  PDFCORE_ENSURE(y < ppf().info.ysize);
+  PDFCORE_ENSURE(x < ppf().info.xsize);
+  PDFCORE_ENSURE(c < format.num_channels);
   size_t pwidth = extras::PackedImage::BitsPerChannel(format.data_type) / 8;
   size_t idx = ((y * color.xsize + x) * format.num_channels + c) * pwidth;
   uint8_t* pixels = reinterpret_cast<uint8_t*>(frame().color.pixels());
@@ -417,12 +417,12 @@ Status TestImage::Frame::SetValue(size_t y, size_t x, size_t c, float val) {
 
 StatusOr<TestImage::Frame> TestImage::AddFrame() {
   size_t index = ppf_.frames.size();
-  JPEGLI_ASSIGN_OR_RETURN(
+  PDFCORE_ASSIGN_OR_RETURN(
       extras::PackedFrame frame,
       extras::PackedFrame::Create(ppf_.info.xsize, ppf_.info.ysize, format_));
   for (size_t i = 0; i < ppf_.extra_channels_info.size(); ++i) {
-    JpegliPixelFormat ec_format = {1, format_.data_type, format_.endianness, 0};
-    JPEGLI_ASSIGN_OR_RETURN(extras::PackedImage image,
+    PdfcorePixelFormat ec_format = {1, format_.data_type, format_.endianness, 0};
+    PDFCORE_ASSIGN_OR_RETURN(extras::PackedImage image,
                             extras::PackedImage::Create(
                                 ppf_.info.xsize, ppf_.info.ysize, ec_format));
     frame.extra_channels.emplace_back(std::move(image));
@@ -432,7 +432,7 @@ StatusOr<TestImage::Frame> TestImage::AddFrame() {
 }
 
 void TestImage::CropLayerInfo(size_t xsize, size_t ysize,
-                              JpegliLayerInfo* info) {
+                              PdfcoreLayerInfo* info) {
   if (info->crop_x0 < static_cast<ptrdiff_t>(xsize)) {
     info->xsize = std::min<size_t>(info->xsize, xsize - info->crop_x0);
   } else {
@@ -458,17 +458,17 @@ void TestImage::CropImage(size_t xsize, size_t ysize,
   image->pixels_size = ysize * new_stride;
 }
 
-JpegliDataType TestImage::DefaultDataType(const JpegliBasicInfo& info) {
+PdfcoreDataType TestImage::DefaultDataType(const PdfcoreBasicInfo& info) {
   if (info.bits_per_sample == 16 && info.exponent_bits_per_sample == 5) {
-    return JPEGLI_TYPE_FLOAT16;
+    return PDFCORE_TYPE_FLOAT16;
   } else if (info.exponent_bits_per_sample > 0 || info.bits_per_sample > 16) {
-    return JPEGLI_TYPE_FLOAT;
+    return PDFCORE_TYPE_FLOAT;
   } else if (info.bits_per_sample > 8) {
-    return JPEGLI_TYPE_UINT16;
+    return PDFCORE_TYPE_UINT16;
   } else {
-    return JPEGLI_TYPE_UINT8;
+    return PDFCORE_TYPE_UINT8;
   }
 }
 
 }  // namespace test
-}  // namespace jpegli
+}  // namespace pdfcore

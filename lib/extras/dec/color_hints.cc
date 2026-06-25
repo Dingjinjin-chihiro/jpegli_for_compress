@@ -16,7 +16,7 @@
 #include "lib/extras/dec/color_description.h"
 #include "lib/extras/packed_image.h"
 
-namespace jpegli {
+namespace pdfcore {
 namespace extras {
 
 Status ApplyColorHints(const ColorHints& color_hints,
@@ -24,23 +24,23 @@ Status ApplyColorHints(const ColorHints& color_hints,
                        PackedPixelFile* ppf) {
   bool got_color_space = color_already_set;
 
-  JPEGLI_RETURN_IF_ERROR(color_hints.Foreach(
+  PDFCORE_RETURN_IF_ERROR(color_hints.Foreach(
       [color_already_set, is_gray, ppf, &got_color_space](
           const std::string& key, const std::string& value) -> Status {
         if (color_already_set && (key == "color_space" || key == "icc")) {
-          JPEGLI_WARNING("Decoder ignoring %s hint", key.c_str());
+          PDFCORE_WARNING("Decoder ignoring %s hint", key.c_str());
           return true;
         }
         if (key == "color_space") {
-          JpegliColorEncoding c_original_external;
+          PdfcoreColorEncoding c_original_external;
           if (!ParseDescription(value, &c_original_external)) {
-            return JPEGLI_FAILURE("Failed to apply color_space");
+            return PDFCORE_FAILURE("Failed to apply color_space");
           }
           ppf->color_encoding = c_original_external;
 
           if (is_gray !=
-              (ppf->color_encoding.color_space == JPEGLI_COLOR_SPACE_GRAY)) {
-            return JPEGLI_FAILURE("mismatch between file and color_space hint");
+              (ppf->color_encoding.color_space == PDFCORE_COLOR_SPACE_GRAY)) {
+            return PDFCORE_FAILURE("mismatch between file and color_space hint");
           }
 
           got_color_space = true;
@@ -63,21 +63,21 @@ Status ApplyColorHints(const ColorHints& color_hints,
           std::vector<uint8_t> blob(data, data + value.size());
           ppf->metadata.jumbf = std::move(blob);
         } else {
-          JPEGLI_WARNING("Ignoring %s hint", key.c_str());
+          PDFCORE_WARNING("Ignoring %s hint", key.c_str());
         }
         return true;
       }));
 
   if (!got_color_space) {
     ppf->color_encoding.color_space =
-        is_gray ? JPEGLI_COLOR_SPACE_GRAY : JPEGLI_COLOR_SPACE_RGB;
-    ppf->color_encoding.white_point = JPEGLI_WHITE_POINT_D65;
-    ppf->color_encoding.primaries = JPEGLI_PRIMARIES_SRGB;
-    ppf->color_encoding.transfer_function = JPEGLI_TRANSFER_FUNCTION_SRGB;
+        is_gray ? PDFCORE_COLOR_SPACE_GRAY : PDFCORE_COLOR_SPACE_RGB;
+    ppf->color_encoding.white_point = PDFCORE_WHITE_POINT_D65;
+    ppf->color_encoding.primaries = PDFCORE_PRIMARIES_SRGB;
+    ppf->color_encoding.transfer_function = PDFCORE_TRANSFER_FUNCTION_SRGB;
   }
 
   return true;
 }
 
 }  // namespace extras
-}  // namespace jpegli
+}  // namespace pdfcore

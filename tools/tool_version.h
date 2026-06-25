@@ -4,16 +4,16 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
-#ifndef JPEGLI_TOOLS_TOOL_VERSION_H_
-#define JPEGLI_TOOLS_TOOL_VERSION_H_
+#ifndef PDFCORE_TOOLS_TOOL_VERSION_H_
+#define PDFCORE_TOOLS_TOOL_VERSION_H_
 
-namespace jpegli_tools {
+namespace pdfcore_jpegli_tools {
 
-// Package version as defined by the JPEGLI_VERSION macro. This is not the
+// Package version as defined by the PDFCORE_VERSION macro. This is not the
 // library semantic versioning number, but instead additional information on the
 // tool version.
-extern const char* kJpegliVersion;
+extern const char* kPdfcoreVersion;
 
-}  // namespace jpegli_tools
+}  // namespace pdfcore_jpegli_tools
 
-#endif  // JPEGLI_TOOLS_TOOL_VERSION_H_
+#endif  // PDFCORE_TOOLS_TOOL_VERSION_H_

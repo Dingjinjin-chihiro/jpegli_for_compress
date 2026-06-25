@@ -4,8 +4,8 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
-#ifndef JPEGLI_LIB_EXTRAS_ENC_ENCODE_H_
-#define JPEGLI_LIB_EXTRAS_ENC_ENCODE_H_
+#ifndef PDFCORE_LIB_EXTRAS_ENC_ENCODE_H_
+#define PDFCORE_LIB_EXTRAS_ENC_ENCODE_H_
 
 // Facade for image encoders.
 
@@ -22,7 +22,7 @@
 #include "lib/extras/codestream_header.h"
 #include "lib/extras/packed_image.h"
 
-namespace jpegli {
+namespace pdfcore {
 namespace extras {
 
 struct EncodedImage {
@@ -52,7 +52,7 @@ class Encoder {
 
   // Set of pixel formats that this encoder takes as input.
   // If empty, the 'encoder' does not need any pixels (it's metadata-only).
-  virtual std::vector<JpegliPixelFormat> AcceptedFormats() const = 0;
+  virtual std::vector<PdfcorePixelFormat> AcceptedFormats() const = 0;
 
   // Can this encoder write CMYK images?
   virtual bool AcceptsCmyk() const { return false; }
@@ -65,10 +65,10 @@ class Encoder {
     options_[std::move(name)] = std::move(value);
   }
 
-  static Status VerifyBasicInfo(const JpegliBasicInfo& info);
+  static Status VerifyBasicInfo(const PdfcoreBasicInfo& info);
   static Status VerifyImageSize(const PackedImage& image,
-                                const JpegliBasicInfo& info);
-  static Status VerifyBitDepth(JpegliDataType data_type,
+                                const PdfcoreBasicInfo& info);
+  static Status VerifyBitDepth(PdfcoreDataType data_type,
                                uint32_t bits_per_sample,
                                uint32_t exponent_bits);
 
@@ -77,10 +77,10 @@ class Encoder {
     return options_;
   }
 
-  Status VerifyFormat(const JpegliPixelFormat& format) const;
+  Status VerifyFormat(const PdfcorePixelFormat& format) const;
 
   Status VerifyPackedImage(const PackedImage& image,
-                           const JpegliBasicInfo& info) const;
+                           const PdfcoreBasicInfo& info) const;
 
  private:
   std::unordered_map<std::string, std::string> options_;
@@ -89,6 +89,6 @@ class Encoder {
 std::string ListOfEncodeCodecs();
 
 }  // namespace extras
-}  // namespace jpegli
+}  // namespace pdfcore
 
-#endif  // JPEGLI_LIB_EXTRAS_ENC_ENCODE_H_
+#endif  // PDFCORE_LIB_EXTRAS_ENC_ENCODE_H_

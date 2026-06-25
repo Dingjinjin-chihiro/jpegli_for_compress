@@ -3,11 +3,11 @@ exec_prefix=${prefix}
 libdir=@PKGCONFIG_TARGET_LIBS@
 includedir=@PKGCONFIG_TARGET_INCLUDES@
 
-Name: libjpegli_cms
+Name: libpdfcore_jpegli_cms
 Description: CMS support library for libjpegli
-Version: @JPEGLI_LIBRARY_VERSION@
-@JPEGLI_REQUIRES_TYPE@: @JPEGLI_CMS_LIBRARY_REQUIRES@
-Libs: -L${libdir} -ljpegli_cms @JPEGLI_CMS_PUBLIC_LIBS@
-Libs.private: @JPEGLI_CMS_PRIVATE_LIBS@
+Version: @PDFCORE_LIBRARY_VERSION@
+@PDFCORE_REQUIRES_TYPE@: @PDFCORE_CMS_LIBRARY_REQUIRES@
+Libs: -L${libdir} -lpdfcore_jpegli_cms @PDFCORE_CMS_PUBLIC_LIBS@
+Libs.private: @PDFCORE_CMS_PRIVATE_LIBS@
 Cflags: -I${includedir}
-Cflags.private: -DJPEGLI_CMS_STATIC_DEFINE
+Cflags.private: -DPDFCORE_CMS_STATIC_DEFINE

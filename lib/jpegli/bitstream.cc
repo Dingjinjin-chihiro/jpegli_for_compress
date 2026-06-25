@@ -20,14 +20,14 @@
 #include "lib/jpegli/encode_internal.h"
 #include "lib/jpegli/error.h"
 
-namespace jpegli {
+namespace pdfcore {
 
 void WriteOutput(j_compress_ptr cinfo, const uint8_t* buf, size_t bufsize) {
   size_t pos = 0;
   while (pos < bufsize) {
     if (cinfo->dest->free_in_buffer == 0 &&
         !(*cinfo->dest->empty_output_buffer)(cinfo)) {
-      JPEGLI_ERROR("Destination suspension is not supported in markers.");
+      PDFCORE_ERROR("Destination suspension is not supported in markers.");
     }
     size_t len = std::min<size_t>(cinfo->dest->free_in_buffer, bufsize - pos);
     memcpy(cinfo->dest->next_output_byte, buf + pos, len);
@@ -96,7 +96,7 @@ bool EncodeDQT(j_compress_ptr cinfo, bool write_all_tables) {
     if (!send_table[i]) continue;
     JQUANT_TBL* quant_table = cinfo->quant_tbl_ptrs[i];
     if (quant_table == nullptr) {
-      JPEGLI_ERROR("Missing quant table %d", i);
+      PDFCORE_ERROR("Missing quant table %d", i);
     }
     int precision = 0;
     for (UINT16 q : quant_table->quantval) {
@@ -113,7 +113,7 @@ bool EncodeDQT(j_compress_ptr cinfo, bool write_all_tables) {
       int val_idx = kJPEGNaturalOrder[j];
       int val = quant_table->quantval[val_idx];
       if (val == 0) {
-        JPEGLI_ERROR("Invalid quantval 0.");
+        PDFCORE_ERROR("Invalid quantval 0.");
       }
       if (precision) {
         data[pos++] = val >> 8;
@@ -132,7 +132,7 @@ bool EncodeDQT(j_compress_ptr cinfo, bool write_all_tables) {
 
 void EncodeSOF(j_compress_ptr cinfo, bool is_baseline) {
   if (cinfo->data_precision != kJpegPrecision) {
-    JPEGLI_ERROR("Unsupported data precision %d", cinfo->data_precision);
+    PDFCORE_ERROR("Unsupported data precision %d", cinfo->data_precision);
   }
   const uint8_t marker = cinfo->progressive_mode ? 0xc2
                          : is_baseline           ? 0xc0
@@ -157,7 +157,7 @@ void EncodeSOF(j_compress_ptr cinfo, bool is_baseline) {
     data[pos++] = ((comp->h_samp_factor << 4u) | (comp->v_samp_factor));
     const uint32_t quant_idx = comp->quant_tbl_no;
     if (cinfo->quant_tbl_ptrs[quant_idx] == nullptr) {
-      JPEGLI_ERROR("Invalid component quant table index %u.", quant_idx);
+      PDFCORE_ERROR("Invalid component quant table index %u.", quant_idx);
     }
     data[pos++] = quant_idx;
   }
@@ -278,12 +278,12 @@ void WriteScanHeader(j_compress_ptr cinfo, int scan_index) {
   EncodeSOS(cinfo, scan_index);
 }
 
-void WriteBlock(const int32_t* JPEGLI_RESTRICT symbols,
-                const int32_t* JPEGLI_RESTRICT extra_bits,
+void WriteBlock(const int32_t* PDFCORE_RESTRICT symbols,
+                const int32_t* PDFCORE_RESTRICT extra_bits,
                 const int num_nonzeros, const bool emit_eob,
-                const HuffmanCodeTable* JPEGLI_RESTRICT dc_code,
-                const HuffmanCodeTable* JPEGLI_RESTRICT ac_code,
-                JpegBitWriter* JPEGLI_RESTRICT bw) {
+                const HuffmanCodeTable* PDFCORE_RESTRICT dc_code,
+                const HuffmanCodeTable* PDFCORE_RESTRICT ac_code,
+                JpegBitWriter* PDFCORE_RESTRICT bw) {
   int symbol = symbols[0];
   WriteBits(bw, dc_code->depth[symbol], dc_code->code[symbol] | extra_bits[0]);
   for (int i = 1; i < num_nonzeros; ++i) {
@@ -310,7 +310,7 @@ void WriteBlock(const int32_t* JPEGLI_RESTRICT symbols,
 
 namespace {
 
-JPEGLI_INLINE void EmitMarker(JpegBitWriter* bw, int marker) {
+PDFCORE_INLINE void EmitMarker(JpegBitWriter* bw, int marker) {
   bw->data[bw->pos++] = 0xFF;
   bw->data[bw->pos++] = marker;
 }
@@ -349,7 +349,7 @@ void WriteTokens(j_compress_ptr cinfo, int scan_index, JpegBitWriter* bw) {
         WriteBits(bw, code->depth[t.symbol], code->code[t.symbol] | t.bits);
         if (--next_cycle == 0) {
           if (!EmptyBitWriterBuffer(bw)) {
-            JPEGLI_ERROR(
+            PDFCORE_ERROR(
                 "Output suspension is not supported in "
                 "finish_compress");
           }
@@ -399,7 +399,7 @@ void WriteACRefinementTokens(j_compress_ptr cinfo, int scan_index,
     }
     if (--next_cycle == 0) {
       if (!EmptyBitWriterBuffer(bw)) {
-        JPEGLI_ERROR("Output suspension is not supported in finish_compress");
+        PDFCORE_ERROR("Output suspension is not supported in finish_compress");
       }
       next_cycle = cycle_len;
     }
@@ -427,7 +427,7 @@ void WriteDCRefinementBits(j_compress_ptr cinfo, int scan_index,
     WriteBits(bw, 1, sti.refbits[refbit_idx++]);
     if (--next_cycle == 0) {
       if (!EmptyBitWriterBuffer(bw)) {
-        JPEGLI_ERROR(
+        PDFCORE_ERROR(
             "Output suspension is not supported in "
             "finish_compress");
       }
@@ -449,12 +449,12 @@ void WriteScanData(j_compress_ptr cinfo, int scan_index) {
     WriteDCRefinementBits(cinfo, scan_index, bw);
   }
   if (!bw->healthy) {
-    JPEGLI_ERROR("Unknown Huffman coded symbol found in scan %d", scan_index);
+    PDFCORE_ERROR("Unknown Huffman coded symbol found in scan %d", scan_index);
   }
   JumpToByteBoundary(bw);
   if (!EmptyBitWriterBuffer(bw)) {
-    JPEGLI_ERROR("Output suspension is not supported in finish_compress");
+    PDFCORE_ERROR("Output suspension is not supported in finish_compress");
   }
 }
 
-}  // namespace jpegli
+}  // namespace pdfcore

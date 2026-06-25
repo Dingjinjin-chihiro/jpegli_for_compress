@@ -23,7 +23,7 @@
 #include "lib/jpegli/transpose-inl.h"
 
 HWY_BEFORE_NAMESPACE();
-namespace jpegli {
+namespace pdfcore {
 namespace HWY_NAMESPACE {
 
 // These templates are not found via ADL.
@@ -47,10 +47,10 @@ constexpr DI di;
 using D8 = HWY_CAPPED(float, 8);
 constexpr D8 d8;
 
-void DequantBlock(const int16_t* JPEGLI_RESTRICT qblock,
-                  const float* JPEGLI_RESTRICT dequant,
-                  const float* JPEGLI_RESTRICT biases,
-                  float* JPEGLI_RESTRICT block) {
+void DequantBlock(const int16_t* PDFCORE_RESTRICT qblock,
+                  const float* PDFCORE_RESTRICT dequant,
+                  const float* PDFCORE_RESTRICT biases,
+                  float* PDFCORE_RESTRICT block) {
   for (size_t k = 0; k < 64; k += Lanes(d)) {
     const auto mul = Load(d, dequant + k);
     const auto bias = Load(d, biases + k);
@@ -68,8 +68,8 @@ void DequantBlock(const int16_t* JPEGLI_RESTRICT qblock,
 }
 
 template <size_t N>
-void ForwardEvenOdd(const float* JPEGLI_RESTRICT a_in, size_t a_in_stride,
-                    float* JPEGLI_RESTRICT a_out) {
+void ForwardEvenOdd(const float* PDFCORE_RESTRICT a_in, size_t a_in_stride,
+                    float* PDFCORE_RESTRICT a_out) {
   for (size_t i = 0; i < N / 2; i++) {
     auto in1 = LoadU(d8, a_in + 2 * i * a_in_stride);
     Store(in1, d8, a_out + i * 8);
@@ -81,7 +81,7 @@ void ForwardEvenOdd(const float* JPEGLI_RESTRICT a_in, size_t a_in_stride,
 }
 
 template <size_t N>
-void BTranspose(float* JPEGLI_RESTRICT coeff) {
+void BTranspose(float* PDFCORE_RESTRICT coeff) {
   for (size_t i = N - 1; i > 0; i--) {
     auto in1 = Load(d8, coeff + i * 8);
     auto in2 = Load(d8, coeff + (i - 1) * 8);
@@ -117,14 +117,14 @@ struct WcMultipliers<8> {
   };
 };
 
-#if JPEGLI_CXX_LANG < JPEGLI_CXX_17
+#if PDFCORE_CXX_LANG < PDFCORE_CXX_17
 constexpr float WcMultipliers<4>::kMultipliers[];
 constexpr float WcMultipliers<8>::kMultipliers[];
 #endif
 
 template <size_t N>
-void MultiplyAndAdd(const float* JPEGLI_RESTRICT coeff,
-                    float* JPEGLI_RESTRICT out, size_t out_stride) {
+void MultiplyAndAdd(const float* PDFCORE_RESTRICT coeff,
+                    float* PDFCORE_RESTRICT out, size_t out_stride) {
   for (size_t i = 0; i < N / 2; i++) {
     auto mul = Set(d8, WcMultipliers<N>::kMultipliers[i]);
     auto in1 = Load(d8, coeff + i * 8);
@@ -141,7 +141,7 @@ struct IDCT1DImpl;
 
 template <>
 struct IDCT1DImpl<1> {
-  JPEGLI_INLINE void operator()(const float* from, size_t from_stride,
+  PDFCORE_INLINE void operator()(const float* from, size_t from_stride,
                                 float* to, size_t to_stride) {
     StoreU(LoadU(d8, from), d8, to);
   }
@@ -149,10 +149,10 @@ struct IDCT1DImpl<1> {
 
 template <>
 struct IDCT1DImpl<2> {
-  JPEGLI_INLINE void operator()(const float* from, size_t from_stride,
+  PDFCORE_INLINE void operator()(const float* from, size_t from_stride,
                                 float* to, size_t to_stride) {
-    JPEGLI_DASSERT(from_stride >= 8);
-    JPEGLI_DASSERT(to_stride >= 8);
+    PDFCORE_DASSERT(from_stride >= 8);
+    PDFCORE_DASSERT(to_stride >= 8);
     auto in1 = LoadU(d8, from);
     auto in2 = LoadU(d8, from + from_stride);
     StoreU(Add(in1, in2), d8, to);
@@ -164,8 +164,8 @@ template <size_t N>
 struct IDCT1DImpl {
   void operator()(const float* from, size_t from_stride, float* to,
                   size_t to_stride) {
-    JPEGLI_DASSERT(from_stride >= 8);
-    JPEGLI_DASSERT(to_stride >= 8);
+    PDFCORE_DASSERT(from_stride >= 8);
+    PDFCORE_DASSERT(to_stride >= 8);
     HWY_ALIGN float tmp[64];
     ForwardEvenOdd<N>(from, from_stride, tmp);
     IDCT1DImpl<N / 2>()(tmp, 8, tmp, 8);
@@ -176,30 +176,30 @@ struct IDCT1DImpl {
 };
 
 template <size_t N>
-void IDCT1D(float* JPEGLI_RESTRICT from, float* JPEGLI_RESTRICT output,
+void IDCT1D(float* PDFCORE_RESTRICT from, float* PDFCORE_RESTRICT output,
             size_t output_stride) {
   for (size_t i = 0; i < 8; i += Lanes(d8)) {
     IDCT1DImpl<N>()(from + i, 8, output + i, output_stride);
   }
 }
 
-void ComputeScaledIDCT(float* JPEGLI_RESTRICT block0,
-                       float* JPEGLI_RESTRICT block1,
-                       float* JPEGLI_RESTRICT output, size_t output_stride) {
+void ComputeScaledIDCT(float* PDFCORE_RESTRICT block0,
+                       float* PDFCORE_RESTRICT block1,
+                       float* PDFCORE_RESTRICT output, size_t output_stride) {
   Transpose8x8Block(block0, block1);
   IDCT1D<8>(block1, block0, 8);
   Transpose8x8Block(block0, block1);
   IDCT1D<8>(block1, output, output_stride);
 }
 
-void InverseTransformBlock8x8(const int16_t* JPEGLI_RESTRICT qblock,
-                              const float* JPEGLI_RESTRICT dequant,
-                              const float* JPEGLI_RESTRICT biases,
-                              float* JPEGLI_RESTRICT scratch_space,
-                              float* JPEGLI_RESTRICT output,
+void InverseTransformBlock8x8(const int16_t* PDFCORE_RESTRICT qblock,
+                              const float* PDFCORE_RESTRICT dequant,
+                              const float* PDFCORE_RESTRICT biases,
+                              float* PDFCORE_RESTRICT scratch_space,
+                              float* PDFCORE_RESTRICT output,
                               size_t output_stride, size_t dctsize) {
-  float* JPEGLI_RESTRICT block0 = scratch_space;
-  float* JPEGLI_RESTRICT block1 = scratch_space + DCTSIZE2;
+  float* PDFCORE_RESTRICT block0 = scratch_space;
+  float* PDFCORE_RESTRICT block1 = scratch_space + DCTSIZE2;
   DequantBlock(qblock, dequant, biases, block0);
   ComputeScaledIDCT(block0, block1, output, output_stride);
 }
@@ -618,24 +618,24 @@ void Compute1dIDCT(const float* in, float* out, size_t N) {
       break;
     }
     default:
-      JPEGLI_DEBUG_ABORT("Unreachable");
+      PDFCORE_DEBUG_ABORT("Unreachable");
       break;
   }
 }
 
-void InverseTransformBlockGeneric(const int16_t* JPEGLI_RESTRICT qblock,
-                                  const float* JPEGLI_RESTRICT dequant,
-                                  const float* JPEGLI_RESTRICT biases,
-                                  float* JPEGLI_RESTRICT scratch_space,
-                                  float* JPEGLI_RESTRICT output,
+void InverseTransformBlockGeneric(const int16_t* PDFCORE_RESTRICT qblock,
+                                  const float* PDFCORE_RESTRICT dequant,
+                                  const float* PDFCORE_RESTRICT biases,
+                                  float* PDFCORE_RESTRICT scratch_space,
+                                  float* PDFCORE_RESTRICT output,
                                   size_t output_stride, size_t dctsize) {
-  float* JPEGLI_RESTRICT block0 = scratch_space;
-  float* JPEGLI_RESTRICT block1 = scratch_space + DCTSIZE2;
+  float* PDFCORE_RESTRICT block0 = scratch_space;
+  float* PDFCORE_RESTRICT block1 = scratch_space + DCTSIZE2;
   DequantBlock(qblock, dequant, biases, block0);
   if (dctsize == 1) {
     *output = *block0;
   } else if (dctsize == 2 || dctsize == 4) {
-    float* JPEGLI_RESTRICT block2 = scratch_space + 2 * DCTSIZE2;
+    float* PDFCORE_RESTRICT block2 = scratch_space + 2 * DCTSIZE2;
     ComputeScaledIDCT(block0, block1, block2, 8);
     if (dctsize == 4) {
       for (size_t iy = 0; iy < 4; ++iy) {
@@ -679,21 +679,21 @@ void InverseTransformBlockGeneric(const int16_t* JPEGLI_RESTRICT qblock,
 
 // NOLINTNEXTLINE(google-readability-namespace-comments)
 }  // namespace HWY_NAMESPACE
-}  // namespace jpegli
+}  // namespace pdfcore
 HWY_AFTER_NAMESPACE();
 
 #if HWY_ONCE
-namespace jpegli {
+namespace pdfcore {
 
 HWY_EXPORT(InverseTransformBlock8x8);
 HWY_EXPORT(InverseTransformBlockGeneric);
 
-jpegli::Status ChooseInverseTransform(j_decompress_ptr cinfo) {
+pdfcore::Status ChooseInverseTransform(j_decompress_ptr cinfo) {
   jpeg_decomp_master* m = cinfo->master;
   for (int c = 0; c < cinfo->num_components; ++c) {
     int dct_size = m->scaled_dct_size[c];
     if (dct_size < 1 || dct_size > 16) {
-      return JPEGLI_FAILURE("Compute1dIDCT does not support N=%d", dct_size);
+      return PDFCORE_FAILURE("Compute1dIDCT does not support N=%d", dct_size);
     }
     if (dct_size == DCTSIZE) {
       m->inverse_transform[c] = HWY_DYNAMIC_DISPATCH(InverseTransformBlock8x8);
@@ -705,5 +705,5 @@ jpegli::Status ChooseInverseTransform(j_decompress_ptr cinfo) {
   return true;
 }
 
-}  // namespace jpegli
+}  // namespace pdfcore
 #endif  // HWY_ONCE

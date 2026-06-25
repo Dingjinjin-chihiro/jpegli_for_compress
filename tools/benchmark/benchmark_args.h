@@ -4,8 +4,8 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
-#ifndef JPEGLI_TOOLS_BENCHMARK_BENCHMARK_ARGS_H_
-#define JPEGLI_TOOLS_BENCHMARK_BENCHMARK_ARGS_H_
+#ifndef PDFCORE_TOOLS_BENCHMARK_BENCHMARK_ARGS_H_
+#define PDFCORE_TOOLS_BENCHMARK_BENCHMARK_ARGS_H_
 
 // Command line parsing and arguments for benchmark_xl
 
@@ -21,11 +21,11 @@
 #include "tools/args.h"
 #include "tools/cmdline.h"
 
-namespace jpegli_tools {
+namespace pdfcore_jpegli_tools {
 
-using ::jpegli::ColorEncoding;
-using ::jpegli::Override;
-using ::jpegli::Status;
+using ::pdfcore::ColorEncoding;
+using ::pdfcore::Override;
+using ::pdfcore::Status;
 
 std::vector<std::string> SplitString(const std::string& s, char c);
 
@@ -33,22 +33,22 @@ Status ParseIntParam(const std::string& param, int lower_bound, int upper_bound,
                      int& val);
 
 struct BenchmarkArgs {
-  using OptionId = jpegli_tools::CommandLineParser::OptionId;
+  using OptionId = pdfcore_jpegli_tools::CommandLineParser::OptionId;
 
   void AddFlag(bool* field, const char* longName, const char* help,
                bool defaultValue) {
     const char* noName = RememberString_(std::string("no") + longName);
     cmdline.AddOptionFlag('\0', longName, nullptr, field,
-                          &jpegli_tools::SetBooleanTrue);
+                          &pdfcore_jpegli_tools::SetBooleanTrue);
     cmdline.AddOptionFlag('\0', noName, help, field,
-                          &jpegli_tools::SetBooleanFalse);
+                          &pdfcore_jpegli_tools::SetBooleanFalse);
     *field = defaultValue;
   }
 
   OptionId AddOverride(Override* field, const char* longName,
                        const char* help) {
     OptionId result = cmdline.AddOptionValue('\0', longName, "0|1", help, field,
-                                             &jpegli_tools::ParseOverride);
+                                             &pdfcore_jpegli_tools::ParseOverride);
     *field = Override::kDefault;
     return result;
   }
@@ -56,7 +56,7 @@ struct BenchmarkArgs {
   OptionId AddString(std::string* field, const char* longName, const char* help,
                      const std::string& defaultValue = "") {
     OptionId result = cmdline.AddOptionValue('\0', longName, "<string>", help,
-                                             field, &jpegli_tools::ParseString);
+                                             field, &pdfcore_jpegli_tools::ParseString);
     *field = defaultValue;
     return result;
   }
@@ -64,7 +64,7 @@ struct BenchmarkArgs {
   OptionId AddFloat(float* field, const char* longName, const char* help,
                     float defaultValue) {
     OptionId result = cmdline.AddOptionValue('\0', longName, "<scalar>", help,
-                                             field, &jpegli_tools::ParseFloat);
+                                             field, &pdfcore_jpegli_tools::ParseFloat);
     *field = defaultValue;
     return result;
   }
@@ -72,7 +72,7 @@ struct BenchmarkArgs {
   OptionId AddDouble(double* field, const char* longName, const char* help,
                      double defaultValue) {
     OptionId result = cmdline.AddOptionValue('\0', longName, "<scalar>", help,
-                                             field, &jpegli_tools::ParseDouble);
+                                             field, &pdfcore_jpegli_tools::ParseDouble);
     *field = defaultValue;
     return result;
   }
@@ -80,7 +80,7 @@ struct BenchmarkArgs {
   OptionId AddSigned(int* field, const char* longName, const char* help,
                      int defaultValue) {
     OptionId result = cmdline.AddOptionValue('\0', longName, "<integer>", help,
-                                             field, &jpegli_tools::ParseSigned);
+                                             field, &pdfcore_jpegli_tools::ParseSigned);
     *field = defaultValue;
     return result;
   }
@@ -89,7 +89,7 @@ struct BenchmarkArgs {
                        size_t defaultValue) {
     OptionId result =
         cmdline.AddOptionValue('\0', longName, "<unsigned>", help, field,
-                               &jpegli_tools::ParseUnsigned);
+                               &pdfcore_jpegli_tools::ParseUnsigned);
     *field = defaultValue;
     return result;
   }
@@ -121,7 +121,7 @@ struct BenchmarkArgs {
   float intensity_target;
 
   std::string color_hints_string;
-  jpegli::extras::ColorHints color_hints;
+  pdfcore::extras::ColorHints color_hints;
 
   size_t override_bitdepth;
 
@@ -151,7 +151,7 @@ struct BenchmarkArgs {
 
   std::string extra_metrics;
 
-  jpegli_tools::CommandLineParser cmdline;
+  pdfcore_jpegli_tools::CommandLineParser cmdline;
 
  private:
   const char* RememberString_(const std::string& text) {
@@ -169,6 +169,6 @@ struct BenchmarkArgs {
 // Returns singleton
 BenchmarkArgs* Args();
 
-}  // namespace jpegli_tools
+}  // namespace pdfcore_jpegli_tools
 
-#endif  // JPEGLI_TOOLS_BENCHMARK_BENCHMARK_ARGS_H_
+#endif  // PDFCORE_TOOLS_BENCHMARK_BENCHMARK_ARGS_H_

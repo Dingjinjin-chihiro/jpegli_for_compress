@@ -196,9 +196,9 @@ get_version() {
 }
 
 test_version() {
-  local major=$(get_version JPEGLI_MAJOR_VERSION)
-  local minor=$(get_version JPEGLI_MINOR_VERSION)
-  local patch=$(get_version JPEGLI_PATCH_VERSION)
+  local major=$(get_version PDFCORE_MAJOR_VERSION)
+  local minor=$(get_version PDFCORE_MINOR_VERSION)
+  local patch=$(get_version PDFCORE_PATCH_VERSION)
   # Check that the version is not empty
   if [[ -z "${major}${minor}${patch}" ]]; then
     echo "Couldn't parse version from CMakeLists.txt" >&2

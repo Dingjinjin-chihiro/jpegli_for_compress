@@ -4,8 +4,8 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
-#ifndef JPEGLI_LIB_CMS_JPEGLI_CMS_INTERNAL_H_
-#define JPEGLI_LIB_CMS_JPEGLI_CMS_INTERNAL_H_
+#ifndef PDFCORE_LIB_CMS_PDFCORE_CMS_INTERNAL_H_
+#define PDFCORE_LIB_CMS_PDFCORE_CMS_INTERNAL_H_
 
 // ICC profiles and color space conversions.
 
@@ -27,11 +27,11 @@
 #include "lib/cms/tone_mapping.h"
 #include "lib/cms/transfer_functions.h"
 
-#ifndef JPEGLI_ENABLE_3D_ICC_TONEMAPPING
-#define JPEGLI_ENABLE_3D_ICC_TONEMAPPING 1
+#ifndef PDFCORE_ENABLE_3D_ICC_TONEMAPPING
+#define PDFCORE_ENABLE_3D_ICC_TONEMAPPING 1
 #endif
 
-namespace jpegli {
+namespace pdfcore {
 
 enum class ExtraTF {
   kNone,
@@ -44,7 +44,7 @@ static Status PrimariesToXYZ(float rx, float ry, float gx, float gy, float bx,
                              float by, float wx, float wy, Matrix3x3& matrix) {
   bool ok = (wx >= 0) && (wx <= 1) && (wy > 0) && (wy <= 1);
   if (!ok) {
-    return JPEGLI_FAILURE("Invalid white point");
+    return PDFCORE_FAILURE("Invalid white point");
   }
   // TODO(lode): also require rx, ry, gx, gy, bx, to be in range 0-1? ICC
   // profiles in theory forbid negative XYZ values, but in practice the ACES P0
@@ -54,11 +54,11 @@ static Status PrimariesToXYZ(float rx, float ry, float gx, float gy, float bx,
                        {1.0f - rx - ry, 1.0f - gx - gy, 1.0f - bx - by}}};
   Matrix3x3 primaries_inv;
   primaries_inv = primaries;
-  JPEGLI_RETURN_IF_ERROR(Inv3x3Matrix(primaries_inv));
+  PDFCORE_RETURN_IF_ERROR(Inv3x3Matrix(primaries_inv));
 
   Vector3 w{wx / wy, 1.0f, (1.0f - wx - wy) / wy};
   // 1 / tiny float can still overflow
-  JPEGLI_RETURN_IF_ERROR(std::isfinite(w[0]) && std::isfinite(w[2]));
+  PDFCORE_RETURN_IF_ERROR(std::isfinite(w[0]) && std::isfinite(w[2]));
   Vector3 xyz;
   Mul3x3Vector(primaries_inv, w, xyz);
 
@@ -82,11 +82,11 @@ static Status AdaptToXYZD50(float wx, float wy, Matrix3x3& matrix) {
   if (!ok) {
     // Out of range values can cause division through zero
     // further down with the bradford adaptation too.
-    return JPEGLI_FAILURE("Invalid white point");
+    return PDFCORE_FAILURE("Invalid white point");
   }
   Vector3 w{wx / wy, 1.0f, (1.0f - wx - wy) / wy};
   // 1 / tiny float can still overflow
-  JPEGLI_RETURN_IF_ERROR(std::isfinite(w[0]) && std::isfinite(w[2]));
+  PDFCORE_RETURN_IF_ERROR(std::isfinite(w[0]) && std::isfinite(w[2]));
   Vector3 w50{0.96422f, 1.0f, 0.82521f};
 
   Vector3 lms;
@@ -96,14 +96,14 @@ static Status AdaptToXYZD50(float wx, float wy, Matrix3x3& matrix) {
   Mul3x3Vector(kBradford, w50, lms50);
 
   if (lms[0] == 0 || lms[1] == 0 || lms[2] == 0) {
-    return JPEGLI_FAILURE("Invalid white point");
+    return PDFCORE_FAILURE("Invalid white point");
   }
   Matrix3x3 a{{{lms50[0] / lms[0], 0, 0},
                {0, lms50[1] / lms[1], 0},
                {0, 0, lms50[2] / lms[2]}}};
   if (!std::isfinite(a[0][0]) || !std::isfinite(a[1][1]) ||
       !std::isfinite(a[2][2])) {
-    return JPEGLI_FAILURE("Invalid white point");
+    return PDFCORE_FAILURE("Invalid white point");
   }
 
   Matrix3x3 b;
@@ -117,25 +117,25 @@ static Status PrimariesToXYZD50(float rx, float ry, float gx, float gy,
                                 float bx, float by, float wx, float wy,
                                 Matrix3x3& matrix) {
   Matrix3x3 toXYZ;
-  JPEGLI_RETURN_IF_ERROR(PrimariesToXYZ(rx, ry, gx, gy, bx, by, wx, wy, toXYZ));
+  PDFCORE_RETURN_IF_ERROR(PrimariesToXYZ(rx, ry, gx, gy, bx, by, wx, wy, toXYZ));
   Matrix3x3 d50;
-  JPEGLI_RETURN_IF_ERROR(AdaptToXYZD50(wx, wy, d50));
+  PDFCORE_RETURN_IF_ERROR(AdaptToXYZD50(wx, wy, d50));
 
   Mul3x3Matrix(d50, toXYZ, matrix);
   return true;
 }
 
-static Status ToneMapPixel(const JpegliColorEncoding& c, const float in[3],
+static Status ToneMapPixel(const PdfcoreColorEncoding& c, const float in[3],
                            uint8_t pcslab_out[3]) {
   Matrix3x3 primaries_XYZ;
-  JPEGLI_RETURN_IF_ERROR(PrimariesToXYZ(
+  PDFCORE_RETURN_IF_ERROR(PrimariesToXYZ(
       c.primaries_red_xy[0], c.primaries_red_xy[1], c.primaries_green_xy[0],
       c.primaries_green_xy[1], c.primaries_blue_xy[0], c.primaries_blue_xy[1],
       c.white_point_xy[0], c.white_point_xy[1], primaries_XYZ));
   const Vector3 luminances = primaries_XYZ[1];
   Color linear;
-  JpegliTransferFunction tf = c.transfer_function;
-  if (tf == JPEGLI_TRANSFER_FUNCTION_PQ) {
+  PdfcoreTransferFunction tf = c.transfer_function;
+  if (tf == PDFCORE_TRANSFER_FUNCTION_PQ) {
     for (size_t i = 0; i < 3; ++i) {
       linear[i] = TF_PQ_Base::DisplayFromEncoded(
           /*display_intensity_target=*/10000.0, in[i]);
@@ -145,7 +145,7 @@ static Status ToneMapPixel(const JpegliColorEncoding& c, const float in[3],
       linear[i] = TF_HLG_Base::DisplayFromEncoded(in[i]);
     }
   }
-  if (tf == JPEGLI_TRANSFER_FUNCTION_PQ) {
+  if (tf == PDFCORE_TRANSFER_FUNCTION_PQ) {
     Rec2408ToneMapperBase tone_mapper({0.0f, 10000.0f}, {0.0f, 250.0f},
                                       luminances);
     tone_mapper.ToneMap(linear);
@@ -158,7 +158,7 @@ static Status ToneMapPixel(const JpegliColorEncoding& c, const float in[3],
                  /*preserve_saturation=*/0.3f);
 
   Matrix3x3 chad;
-  JPEGLI_RETURN_IF_ERROR(
+  PDFCORE_RETURN_IF_ERROR(
       AdaptToXYZD50(c.white_point_xy[0], c.white_point_xy[1], chad));
   Matrix3x3 to_xyzd50;
   Mul3x3Matrix(chad, primaries_XYZ, to_xyzd50);
@@ -223,7 +223,7 @@ static std::vector<uint16_t> CreateTableCurve(bool tone_map) {
       tone_mapper.ToneMap(gray);
       y = gray[0];
     }
-    JPEGLI_DASSERT(y >= 0.0);
+    PDFCORE_DASSERT(y >= 0.0);
     // Clamp to table range - necessary for HLG.
     y = Clamp1(y, 0.0, 1.0);
     // 1.0 corresponds to table value 0xFFFF.
@@ -234,7 +234,7 @@ static std::vector<uint16_t> CreateTableCurve(bool tone_map) {
 
 static Status CIEXYZFromWhiteCIExy(double wx, double wy, Color& XYZ) {
   // Target Y = 1.
-  if (std::abs(wy) < 1e-12) return JPEGLI_FAILURE("Y value is too small");
+  if (std::abs(wy) < 1e-12) return PDFCORE_FAILURE("Y value is too small");
   const float factor = 1 / wy;
   XYZ[0] = wx * factor;
   XYZ[1] = 1;
@@ -244,25 +244,25 @@ static Status CIEXYZFromWhiteCIExy(double wx, double wy, Color& XYZ) {
 
 namespace detail {
 
-constexpr bool kEnable3DToneMapping = JPEGLI_ENABLE_3D_ICC_TONEMAPPING;
+constexpr bool kEnable3DToneMapping = PDFCORE_ENABLE_3D_ICC_TONEMAPPING;
 
-static bool CanToneMap(const JpegliColorEncoding& encoding) {
+static bool CanToneMap(const PdfcoreColorEncoding& encoding) {
   // If the color space cannot be represented by a CICP tag in the ICC profile
   // then the rest of the profile must unambiguously identify it; we have less
   // freedom to do use it for tone mapping.
-  JpegliTransferFunction tf = encoding.transfer_function;
-  JpegliPrimaries p = encoding.primaries;
-  JpegliWhitePoint wp = encoding.white_point;
-  return encoding.color_space == JPEGLI_COLOR_SPACE_RGB &&
-         (tf == JPEGLI_TRANSFER_FUNCTION_PQ ||
-          tf == JPEGLI_TRANSFER_FUNCTION_HLG) &&
-         ((p == JPEGLI_PRIMARIES_P3 &&
-           (wp == JPEGLI_WHITE_POINT_D65 || wp == JPEGLI_WHITE_POINT_DCI)) ||
-          (p != JPEGLI_PRIMARIES_CUSTOM && wp == JPEGLI_WHITE_POINT_D65));
+  PdfcoreTransferFunction tf = encoding.transfer_function;
+  PdfcorePrimaries p = encoding.primaries;
+  PdfcoreWhitePoint wp = encoding.white_point;
+  return encoding.color_space == PDFCORE_COLOR_SPACE_RGB &&
+         (tf == PDFCORE_TRANSFER_FUNCTION_PQ ||
+          tf == PDFCORE_TRANSFER_FUNCTION_HLG) &&
+         ((p == PDFCORE_PRIMARIES_P3 &&
+           (wp == PDFCORE_WHITE_POINT_D65 || wp == PDFCORE_WHITE_POINT_DCI)) ||
+          (p != PDFCORE_PRIMARIES_CUSTOM && wp == PDFCORE_WHITE_POINT_D65));
 }
 
 static void ICCComputeMD5(const std::vector<uint8_t>& data, uint8_t sum[16])
-    JPEGLI_NO_SANITIZE("unsigned-integer-overflow") {
+    PDFCORE_NO_SANITIZE("unsigned-integer-overflow") {
   std::vector<uint8_t> data64 = data;
   data64.push_back(128);
   // Add bytes such that ((size + 8) & 63) == 0.
@@ -355,9 +355,9 @@ static void ICCComputeMD5(const std::vector<uint8_t>& data, uint8_t sum[16])
 static Status CreateICCChadMatrix(double wx, double wy, Matrix3x3& result) {
   Matrix3x3 m;
   if (wy == 0) {  // WhitePoint can not be pitch-black.
-    return JPEGLI_FAILURE("Invalid WhitePoint");
+    return PDFCORE_FAILURE("Invalid WhitePoint");
   }
-  JPEGLI_RETURN_IF_ERROR(AdaptToXYZD50(wx, wy, m));
+  PDFCORE_RETURN_IF_ERROR(AdaptToXYZD50(wx, wy, m));
   result = m;
   return true;
 }
@@ -367,7 +367,7 @@ static Status CreateICCRGBMatrix(double rx, double ry, double gx, double gy,
                                  double bx, double by, double wx, double wy,
                                  Matrix3x3& result) {
   Matrix3x3 m;
-  JPEGLI_RETURN_IF_ERROR(PrimariesToXYZD50(rx, ry, gx, gy, bx, by, wx, wy, m));
+  PDFCORE_RETURN_IF_ERROR(PrimariesToXYZD50(rx, ry, gx, gy, bx, by, wx, wy, m));
   result = m;
   return true;
 }
@@ -407,7 +407,7 @@ static Status WriteICCS15Fixed16(float value, size_t pos,
   // 32767.998046875, 32767.99609375, 32767.994140625
   // Even the first value works well,...
   bool ok = (-32767.995f <= value) && (value <= 32767.995f);
-  if (!ok) return JPEGLI_FAILURE("ICC value is out of range / NaN");
+  if (!ok) return PDFCORE_FAILURE("ICC value is out of range / NaN");
   int32_t i = static_cast<int32_t>(std::lround(value * 65536.0f));
   // Use two's complement
   uint32_t u = static_cast<uint32_t>(i);
@@ -415,7 +415,7 @@ static Status WriteICCS15Fixed16(float value, size_t pos,
   return true;
 }
 
-static Status CreateICCHeader(const JpegliColorEncoding& c,
+static Status CreateICCHeader(const PdfcoreColorEncoding& c,
                               std::vector<uint8_t>* header) {
   // TODO(lode): choose color management engine name, e.g. "skia" if
   // integrated in skia.
@@ -427,9 +427,9 @@ static Status CreateICCHeader(const JpegliColorEncoding& c,
   WriteICCTag(kCmm, 4, header);
   WriteICCUint32(0x04400000u, 8, header);
   const char* profile_type =
-      c.color_space == JPEGLI_COLOR_SPACE_XYB ? "scnr" : "mntr";
+      c.color_space == PDFCORE_COLOR_SPACE_XYB ? "scnr" : "mntr";
   WriteICCTag(profile_type, 12, header);
-  WriteICCTag(c.color_space == JPEGLI_COLOR_SPACE_GRAY ? "GRAY" : "RGB ", 16,
+  WriteICCTag(c.color_space == PDFCORE_COLOR_SPACE_GRAY ? "GRAY" : "RGB ", 16,
               header);
   if (kEnable3DToneMapping && CanToneMap(c)) {
     // We are going to use a 3D LUT for tone mapping, which will be more compact
@@ -515,7 +515,7 @@ static Status CreateICCXYZTag(const Color& xyz, std::vector<uint8_t>* tags) {
   WriteICCTag("XYZ ", tags->size(), tags);
   WriteICCUint32(0, tags->size(), tags);
   for (size_t i = 0; i < 3; ++i) {
-    JPEGLI_RETURN_IF_ERROR(WriteICCS15Fixed16(xyz[i], tags->size(), tags));
+    PDFCORE_RETURN_IF_ERROR(WriteICCS15Fixed16(xyz[i], tags->size(), tags));
   }
   return true;
 }
@@ -526,38 +526,38 @@ static Status CreateICCChadTag(const Matrix3x3& chad,
   WriteICCUint32(0, tags->size(), tags);
   for (size_t j = 0; j < 3; j++) {
     for (size_t i = 0; i < 3; i++) {
-      JPEGLI_RETURN_IF_ERROR(
+      PDFCORE_RETURN_IF_ERROR(
           WriteICCS15Fixed16(chad[j][i], tags->size(), tags));
     }
   }
   return true;
 }
 
-static void MaybeCreateICCCICPTag(const JpegliColorEncoding& c,
+static void MaybeCreateICCCICPTag(const PdfcoreColorEncoding& c,
                                   std::vector<uint8_t>* tags, size_t* offset,
                                   size_t* size, std::vector<uint8_t>* tagtable,
                                   std::vector<size_t>* offsets) {
-  if (c.color_space != JPEGLI_COLOR_SPACE_RGB) {
+  if (c.color_space != PDFCORE_COLOR_SPACE_RGB) {
     return;
   }
   uint8_t primaries = 0;
-  if (c.primaries == JPEGLI_PRIMARIES_P3) {
-    if (c.white_point == JPEGLI_WHITE_POINT_D65) {
+  if (c.primaries == PDFCORE_PRIMARIES_P3) {
+    if (c.white_point == PDFCORE_WHITE_POINT_D65) {
       primaries = 12;
-    } else if (c.white_point == JPEGLI_WHITE_POINT_DCI) {
+    } else if (c.white_point == PDFCORE_WHITE_POINT_DCI) {
       primaries = 11;
     } else {
       return;
     }
-  } else if (c.primaries != JPEGLI_PRIMARIES_CUSTOM &&
-             c.white_point == JPEGLI_WHITE_POINT_D65) {
+  } else if (c.primaries != PDFCORE_PRIMARIES_CUSTOM &&
+             c.white_point == PDFCORE_WHITE_POINT_D65) {
     primaries = static_cast<uint8_t>(c.primaries);
   } else {
     return;
   }
-  JpegliTransferFunction tf = c.transfer_function;
-  if (tf == JPEGLI_TRANSFER_FUNCTION_UNKNOWN ||
-      tf == JPEGLI_TRANSFER_FUNCTION_GAMMA) {
+  PdfcoreTransferFunction tf = c.transfer_function;
+  if (tf == PDFCORE_TRANSFER_FUNCTION_UNKNOWN ||
+      tf == PDFCORE_TRANSFER_FUNCTION_GAMMA) {
     return;
   }
   WriteICCTag("cicp", tags->size(), tags);
@@ -593,7 +593,7 @@ static Status CreateICCCurvParaTag(const std::vector<float>& params,
   WriteICCUint16(curve_type, tags->size(), tags);
   WriteICCUint16(0, tags->size(), tags);
   for (float param : params) {
-    JPEGLI_RETURN_IF_ERROR(WriteICCS15Fixed16(param, tags->size(), tags));
+    PDFCORE_RETURN_IF_ERROR(WriteICCS15Fixed16(param, tags->size(), tags));
   }
   return true;
 }
@@ -622,9 +622,9 @@ static Status CreateICCLutAtoBTagForXYB(std::vector<uint8_t>* tags) {
 
   // offset = 32
   // no-op curves
-  JPEGLI_RETURN_IF_ERROR(CreateICCCurvParaTag({1.0f}, 0, tags));
-  JPEGLI_RETURN_IF_ERROR(CreateICCCurvParaTag({1.0f}, 0, tags));
-  JPEGLI_RETURN_IF_ERROR(CreateICCCurvParaTag({1.0f}, 0, tags));
+  PDFCORE_RETURN_IF_ERROR(CreateICCCurvParaTag({1.0f}, 0, tags));
+  PDFCORE_RETURN_IF_ERROR(CreateICCCurvParaTag({1.0f}, 0, tags));
+  PDFCORE_RETURN_IF_ERROR(CreateICCCurvParaTag({1.0f}, 0, tags));
   // offset = 80
   // number of grid points for each input channel
   for (int i = 0; i < 16; ++i) {
@@ -636,14 +636,14 @@ static Status CreateICCLutAtoBTagForXYB(std::vector<uint8_t>* tags) {
   WriteICCUint8(0, tags->size(), tags);
   WriteICCUint16(0, tags->size(), tags);
   // 2*2*2*3 entries of 2 bytes each = 48 bytes
-  const jpegli::cms::ColorCube3D& cube = jpegli::cms::UnscaledA2BCube();
+  const pdfcore::cms::ColorCube3D& cube = pdfcore::cms::UnscaledA2BCube();
   for (size_t ix = 0; ix < 2; ++ix) {
     for (size_t iy = 0; iy < 2; ++iy) {
       for (size_t ib = 0; ib < 2; ++ib) {
-        const jpegli::cms::ColorCube0D& out_f = cube[ix][iy][ib];
+        const pdfcore::cms::ColorCube0D& out_f = cube[ix][iy][ib];
         for (int i = 0; i < 3; ++i) {
           int32_t val = static_cast<int32_t>(std::lroundf(65535 * out_f[i]));
-          JPEGLI_DASSERT(val >= 0 && val <= 65535);
+          PDFCORE_DASSERT(val >= 0 && val <= 65535);
           WriteICCUint16(val, tags->size(), tags);
         }
       }
@@ -652,16 +652,16 @@ static Status CreateICCLutAtoBTagForXYB(std::vector<uint8_t>* tags) {
   // offset = 148
   // 3 curves with 5 parameters = 3 * (12 + 5 * 4) = 96 bytes
   for (size_t i = 0; i < 3; ++i) {
-    const float b = -jpegli::cms::kXYBOffset[i] -
-                    std::cbrt(jpegli::cms::kNegOpsinAbsorbanceBiasRGB[i]);
+    const float b = -pdfcore::cms::kXYBOffset[i] -
+                    std::cbrt(pdfcore::cms::kNegOpsinAbsorbanceBiasRGB[i]);
     std::vector<float> params = {
         3,
-        1.0f / jpegli::cms::kXYBScale[i],
+        1.0f / pdfcore::cms::kXYBScale[i],
         b,
         0,                                              // unused
-        std::max(0.f, -b * jpegli::cms::kXYBScale[i]),  // make skcms happy
+        std::max(0.f, -b * pdfcore::cms::kXYBScale[i]),  // make skcms happy
     };
-    JPEGLI_RETURN_IF_ERROR(CreateICCCurvParaTag(params, 3, tags));
+    PDFCORE_RETURN_IF_ERROR(CreateICCCurvParaTag(params, 3, tags));
   }
   // offset = 244
   const double matrix[] = {1.5170095, -1.1065225, 0.071623,
@@ -669,20 +669,20 @@ static Status CreateICCLutAtoBTagForXYB(std::vector<uint8_t>* tags) {
                            -1.387676, 1.1145555,  0.6857255};
   // 12 * 4 = 48 bytes
   for (double v : matrix) {
-    JPEGLI_RETURN_IF_ERROR(WriteICCS15Fixed16(v, tags->size(), tags));
+    PDFCORE_RETURN_IF_ERROR(WriteICCS15Fixed16(v, tags->size(), tags));
   }
   for (size_t i = 0; i < 3; ++i) {
     float intercept = 0;
     for (size_t j = 0; j < 3; ++j) {
       intercept +=
-          matrix[i * 3 + j] * jpegli::cms::kNegOpsinAbsorbanceBiasRGB[j];
+          matrix[i * 3 + j] * pdfcore::cms::kNegOpsinAbsorbanceBiasRGB[j];
     }
-    JPEGLI_RETURN_IF_ERROR(WriteICCS15Fixed16(intercept, tags->size(), tags));
+    PDFCORE_RETURN_IF_ERROR(WriteICCS15Fixed16(intercept, tags->size(), tags));
   }
   return true;
 }
 
-static Status CreateICCLutAtoBTagForHDR(JpegliColorEncoding color_encoding,
+static Status CreateICCLutAtoBTagForHDR(PdfcoreColorEncoding color_encoding,
                                         std::vector<uint8_t>* tags) {
   static constexpr size_t k3DLutDim = 9;
   WriteICCTag("mft1", tags->size(), tags);
@@ -700,7 +700,7 @@ static Status CreateICCLutAtoBTagForHDR(JpegliColorEncoding color_encoding,
   // Matrix (per specification, must be identity if input is not XYZ)
   for (size_t i = 0; i < 3; ++i) {
     for (size_t j = 0; j < 3; ++j) {
-      JPEGLI_RETURN_IF_ERROR(
+      PDFCORE_RETURN_IF_ERROR(
           WriteICCS15Fixed16(i == j ? 1.f : 0.f, tags->size(), tags));
     }
   }
@@ -719,7 +719,7 @@ static Status CreateICCLutAtoBTagForHDR(JpegliColorEncoding color_encoding,
                       iy * (1.0f / (k3DLutDim - 1)),
                       ib * (1.0f / (k3DLutDim - 1))};
         uint8_t pcslab_out[3];
-        JPEGLI_RETURN_IF_ERROR(ToneMapPixel(color_encoding, f, pcslab_out));
+        PDFCORE_RETURN_IF_ERROR(ToneMapPixel(color_encoding, f, pcslab_out));
         for (uint8_t val : pcslab_out) {
           WriteICCUint8(val, tags->size(), tags);
         }
@@ -759,153 +759,153 @@ static Status CreateICCNoOpBToATag(std::vector<uint8_t>* tags) {
   // offset to first A curve
   WriteICCUint32(0, tags->size(), tags);
 
-  JPEGLI_RETURN_IF_ERROR(CreateICCCurvParaTag({1.0f}, 0, tags));
-  JPEGLI_RETURN_IF_ERROR(CreateICCCurvParaTag({1.0f}, 0, tags));
-  JPEGLI_RETURN_IF_ERROR(CreateICCCurvParaTag({1.0f}, 0, tags));
+  PDFCORE_RETURN_IF_ERROR(CreateICCCurvParaTag({1.0f}, 0, tags));
+  PDFCORE_RETURN_IF_ERROR(CreateICCCurvParaTag({1.0f}, 0, tags));
+  PDFCORE_RETURN_IF_ERROR(CreateICCCurvParaTag({1.0f}, 0, tags));
 
   return true;
 }
 
 // These strings are baked into Description - do not change.
 
-static std::string ToString(JpegliColorSpace color_space) {
+static std::string ToString(PdfcoreColorSpace color_space) {
   switch (color_space) {
-    case JPEGLI_COLOR_SPACE_RGB:
+    case PDFCORE_COLOR_SPACE_RGB:
       return "RGB";
-    case JPEGLI_COLOR_SPACE_GRAY:
+    case PDFCORE_COLOR_SPACE_GRAY:
       return "Gra";
-    case JPEGLI_COLOR_SPACE_XYB:
+    case PDFCORE_COLOR_SPACE_XYB:
       return "XYB";
-    case JPEGLI_COLOR_SPACE_UNKNOWN:
+    case PDFCORE_COLOR_SPACE_UNKNOWN:
       return "CS?";
     default:
       // Should not happen - visitor fails if enum is invalid.
-      JPEGLI_DEBUG_ABORT("Invalid ColorSpace %u",
+      PDFCORE_DEBUG_ABORT("Invalid ColorSpace %u",
                          static_cast<uint32_t>(color_space));
       return "Invalid";
   }
 }
 
-static std::string ToString(JpegliWhitePoint white_point) {
+static std::string ToString(PdfcoreWhitePoint white_point) {
   switch (white_point) {
-    case JPEGLI_WHITE_POINT_D65:
+    case PDFCORE_WHITE_POINT_D65:
       return "D65";
-    case JPEGLI_WHITE_POINT_CUSTOM:
+    case PDFCORE_WHITE_POINT_CUSTOM:
       return "Cst";
-    case JPEGLI_WHITE_POINT_E:
+    case PDFCORE_WHITE_POINT_E:
       return "EER";
-    case JPEGLI_WHITE_POINT_DCI:
+    case PDFCORE_WHITE_POINT_DCI:
       return "DCI";
     default:
       // Should not happen - visitor fails if enum is invalid.
-      JPEGLI_DEBUG_ABORT("Invalid WhitePoint %u",
+      PDFCORE_DEBUG_ABORT("Invalid WhitePoint %u",
                          static_cast<uint32_t>(white_point));
       return "Invalid";
   }
 }
 
-static std::string ToString(JpegliPrimaries primaries) {
+static std::string ToString(PdfcorePrimaries primaries) {
   switch (primaries) {
-    case JPEGLI_PRIMARIES_SRGB:
+    case PDFCORE_PRIMARIES_SRGB:
       return "SRG";
-    case JPEGLI_PRIMARIES_2100:
+    case PDFCORE_PRIMARIES_2100:
       return "202";
-    case JPEGLI_PRIMARIES_P3:
+    case PDFCORE_PRIMARIES_P3:
       return "DCI";
-    case JPEGLI_PRIMARIES_CUSTOM:
+    case PDFCORE_PRIMARIES_CUSTOM:
       return "Cst";
     default:
       // Should not happen - visitor fails if enum is invalid.
-      JPEGLI_DEBUG_ABORT("Invalid Primaries %u",
+      PDFCORE_DEBUG_ABORT("Invalid Primaries %u",
                          static_cast<uint32_t>(primaries));
       return "Invalid";
   }
 }
 
-static std::string ToString(JpegliTransferFunction transfer_function) {
+static std::string ToString(PdfcoreTransferFunction transfer_function) {
   switch (transfer_function) {
-    case JPEGLI_TRANSFER_FUNCTION_SRGB:
+    case PDFCORE_TRANSFER_FUNCTION_SRGB:
       return "SRG";
-    case JPEGLI_TRANSFER_FUNCTION_LINEAR:
+    case PDFCORE_TRANSFER_FUNCTION_LINEAR:
       return "Lin";
-    case JPEGLI_TRANSFER_FUNCTION_709:
+    case PDFCORE_TRANSFER_FUNCTION_709:
       return "709";
-    case JPEGLI_TRANSFER_FUNCTION_PQ:
+    case PDFCORE_TRANSFER_FUNCTION_PQ:
       return "PeQ";
-    case JPEGLI_TRANSFER_FUNCTION_HLG:
+    case PDFCORE_TRANSFER_FUNCTION_HLG:
       return "HLG";
-    case JPEGLI_TRANSFER_FUNCTION_DCI:
+    case PDFCORE_TRANSFER_FUNCTION_DCI:
       return "DCI";
-    case JPEGLI_TRANSFER_FUNCTION_UNKNOWN:
+    case PDFCORE_TRANSFER_FUNCTION_UNKNOWN:
       return "TF?";
-    case JPEGLI_TRANSFER_FUNCTION_GAMMA:
-      JPEGLI_DEBUG_ABORT("Invalid TransferFunction: gamma");
+    case PDFCORE_TRANSFER_FUNCTION_GAMMA:
+      PDFCORE_DEBUG_ABORT("Invalid TransferFunction: gamma");
       return "Invalid";
     default:
       // Should not happen - visitor fails if enum is invalid.
-      JPEGLI_DEBUG_ABORT("Invalid TransferFunction %u",
+      PDFCORE_DEBUG_ABORT("Invalid TransferFunction %u",
                          static_cast<uint32_t>(transfer_function));
       return "Invalid";
   }
 }
 
-static std::string ToString(JpegliRenderingIntent rendering_intent) {
+static std::string ToString(PdfcoreRenderingIntent rendering_intent) {
   switch (rendering_intent) {
-    case JPEGLI_RENDERING_INTENT_PERCEPTUAL:
+    case PDFCORE_RENDERING_INTENT_PERCEPTUAL:
       return "Per";
-    case JPEGLI_RENDERING_INTENT_RELATIVE:
+    case PDFCORE_RENDERING_INTENT_RELATIVE:
       return "Rel";
-    case JPEGLI_RENDERING_INTENT_SATURATION:
+    case PDFCORE_RENDERING_INTENT_SATURATION:
       return "Sat";
-    case JPEGLI_RENDERING_INTENT_ABSOLUTE:
+    case PDFCORE_RENDERING_INTENT_ABSOLUTE:
       return "Abs";
   }
   // Should not happen - visitor fails if enum is invalid.
-  JPEGLI_DEBUG_ABORT("Invalid RenderingIntent %u",
+  PDFCORE_DEBUG_ABORT("Invalid RenderingIntent %u",
                      static_cast<uint32_t>(rendering_intent));
   return "Invalid";
 }
 
-static std::string ColorEncodingDescriptionImpl(const JpegliColorEncoding& c) {
-  if (c.color_space == JPEGLI_COLOR_SPACE_RGB &&
-      c.white_point == JPEGLI_WHITE_POINT_D65) {
-    if (c.rendering_intent == JPEGLI_RENDERING_INTENT_PERCEPTUAL &&
-        c.transfer_function == JPEGLI_TRANSFER_FUNCTION_SRGB) {
-      if (c.primaries == JPEGLI_PRIMARIES_SRGB) return "sRGB";
-      if (c.primaries == JPEGLI_PRIMARIES_P3) return "DisplayP3";
+static std::string ColorEncodingDescriptionImpl(const PdfcoreColorEncoding& c) {
+  if (c.color_space == PDFCORE_COLOR_SPACE_RGB &&
+      c.white_point == PDFCORE_WHITE_POINT_D65) {
+    if (c.rendering_intent == PDFCORE_RENDERING_INTENT_PERCEPTUAL &&
+        c.transfer_function == PDFCORE_TRANSFER_FUNCTION_SRGB) {
+      if (c.primaries == PDFCORE_PRIMARIES_SRGB) return "sRGB";
+      if (c.primaries == PDFCORE_PRIMARIES_P3) return "DisplayP3";
     }
-    if (c.rendering_intent == JPEGLI_RENDERING_INTENT_RELATIVE &&
-        c.primaries == JPEGLI_PRIMARIES_2100) {
-      if (c.transfer_function == JPEGLI_TRANSFER_FUNCTION_PQ)
+    if (c.rendering_intent == PDFCORE_RENDERING_INTENT_RELATIVE &&
+        c.primaries == PDFCORE_PRIMARIES_2100) {
+      if (c.transfer_function == PDFCORE_TRANSFER_FUNCTION_PQ)
         return "Rec2100PQ";
-      if (c.transfer_function == JPEGLI_TRANSFER_FUNCTION_HLG)
+      if (c.transfer_function == PDFCORE_TRANSFER_FUNCTION_HLG)
         return "Rec2100HLG";
     }
   }
 
   std::string d = ToString(c.color_space);
 
-  bool explicit_wp_tf = (c.color_space != JPEGLI_COLOR_SPACE_XYB);
+  bool explicit_wp_tf = (c.color_space != PDFCORE_COLOR_SPACE_XYB);
   if (explicit_wp_tf) {
     d += '_';
-    if (c.white_point == JPEGLI_WHITE_POINT_CUSTOM) {
-      d += jpegli::ToString(c.white_point_xy[0]) + ';';
-      d += jpegli::ToString(c.white_point_xy[1]);
+    if (c.white_point == PDFCORE_WHITE_POINT_CUSTOM) {
+      d += pdfcore::ToString(c.white_point_xy[0]) + ';';
+      d += pdfcore::ToString(c.white_point_xy[1]);
     } else {
       d += ToString(c.white_point);
     }
   }
 
-  if ((c.color_space != JPEGLI_COLOR_SPACE_GRAY) &&
-      (c.color_space != JPEGLI_COLOR_SPACE_XYB)) {
+  if ((c.color_space != PDFCORE_COLOR_SPACE_GRAY) &&
+      (c.color_space != PDFCORE_COLOR_SPACE_XYB)) {
     d += '_';
-    if (c.primaries == JPEGLI_PRIMARIES_CUSTOM) {
-      d += jpegli::ToString(c.primaries_red_xy[0]) + ';';
-      d += jpegli::ToString(c.primaries_red_xy[1]) + ';';
-      d += jpegli::ToString(c.primaries_green_xy[0]) + ';';
-      d += jpegli::ToString(c.primaries_green_xy[1]) + ';';
-      d += jpegli::ToString(c.primaries_blue_xy[0]) + ';';
-      d += jpegli::ToString(c.primaries_blue_xy[1]);
+    if (c.primaries == PDFCORE_PRIMARIES_CUSTOM) {
+      d += pdfcore::ToString(c.primaries_red_xy[0]) + ';';
+      d += pdfcore::ToString(c.primaries_red_xy[1]) + ';';
+      d += pdfcore::ToString(c.primaries_green_xy[0]) + ';';
+      d += pdfcore::ToString(c.primaries_green_xy[1]) + ';';
+      d += pdfcore::ToString(c.primaries_blue_xy[0]) + ';';
+      d += pdfcore::ToString(c.primaries_blue_xy[1]);
     } else {
       d += ToString(c.primaries);
     }
@@ -915,11 +915,11 @@ static std::string ColorEncodingDescriptionImpl(const JpegliColorEncoding& c) {
   d += ToString(c.rendering_intent);
 
   if (explicit_wp_tf) {
-    JpegliTransferFunction tf = c.transfer_function;
+    PdfcoreTransferFunction tf = c.transfer_function;
     d += '_';
-    if (tf == JPEGLI_TRANSFER_FUNCTION_GAMMA) {
+    if (tf == PDFCORE_TRANSFER_FUNCTION_GAMMA) {
       d += 'g';
-      d += jpegli::ToString(c.gamma);
+      d += pdfcore::ToString(c.gamma);
     } else {
       d += ToString(tf);
     }
@@ -927,35 +927,35 @@ static std::string ColorEncodingDescriptionImpl(const JpegliColorEncoding& c) {
   return d;
 }
 
-static Status MaybeCreateProfileImpl(const JpegliColorEncoding& c,
+static Status MaybeCreateProfileImpl(const PdfcoreColorEncoding& c,
                                      std::vector<uint8_t>* icc) {
   std::vector<uint8_t> header;
   std::vector<uint8_t> tagtable;
   std::vector<uint8_t> tags;
-  JpegliTransferFunction tf = c.transfer_function;
-  if (c.color_space == JPEGLI_COLOR_SPACE_UNKNOWN ||
-      tf == JPEGLI_TRANSFER_FUNCTION_UNKNOWN) {
+  PdfcoreTransferFunction tf = c.transfer_function;
+  if (c.color_space == PDFCORE_COLOR_SPACE_UNKNOWN ||
+      tf == PDFCORE_TRANSFER_FUNCTION_UNKNOWN) {
     return false;  // Not an error
   }
 
   switch (c.color_space) {
-    case JPEGLI_COLOR_SPACE_RGB:
-    case JPEGLI_COLOR_SPACE_GRAY:
-    case JPEGLI_COLOR_SPACE_XYB:
+    case PDFCORE_COLOR_SPACE_RGB:
+    case PDFCORE_COLOR_SPACE_GRAY:
+    case PDFCORE_COLOR_SPACE_XYB:
       break;  // OK
     default:
-      return JPEGLI_FAILURE("Invalid CS %u",
+      return PDFCORE_FAILURE("Invalid CS %u",
                             static_cast<unsigned int>(c.color_space));
   }
 
-  if (c.color_space == JPEGLI_COLOR_SPACE_XYB &&
-      c.rendering_intent != JPEGLI_RENDERING_INTENT_PERCEPTUAL) {
-    return JPEGLI_FAILURE(
+  if (c.color_space == PDFCORE_COLOR_SPACE_XYB &&
+      c.rendering_intent != PDFCORE_RENDERING_INTENT_PERCEPTUAL) {
+    return PDFCORE_FAILURE(
         "Only perceptual rendering intent implemented for XYB "
         "ICC profile.");
   }
 
-  JPEGLI_RETURN_IF_ERROR(CreateICCHeader(c, &header));
+  PDFCORE_RETURN_IF_ERROR(CreateICCHeader(c, &header));
 
   std::vector<size_t> offsets;
   // tag count, deferred to later
@@ -974,35 +974,35 @@ static Status MaybeCreateProfileImpl(const JpegliColorEncoding& c,
   AddToICCTagTable("cprt", tag_offset, tag_size, &tagtable, &offsets);
 
   // TODO(eustas): isn't it the other way round: gray image has d50 WhitePoint?
-  if (c.color_space == JPEGLI_COLOR_SPACE_GRAY) {
+  if (c.color_space == PDFCORE_COLOR_SPACE_GRAY) {
     Color wtpt;
-    JPEGLI_RETURN_IF_ERROR(
+    PDFCORE_RETURN_IF_ERROR(
         CIEXYZFromWhiteCIExy(c.white_point_xy[0], c.white_point_xy[1], wtpt));
-    JPEGLI_RETURN_IF_ERROR(CreateICCXYZTag(wtpt, &tags));
+    PDFCORE_RETURN_IF_ERROR(CreateICCXYZTag(wtpt, &tags));
   } else {
     Color d50{0.964203, 1.0, 0.824905};
-    JPEGLI_RETURN_IF_ERROR(CreateICCXYZTag(d50, &tags));
+    PDFCORE_RETURN_IF_ERROR(CreateICCXYZTag(d50, &tags));
   }
   FinalizeICCTag(&tags, &tag_offset, &tag_size);
   AddToICCTagTable("wtpt", tag_offset, tag_size, &tagtable, &offsets);
 
-  if (c.color_space != JPEGLI_COLOR_SPACE_GRAY) {
+  if (c.color_space != PDFCORE_COLOR_SPACE_GRAY) {
     // Chromatic adaptation matrix
     Matrix3x3 chad;
-    JPEGLI_RETURN_IF_ERROR(
+    PDFCORE_RETURN_IF_ERROR(
         CreateICCChadMatrix(c.white_point_xy[0], c.white_point_xy[1], chad));
 
-    JPEGLI_RETURN_IF_ERROR(CreateICCChadTag(chad, &tags));
+    PDFCORE_RETURN_IF_ERROR(CreateICCChadTag(chad, &tags));
     FinalizeICCTag(&tags, &tag_offset, &tag_size);
     AddToICCTagTable("chad", tag_offset, tag_size, &tagtable, &offsets);
   }
 
-  if (c.color_space == JPEGLI_COLOR_SPACE_RGB) {
+  if (c.color_space == PDFCORE_COLOR_SPACE_RGB) {
     MaybeCreateICCCICPTag(c, &tags, &tag_offset, &tag_size, &tagtable,
                           &offsets);
 
     Matrix3x3 m;
-    JPEGLI_RETURN_IF_ERROR(CreateICCRGBMatrix(
+    PDFCORE_RETURN_IF_ERROR(CreateICCRGBMatrix(
         c.primaries_red_xy[0], c.primaries_red_xy[1], c.primaries_green_xy[0],
         c.primaries_green_xy[1], c.primaries_blue_xy[0], c.primaries_blue_xy[1],
         c.white_point_xy[0], c.white_point_xy[1], m));
@@ -1010,72 +1010,72 @@ static Status MaybeCreateProfileImpl(const JpegliColorEncoding& c,
     Color g{m[0][1], m[1][1], m[2][1]};
     Color b{m[0][2], m[1][2], m[2][2]};
 
-    JPEGLI_RETURN_IF_ERROR(CreateICCXYZTag(r, &tags));
+    PDFCORE_RETURN_IF_ERROR(CreateICCXYZTag(r, &tags));
     FinalizeICCTag(&tags, &tag_offset, &tag_size);
     AddToICCTagTable("rXYZ", tag_offset, tag_size, &tagtable, &offsets);
 
-    JPEGLI_RETURN_IF_ERROR(CreateICCXYZTag(g, &tags));
+    PDFCORE_RETURN_IF_ERROR(CreateICCXYZTag(g, &tags));
     FinalizeICCTag(&tags, &tag_offset, &tag_size);
     AddToICCTagTable("gXYZ", tag_offset, tag_size, &tagtable, &offsets);
 
-    JPEGLI_RETURN_IF_ERROR(CreateICCXYZTag(b, &tags));
+    PDFCORE_RETURN_IF_ERROR(CreateICCXYZTag(b, &tags));
     FinalizeICCTag(&tags, &tag_offset, &tag_size);
     AddToICCTagTable("bXYZ", tag_offset, tag_size, &tagtable, &offsets);
   }
 
-  if (c.color_space == JPEGLI_COLOR_SPACE_XYB) {
-    JPEGLI_RETURN_IF_ERROR(CreateICCLutAtoBTagForXYB(&tags));
+  if (c.color_space == PDFCORE_COLOR_SPACE_XYB) {
+    PDFCORE_RETURN_IF_ERROR(CreateICCLutAtoBTagForXYB(&tags));
     FinalizeICCTag(&tags, &tag_offset, &tag_size);
     AddToICCTagTable("A2B0", tag_offset, tag_size, &tagtable, &offsets);
-    JPEGLI_RETURN_IF_ERROR(CreateICCNoOpBToATag(&tags));
+    PDFCORE_RETURN_IF_ERROR(CreateICCNoOpBToATag(&tags));
     FinalizeICCTag(&tags, &tag_offset, &tag_size);
     AddToICCTagTable("B2A0", tag_offset, tag_size, &tagtable, &offsets);
   } else if (kEnable3DToneMapping && CanToneMap(c)) {
-    JPEGLI_RETURN_IF_ERROR(CreateICCLutAtoBTagForHDR(c, &tags));
+    PDFCORE_RETURN_IF_ERROR(CreateICCLutAtoBTagForHDR(c, &tags));
     FinalizeICCTag(&tags, &tag_offset, &tag_size);
     AddToICCTagTable("A2B0", tag_offset, tag_size, &tagtable, &offsets);
-    JPEGLI_RETURN_IF_ERROR(CreateICCNoOpBToATag(&tags));
+    PDFCORE_RETURN_IF_ERROR(CreateICCNoOpBToATag(&tags));
     FinalizeICCTag(&tags, &tag_offset, &tag_size);
     AddToICCTagTable("B2A0", tag_offset, tag_size, &tagtable, &offsets);
   } else {
-    if (tf == JPEGLI_TRANSFER_FUNCTION_GAMMA) {
+    if (tf == PDFCORE_TRANSFER_FUNCTION_GAMMA) {
       float gamma = 1.0 / c.gamma;
-      JPEGLI_RETURN_IF_ERROR(CreateICCCurvParaTag({gamma}, 0, &tags));
-    } else if (c.color_space != JPEGLI_COLOR_SPACE_XYB) {
+      PDFCORE_RETURN_IF_ERROR(CreateICCCurvParaTag({gamma}, 0, &tags));
+    } else if (c.color_space != PDFCORE_COLOR_SPACE_XYB) {
       switch (tf) {
-        case JPEGLI_TRANSFER_FUNCTION_HLG:
+        case PDFCORE_TRANSFER_FUNCTION_HLG:
           CreateICCCurvCurvTag(
               CreateTableCurve<64, ExtraTF::kHLG>(CanToneMap(c)), &tags);
           break;
-        case JPEGLI_TRANSFER_FUNCTION_PQ:
+        case PDFCORE_TRANSFER_FUNCTION_PQ:
           CreateICCCurvCurvTag(
               CreateTableCurve<64, ExtraTF::kPQ>(CanToneMap(c)), &tags);
           break;
-        case JPEGLI_TRANSFER_FUNCTION_SRGB:
-          JPEGLI_RETURN_IF_ERROR(CreateICCCurvParaTag(
+        case PDFCORE_TRANSFER_FUNCTION_SRGB:
+          PDFCORE_RETURN_IF_ERROR(CreateICCCurvParaTag(
               {2.4, 1.0 / 1.055, 0.055 / 1.055, 1.0 / 12.92, 0.04045}, 3,
               &tags));
           break;
-        case JPEGLI_TRANSFER_FUNCTION_709:
-          JPEGLI_RETURN_IF_ERROR(CreateICCCurvParaTag(
+        case PDFCORE_TRANSFER_FUNCTION_709:
+          PDFCORE_RETURN_IF_ERROR(CreateICCCurvParaTag(
               {1.0 / 0.45, 1.0 / 1.099, 0.099 / 1.099, 1.0 / 4.5, 0.081}, 3,
               &tags));
           break;
-        case JPEGLI_TRANSFER_FUNCTION_LINEAR:
-          JPEGLI_RETURN_IF_ERROR(
+        case PDFCORE_TRANSFER_FUNCTION_LINEAR:
+          PDFCORE_RETURN_IF_ERROR(
               CreateICCCurvParaTag({1.0, 1.0, 0.0, 1.0, 0.0}, 3, &tags));
           break;
-        case JPEGLI_TRANSFER_FUNCTION_DCI:
-          JPEGLI_RETURN_IF_ERROR(
+        case PDFCORE_TRANSFER_FUNCTION_DCI:
+          PDFCORE_RETURN_IF_ERROR(
               CreateICCCurvParaTag({2.6, 1.0, 0.0, 1.0, 0.0}, 3, &tags));
           break;
         default:
-          return JPEGLI_UNREACHABLE("unknown TF %u",
+          return PDFCORE_UNREACHABLE("unknown TF %u",
                                     static_cast<unsigned int>(tf));
       }
     }
     FinalizeICCTag(&tags, &tag_offset, &tag_size);
-    if (c.color_space == JPEGLI_COLOR_SPACE_GRAY) {
+    if (c.color_space == PDFCORE_COLOR_SPACE_GRAY) {
       AddToICCTagTable("kTRC", tag_offset, tag_size, &tagtable, &offsets);
     } else {
       AddToICCTagTable("rTRC", tag_offset, tag_size, &tagtable, &offsets);
@@ -1119,18 +1119,18 @@ static Status MaybeCreateProfileImpl(const JpegliColorEncoding& c,
 
 // Returns a representation of the ColorEncoding fields (not icc).
 // Example description: "RGB_D65_SRG_Rel_Lin"
-static JPEGLI_MAYBE_UNUSED std::string ColorEncodingDescription(
-    const JpegliColorEncoding& c) {
+static PDFCORE_MAYBE_UNUSED std::string ColorEncodingDescription(
+    const PdfcoreColorEncoding& c) {
   return detail::ColorEncodingDescriptionImpl(c);
 }
 
 // NOTE: for XYB colorspace, the created profile can be used to transform a
 // *scaled* XYB image (created by ScaleXYB()) to another colorspace.
-static JPEGLI_MAYBE_UNUSED Status
-MaybeCreateProfile(const JpegliColorEncoding& c, std::vector<uint8_t>* icc) {
+static PDFCORE_MAYBE_UNUSED Status
+MaybeCreateProfile(const PdfcoreColorEncoding& c, std::vector<uint8_t>* icc) {
   return detail::MaybeCreateProfileImpl(c, icc);
 }
 
-}  // namespace jpegli
+}  // namespace pdfcore
 
-#endif  // JPEGLI_LIB_CMS_JPEGLI_CMS_INTERNAL_H_
+#endif  // PDFCORE_LIB_CMS_PDFCORE_CMS_INTERNAL_H_

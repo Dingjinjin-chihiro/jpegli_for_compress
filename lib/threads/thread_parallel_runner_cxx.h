@@ -4,7 +4,7 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
-/// @addtogroup libjpegli_cpp
+/// @addtogroup libpdfcore_jpegli_cpp
 /// @{
 ///
 /// @file thread_parallel_runner_cxx.h
@@ -13,8 +13,8 @@
 /// There's no binary library associated with the header since this is a header
 /// only library.
 
-#ifndef JPEGLI_THREAD_PARALLEL_RUNNER_CXX_H_
-#define JPEGLI_THREAD_PARALLEL_RUNNER_CXX_H_
+#ifndef PDFCORE_THREAD_PARALLEL_RUNNER_CXX_H_
+#define PDFCORE_THREAD_PARALLEL_RUNNER_CXX_H_
 
 #include <cstddef>
 #include <memory>
@@ -24,44 +24,44 @@
 
 #ifndef __cplusplus
 #error \
-    "This a C++ only header. Use jpegli/jpegli_thread_parallel_runner.h from C" \
+    "This a C++ only header. Use jpegli/pdfcore_jpegli_thread_parallel_runner.h from C" \
     "sources."
 #endif
 
-/// Struct to call JpegliThreadParallelRunnerDestroy from the
-/// JpegliThreadParallelRunnerPtr unique_ptr.
-struct JpegliThreadParallelRunnerDestroyStruct {
-  /// Calls @ref JpegliThreadParallelRunnerDestroy() on the passed runner.
-  void operator()(void* runner) { JpegliThreadParallelRunnerDestroy(runner); }
+/// Struct to call PdfcoreThreadParallelRunnerDestroy from the
+/// PdfcoreThreadParallelRunnerPtr unique_ptr.
+struct PdfcoreThreadParallelRunnerDestroyStruct {
+  /// Calls @ref PdfcoreThreadParallelRunnerDestroy() on the passed runner.
+  void operator()(void* runner) { PdfcoreThreadParallelRunnerDestroy(runner); }
 };
 
-/// std::unique_ptr<> type that calls JpegliThreadParallelRunnerDestroy() when
+/// std::unique_ptr<> type that calls PdfcoreThreadParallelRunnerDestroy() when
 /// releasing the runner.
 ///
 /// Use this helper type from C++ sources to ensure the runner is destroyed and
 /// their internal resources released.
-typedef std::unique_ptr<void, JpegliThreadParallelRunnerDestroyStruct>
-    JpegliThreadParallelRunnerPtr;
+typedef std::unique_ptr<void, PdfcoreThreadParallelRunnerDestroyStruct>
+    PdfcoreThreadParallelRunnerPtr;
 
-/// Creates an instance of JpegliThreadParallelRunner into a
-/// JpegliThreadParallelRunnerPtr and initializes it.
+/// Creates an instance of PdfcoreThreadParallelRunner into a
+/// PdfcoreThreadParallelRunnerPtr and initializes it.
 ///
 /// This function returns a unique_ptr that will call
-/// JpegliThreadParallelRunnerDestroy() when releasing the pointer. See @ref
-/// JpegliThreadParallelRunnerCreate for details on the instance creation.
+/// PdfcoreThreadParallelRunnerDestroy() when releasing the pointer. See @ref
+/// PdfcoreThreadParallelRunnerCreate for details on the instance creation.
 ///
 /// @param memory_manager custom allocator function. It may be NULL. The memory
 ///        manager will be copied internally.
 /// @param num_worker_threads the number of worker threads to create.
-/// @return a @c NULL JpegliThreadParallelRunnerPtr if the instance can not be
+/// @return a @c NULL PdfcoreThreadParallelRunnerPtr if the instance can not be
 /// allocated or initialized
-/// @return initialized JpegliThreadParallelRunnerPtr instance otherwise.
-static inline JpegliThreadParallelRunnerPtr JpegliThreadParallelRunnerMake(
-    const JpegliMemoryManager* memory_manager, size_t num_worker_threads) {
-  return JpegliThreadParallelRunnerPtr(
-      JpegliThreadParallelRunnerCreate(memory_manager, num_worker_threads));
+/// @return initialized PdfcoreThreadParallelRunnerPtr instance otherwise.
+static inline PdfcoreThreadParallelRunnerPtr PdfcoreThreadParallelRunnerMake(
+    const PdfcoreMemoryManager* memory_manager, size_t num_worker_threads) {
+  return PdfcoreThreadParallelRunnerPtr(
+      PdfcoreThreadParallelRunnerCreate(memory_manager, num_worker_threads));
 }
 
-#endif  // JPEGLI_THREAD_PARALLEL_RUNNER_CXX_H_
+#endif  // PDFCORE_THREAD_PARALLEL_RUNNER_CXX_H_
 
 /// @}

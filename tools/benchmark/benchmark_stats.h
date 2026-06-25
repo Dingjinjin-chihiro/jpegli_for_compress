@@ -4,8 +4,8 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
-#ifndef JPEGLI_TOOLS_BENCHMARK_BENCHMARK_STATS_H_
-#define JPEGLI_TOOLS_BENCHMARK_BENCHMARK_STATS_H_
+#ifndef PDFCORE_TOOLS_BENCHMARK_BENCHMARK_STATS_H_
+#define PDFCORE_TOOLS_BENCHMARK_BENCHMARK_STATS_H_
 
 #include <cstddef>
 #include <string>
@@ -13,7 +13,7 @@
 
 #include "lib/base/status.h"
 
-namespace jpegli_tools {
+namespace pdfcore_jpegli_tools {
 
 std::string StringPrintf(const char* format, ...);
 
@@ -32,7 +32,7 @@ struct BenchmarkStats {
 
   std::string PrintLine(const std::string& codec_desc) const;
 
-  ::jpegli::Status PrintMoreStats() const;
+  ::pdfcore::Status PrintMoreStats() const;
 
   size_t total_input_files = 0;
   size_t total_input_pixels = 0;
@@ -52,14 +52,14 @@ struct BenchmarkStats {
   std::vector<float> extra_metrics;
 };
 
-::jpegli::StatusOr<std::string> PrintHeader(
+::pdfcore::StatusOr<std::string> PrintHeader(
     const std::vector<std::string>& extra_metrics_names);
 
 // Given the rows of all printed statistics, print an aggregate row.
-::jpegli::StatusOr<std::string> PrintAggregate(
+::pdfcore::StatusOr<std::string> PrintAggregate(
     size_t num_extra_metrics,
     const std::vector<std::vector<ColumnValue>>& aggregate);
 
-}  // namespace jpegli_tools
+}  // namespace pdfcore_jpegli_tools
 
-#endif  // JPEGLI_TOOLS_BENCHMARK_BENCHMARK_STATS_H_
+#endif  // PDFCORE_TOOLS_BENCHMARK_BENCHMARK_STATS_H_

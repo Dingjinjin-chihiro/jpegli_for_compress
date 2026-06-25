@@ -4,13 +4,13 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
-#ifndef JPEGLI_TOOLS_SPEED_STATS_H_
-#define JPEGLI_TOOLS_SPEED_STATS_H_
+#ifndef PDFCORE_TOOLS_SPEED_STATS_H_
+#define PDFCORE_TOOLS_SPEED_STATS_H_
 
 #include <cstddef>
 #include <vector>
 
-namespace jpegli_tools {
+namespace pdfcore_jpegli_tools {
 
 class SpeedStats {
  public:
@@ -53,6 +53,6 @@ class SpeedStats {
   size_t file_size_ = 0;
 };
 
-}  // namespace jpegli_tools
+}  // namespace pdfcore_jpegli_tools
 
-#endif  // JPEGLI_TOOLS_SPEED_STATS_H_
+#endif  // PDFCORE_TOOLS_SPEED_STATS_H_

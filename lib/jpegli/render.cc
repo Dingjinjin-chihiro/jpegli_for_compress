@@ -28,18 +28,18 @@
 #include "lib/jpegli/upsample.h"
 
 #ifdef MEMORY_SANITIZER
-#define JPEGLI_MEMORY_SANITIZER 1
+#define PDFCORE_MEMORY_SANITIZER 1
 #elif defined(__has_feature)
 #if __has_feature(memory_sanitizer)
-#define JPEGLI_MEMORY_SANITIZER 1
+#define PDFCORE_MEMORY_SANITIZER 1
 #else
-#define JPEGLI_MEMORY_SANITIZER 0
+#define PDFCORE_MEMORY_SANITIZER 0
 #endif
 #else
-#define JPEGLI_MEMORY_SANITIZER 0
+#define PDFCORE_MEMORY_SANITIZER 0
 #endif
 
-#if JPEGLI_MEMORY_SANITIZER
+#if PDFCORE_MEMORY_SANITIZER
 #include "sanitizer/msan_interface.h"
 #endif
 
@@ -49,7 +49,7 @@
 #include <hwy/highway.h>
 
 HWY_BEFORE_NAMESPACE();
-namespace jpegli {
+namespace pdfcore {
 namespace HWY_NAMESPACE {
 
 // These templates are not found via ADL.
@@ -70,10 +70,10 @@ using DI = HWY_FULL(int32_t);
 constexpr D d;
 constexpr DI di;
 
-void GatherBlockStats(const int16_t* JPEGLI_RESTRICT coeffs,
+void GatherBlockStats(const int16_t* PDFCORE_RESTRICT coeffs,
                       const size_t coeffs_size,
-                      int32_t* JPEGLI_RESTRICT nonzeros,
-                      int32_t* JPEGLI_RESTRICT sumabs) {
+                      int32_t* PDFCORE_RESTRICT nonzeros,
+                      int32_t* PDFCORE_RESTRICT sumabs) {
   for (size_t i = 0; i < coeffs_size; i += Lanes(d)) {
     size_t k = i % DCTSIZE2;
     const Rebind<int16_t, DI> di16;
@@ -106,13 +106,13 @@ void DitherRow(j_decompress_ptr cinfo, float* row, int c, size_t y,
 }
 
 template <typename T>
-void StoreUnsignedRow(float* JPEGLI_RESTRICT input[], size_t x0, size_t len,
+void StoreUnsignedRow(float* PDFCORE_RESTRICT input[], size_t x0, size_t len,
                       size_t num_channels, float multiplier, T* output) {
   const HWY_CAPPED(float, 8) cd;
   auto zero = Zero(cd);
   auto mul = Set(cd, multiplier);
   const Rebind<T, decltype(cd)> cdu;
-#if JPEGLI_MEMORY_SANITIZER
+#if PDFCORE_MEMORY_SANITIZER
   const size_t padding = hwy::RoundUpTo(len, Lanes(cd)) - len;
   for (size_t c = 0; c < num_channels; ++c) {
     __msan_unpoison(input[c] + x0 + len, sizeof(input[c][0]) * padding);
@@ -151,13 +151,13 @@ void StoreUnsignedRow(float* JPEGLI_RESTRICT input[], size_t x0, size_t len,
                         DemoteTo(cdu, NearestInt(v3)), cdu, &output[4 * i]);
     }
   }
-#if JPEGLI_MEMORY_SANITIZER
+#if PDFCORE_MEMORY_SANITIZER
   __msan_poison(output + num_channels * len,
                 sizeof(output[0]) * num_channels * padding);
 #endif
 }
 
-void StoreFloatRow(float* JPEGLI_RESTRICT input[3], size_t x0, size_t len,
+void StoreFloatRow(float* PDFCORE_RESTRICT input[3], size_t x0, size_t len,
                    size_t num_channels, float* output) {
   const HWY_CAPPED(float, 8) cd;
   if (num_channels == 1) {
@@ -198,11 +198,11 @@ float LimitError(float error) {
   return error > 0.0f ? abserror : -abserror;
 }
 
-void WriteToOutput(j_decompress_ptr cinfo, float* JPEGLI_RESTRICT rows[],
+void WriteToOutput(j_decompress_ptr cinfo, float* PDFCORE_RESTRICT rows[],
                    size_t xoffset, size_t len, size_t num_channels,
-                   uint8_t* JPEGLI_RESTRICT output) {
+                   uint8_t* PDFCORE_RESTRICT output) {
   jpeg_decomp_master* m = cinfo->master;
-  uint8_t* JPEGLI_RESTRICT scratch_space = m->output_scratch_;
+  uint8_t* PDFCORE_RESTRICT scratch_space = m->output_scratch_;
   if (cinfo->quantize_colors && m->quant_pass_ == 1) {
     float* error_row[kMaxComponents];
     float* next_error_row[kMaxComponents];
@@ -250,11 +250,11 @@ void WriteToOutput(j_decompress_ptr cinfo, float* JPEGLI_RESTRICT rows[],
         }
       }
     }
-  } else if (m->output_data_type_ == JPEGLI_TYPE_UINT8) {
+  } else if (m->output_data_type_ == PDFCORE_TYPE_UINT8) {
     const float mul = 255.0;
     StoreUnsignedRow(rows, xoffset, len, num_channels, mul, scratch_space);
     memcpy(output, scratch_space, len * num_channels);
-  } else if (m->output_data_type_ == JPEGLI_TYPE_UINT16) {
+  } else if (m->output_data_type_ == PDFCORE_TYPE_UINT16) {
     const float mul = 65535.0;
     uint16_t* tmp = reinterpret_cast<uint16_t*>(scratch_space);
     StoreUnsignedRow(rows, xoffset, len, num_channels, mul, tmp);
@@ -268,7 +268,7 @@ void WriteToOutput(j_decompress_ptr cinfo, float* JPEGLI_RESTRICT rows[],
       }
     }
     memcpy(output, tmp, len * num_channels * 2);
-  } else if (m->output_data_type_ == JPEGLI_TYPE_FLOAT) {
+  } else if (m->output_data_type_ == PDFCORE_TYPE_FLOAT) {
     float* tmp = reinterpret_cast<float*>(scratch_space);
     StoreFloatRow(rows, xoffset, len, num_channels, tmp);
     if (m->swap_endianness_) {
@@ -283,27 +283,27 @@ void WriteToOutput(j_decompress_ptr cinfo, float* JPEGLI_RESTRICT rows[],
 
 // NOLINTNEXTLINE(google-readability-namespace-comments)
 }  // namespace HWY_NAMESPACE
-}  // namespace jpegli
+}  // namespace pdfcore
 HWY_AFTER_NAMESPACE();
 
 #if HWY_ONCE
 
-namespace jpegli {
+namespace pdfcore {
 
 HWY_EXPORT(GatherBlockStats);
 HWY_EXPORT(WriteToOutput);
 HWY_EXPORT(DecenterRow);
 
-void GatherBlockStats(const int16_t* JPEGLI_RESTRICT coeffs,
+void GatherBlockStats(const int16_t* PDFCORE_RESTRICT coeffs,
                       const size_t coeffs_size,
-                      int32_t* JPEGLI_RESTRICT nonzeros,
-                      int32_t* JPEGLI_RESTRICT sumabs) {
+                      int32_t* PDFCORE_RESTRICT nonzeros,
+                      int32_t* PDFCORE_RESTRICT sumabs) {
   HWY_DYNAMIC_DISPATCH(GatherBlockStats)(coeffs, coeffs_size, nonzeros, sumabs);
 }
 
-void WriteToOutput(j_decompress_ptr cinfo, float* JPEGLI_RESTRICT rows[],
+void WriteToOutput(j_decompress_ptr cinfo, float* PDFCORE_RESTRICT rows[],
                    size_t xoffset, size_t len, size_t num_channels,
-                   uint8_t* JPEGLI_RESTRICT output) {
+                   uint8_t* PDFCORE_RESTRICT output) {
   HWY_DYNAMIC_DISPATCH(WriteToOutput)
   (cinfo, rows, xoffset, len, num_channels, output);
 }
@@ -471,7 +471,7 @@ void PredictSmooth(j_decompress_ptr cinfo, JBLOCKARRAY blocks, int component,
     auto dc = [&](int i, int j) {
       return swap_indices ? dc_values[j][i] : dc_values[i][j];
     };
-    JPEGLI_CHECK(coef_index >= 0 && coef_index < 10);
+    PDFCORE_CHECK(coef_index >= 0 && coef_index < 10);
     Al = coef_bits[coef_index];
     switch (coef_index) {
       case 0:
@@ -557,7 +557,7 @@ void PredictSmooth(j_decompress_ptr cinfo, JBLOCKARRAY blocks, int component,
 void PrepareForOutput(j_decompress_ptr cinfo) {
   jpeg_decomp_master* m = cinfo->master;
   bool smoothing = do_smoothing(cinfo);
-  m->apply_smoothing = smoothing && FROM_JPEGLI_BOOL(cinfo->do_block_smoothing);
+  m->apply_smoothing = smoothing && FROM_PDFCORE_BOOL(cinfo->do_block_smoothing);
   size_t coeffs_per_block = cinfo->num_components * DCTSIZE2;
   memset(m->nonzeros_, 0, coeffs_per_block * sizeof(m->nonzeros_[0]));
   memset(m->sumabs_, 0, coeffs_per_block * sizeof(m->sumabs_[0]));
@@ -574,7 +574,7 @@ void PrepareForOutput(j_decompress_ptr cinfo) {
       m->dequant_[c * DCTSIZE2 + k] = table->quantval[k] * kDequantScale;
     }
   }
-  JPEGLI_CHECK(ChooseInverseTransform(cinfo));
+  PDFCORE_CHECK(ChooseInverseTransform(cinfo));
   ChooseColorTransform(cinfo);
 }
 
@@ -603,7 +603,7 @@ void DecodeCurrentiMCURow(j_decompress_ptr cinfo) {
         if (by >= compinfo.height_in_blocks) {
           continue;
         }
-        int16_t* JPEGLI_RESTRICT coeffs = &blocks[c][iy][0][0];
+        int16_t* PDFCORE_RESTRICT coeffs = &blocks[c][iy][0][0];
         size_t num = compinfo.width_in_blocks * DCTSIZE2;
         GatherBlockStats(coeffs, num, &m->nonzeros_[k0], &m->sumabs_[k0]);
         m->num_processed_blocks_[c] += compinfo.width_in_blocks;
@@ -622,8 +622,8 @@ void DecodeCurrentiMCURow(j_decompress_ptr cinfo) {
         continue;
       }
       size_t dctsize = m->scaled_dct_size[c];
-      int16_t* JPEGLI_RESTRICT row_in = &blocks[c][iy][0][0];
-      float* JPEGLI_RESTRICT row_out = raw_out->Row(by * dctsize);
+      int16_t* PDFCORE_RESTRICT row_in = &blocks[c][iy][0][0];
+      float* PDFCORE_RESTRICT row_out = raw_out->Row(by * dctsize);
       for (size_t bx = 0; bx < compinfo.width_in_blocks; ++bx) {
         if (m->apply_smoothing) {
           PredictSmooth(cinfo, blocks[c], c, bx, iy);
@@ -646,7 +646,7 @@ void DecodeCurrentiMCURow(j_decompress_ptr cinfo) {
 }
 
 void ProcessRawOutput(j_decompress_ptr cinfo, JSAMPIMAGE data) {
-  jpegli::DecodeCurrentiMCURow(cinfo);
+  pdfcore::DecodeCurrentiMCURow(cinfo);
   jpeg_decomp_master* m = cinfo->master;
   for (int c = 0; c < cinfo->num_components; ++c) {
     const auto& compinfo = cinfo->comp_info[c];
@@ -700,11 +700,11 @@ void ProcessOutput(j_decompress_ptr cinfo, size_t* num_output_rows,
         size_t yc = y / m->v_factor[c];
         for (int dy = 0; dy < line_groups; ++dy) {
           size_t ymid = yc + dy;
-          const float* JPEGLI_RESTRICT row_mid = raw_out->Row(ymid);
+          const float* PDFCORE_RESTRICT row_mid = raw_out->Row(ymid);
           if (cinfo->do_fancy_upsampling && m->v_factor[c] == 2) {
-            const float* JPEGLI_RESTRICT row_top =
+            const float* PDFCORE_RESTRICT row_top =
                 ymid == 0 ? row_mid : raw_out->Row(ymid - 1);
-            const float* JPEGLI_RESTRICT row_bot = ymid + 1 == m->raw_height_[c]
+            const float* PDFCORE_RESTRICT row_bot = ymid + 1 == m->raw_height_[c]
                                                        ? row_mid
                                                        : raw_out->Row(ymid + 1);
             Upsample2Vertical(row_top, row_mid, row_bot,
@@ -719,8 +719,8 @@ void ProcessOutput(j_decompress_ptr cinfo, size_t* num_output_rows,
           if (m->h_factor[c] > 1) {
             for (int yix = 0; yix < m->v_factor[c]; ++yix) {
               int row_ix = m->v_factor[c] * dy + yix;
-              float* JPEGLI_RESTRICT row = render_out->Row(row_ix);
-              float* JPEGLI_RESTRICT tmp =
+              float* PDFCORE_RESTRICT row = render_out->Row(row_ix);
+              float* PDFCORE_RESTRICT tmp =
                   m->upsample_scratch_ + HWY_ALIGNMENT / sizeof(float);
               if (cinfo->do_fancy_upsampling && m->h_factor[c] == 2) {
                 Upsample2Horizontal(row, tmp, output_width);
@@ -753,7 +753,7 @@ void ProcessOutput(j_decompress_ptr cinfo, size_t* num_output_rows,
           WriteToOutput(cinfo, rows, m->xoffset_, cinfo->output_width,
                         cinfo->out_color_components, output);
         }
-        JPEGLI_CHECK(cinfo->output_scanline == y + yix);
+        PDFCORE_CHECK(cinfo->output_scanline == y + yix);
         ++cinfo->output_scanline;
         ++(*num_output_rows);
         if (cinfo->output_scanline == cinfo->output_height) {
@@ -767,5 +767,5 @@ void ProcessOutput(j_decompress_ptr cinfo, size_t* num_output_rows,
   }
 }
 
-}  // namespace jpegli
+}  // namespace pdfcore
 #endif  // HWY_ONCE

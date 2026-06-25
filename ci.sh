@@ -102,7 +102,7 @@ fi
 
 # Version inferred from the CI variables.
 CI_COMMIT_SHA=${GITHUB_SHA:-}
-JPEGLI_VERSION=${JPEGLI_VERSION:-}
+PDFCORE_VERSION=${PDFCORE_VERSION:-}
 
 # Benchmark parameters
 STORE_IMAGES=${STORE_IMAGES:-1}
@@ -321,16 +321,16 @@ cmake_configure() {
     -DCMAKE_EXE_LINKER_FLAGS="${CMAKE_EXE_LINKER_FLAGS}"
     -DCMAKE_MODULE_LINKER_FLAGS="${CMAKE_MODULE_LINKER_FLAGS}"
     -DCMAKE_SHARED_LINKER_FLAGS="${CMAKE_SHARED_LINKER_FLAGS}"
-    -DJPEGLI_VERSION="${JPEGLI_VERSION}"
+    -DPDFCORE_VERSION="${PDFCORE_VERSION}"
     -DSANITIZER="${SANITIZER}"
     # These are not enabled by default in cmake.
-    -DJPEGLI_ENABLE_DEVTOOLS=ON
+    -DPDFCORE_ENABLE_DEVTOOLS=ON
     # We always use libfuzzer in the ci.sh wrapper.
-    -DJPEGLI_FUZZER_LINK_FLAGS="-fsanitize=fuzzer"
+    -DPDFCORE_FUZZER_LINK_FLAGS="-fsanitize=fuzzer"
   )
   if [[ "${BUILD_TARGET}" != *mingw32 ]]; then
     args+=(
-      -DJPEGLI_WARNINGS_AS_ERRORS=ON
+      -DPDFCORE_WARNINGS_AS_ERRORS=ON
     )
   fi
   if [[ -n "${BUILD_TARGET}" ]]; then
@@ -505,7 +505,7 @@ cmd_release() {
 
 cmd_opt() {
   CMAKE_BUILD_TYPE="RelWithDebInfo"
-  CMAKE_CXX_FLAGS+=" -DJPEGLI_IS_DEBUG_BUILD"
+  CMAKE_CXX_FLAGS+=" -DPDFCORE_IS_DEBUG_BUILD"
   cmake_configure "$@"
   cmake_build_and_test
 }
@@ -514,7 +514,7 @@ cmd_coverage() {
   # -O0 prohibits stack space reuse -> causes stack-overflow on dozens of tests.
   TEST_STACK_LIMIT="none"
 
-  cmd_release -DJPEGLI_ENABLE_COVERAGE=ON "$@"
+  cmd_release -DPDFCORE_ENABLE_COVERAGE=ON "$@"
 
   if [[ "${SKIP_TEST}" -ne "1" ]]; then
     # If we didn't run the test we also don't print a coverage report.
@@ -569,7 +569,7 @@ cmd_gbench() {
   export_env
   (cd "${BUILD_DIR}"
    export UBSAN_OPTIONS=print_stacktrace=1
-   lib/jpegli_gbench \
+   lib/pdfcore_jpegli_gbench \
      --benchmark_counters_tabular=true \
      --benchmark_out_format=json \
      --benchmark_out=gbench.json "$@"
@@ -579,7 +579,7 @@ cmd_gbench() {
 cmd_asanfuzz() {
   CMAKE_CXX_FLAGS+=" -fsanitize=fuzzer-no-link -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION=1"
   CMAKE_C_FLAGS+=" -fsanitize=fuzzer-no-link -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION=1"
-  cmd_asan -DJPEGLI_ENABLE_FUZZERS=ON "$@"
+  cmd_asan -DPDFCORE_ENABLE_FUZZERS=ON "$@"
 }
 
 cmd_msanfuzz() {
@@ -595,7 +595,7 @@ cmd_msanfuzz() {
 
   CMAKE_CXX_FLAGS+=" -fsanitize=fuzzer-no-link -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION=1"
   CMAKE_C_FLAGS+=" -fsanitize=fuzzer-no-link -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION=1"
-  cmd_msan -DJPEGLI_ENABLE_FUZZERS=ON "$@"
+  cmd_msan -DPDFCORE_ENABLE_FUZZERS=ON "$@"
 }
 
 cmd_asan() {
@@ -605,7 +605,7 @@ cmd_asan() {
   CMAKE_CXX_FLAGS+=" -g -DADDRESS_SANITIZER \
     -fsanitize=address ${UBSAN_FLAGS[@]}"
   strip_dead_code
-  cmake_configure "$@" -DJPEGLI_ENABLE_TCMALLOC=OFF
+  cmake_configure "$@" -DPDFCORE_ENABLE_TCMALLOC=OFF
   cmake_build_and_test
 }
 
@@ -619,7 +619,7 @@ cmd_tsan() {
   CMAKE_C_FLAGS+=" ${tsan_args[@]}"
   CMAKE_CXX_FLAGS+=" ${tsan_args[@]}"
 
-  cmake_configure "$@" -DJPEGLI_ENABLE_TCMALLOC=OFF
+  cmake_configure "$@" -DPDFCORE_ENABLE_TCMALLOC=OFF
   cmake_build_and_test
 }
 
@@ -682,9 +682,9 @@ cmd_msan() {
   # TODO(eustas): investigate why fuzzers do not link when MSAN libc++ is used
   cmake_configure "$@" \
     -DCMAKE_CROSSCOMPILING=1 -DRUN_HAVE_STD_REGEX=0 -DRUN_HAVE_POSIX_REGEX=0 \
-    -DJPEGLI_ENABLE_TCMALLOC=OFF -DJPEGLI_WARNINGS_AS_ERRORS=OFF \
+    -DPDFCORE_ENABLE_TCMALLOC=OFF -DPDFCORE_WARNINGS_AS_ERRORS=OFF \
     -DCMAKE_REQUIRED_LINK_OPTIONS="${msan_linker_flags[@]}" \
-    -DJPEGLI_ENABLE_FUZZERS=OFF
+    -DPDFCORE_ENABLE_FUZZERS=OFF
   cmake_build_and_test
 }
 
@@ -796,17 +796,17 @@ _cmd_ossfuzz() {
 
   # Args passed to ninja. These will be evaluated as a string separated by
   # spaces.
-  local jpegli_extra_args="$@"
+  local pdfcore_jpegli_extra_args="$@"
 
   sudo docker run --rm -i \
-    -e JPEGLI_UID=$(id -u) \
-    -e JPEGLI_GID=$(id -g) \
+    -e PDFCORE_UID=$(id -u) \
+    -e PDFCORE_GID=$(id -g) \
     -e FUZZING_ENGINE="${FUZZING_ENGINE:-libfuzzer}" \
     -e SANITIZER="${sanitizer}" \
     -e ARCHITECTURE=x86_64 \
     -e FUZZING_LANGUAGE=c++ \
     -e MSAN_LIBS_PATH="/work/msan" \
-    -e JPEGLI_EXTRA_ARGS="${jpegli_extra_args}" \
+    -e PDFCORE_EXTRA_ARGS="${pdfcore_jpegli_extra_args}" \
     -v "${MYDIR}":/src/libjpegli \
     -v "${MYDIR}/tools/scripts/ossfuzz-build.sh":/src/build.sh \
     -v "${real_build_dir}":/work \
@@ -879,7 +879,7 @@ cmd_benchmark() {
 
   tar -xvf "${nikon_corpus_tar}" -C "${corpus_dir}"
 
-  local sem_id="jpegli_benchmark-$$"
+  local sem_id="pdfcore_jpegli_benchmark-$$"
   local nprocs=$(nproc --all || echo 1)
   images=()
   local filename
@@ -1027,7 +1027,7 @@ _speed_from_output() {
 # Run benchmarks on ARM for the big and little CPUs.
 cmd_arm_benchmark() {
   # Flags used for cjxl encoder with .png inputs
-  local jpegli_png_benchmarks=(
+  local pdfcore_jpegli_png_benchmarks=(
     # Lossy options:
     "--epf=0 --distance=1.0 --speed=cheetah"
     "--epf=2 --distance=1.0 --speed=cheetah"
@@ -1049,7 +1049,7 @@ cmd_arm_benchmark() {
 
   # Flags used for cjxl encoder with .jpg inputs. These should do lossless
   # JPEG recompression (of pixels or full jpeg).
-  local jpegli_jpeg_benchmarks=(
+  local pdfcore_jpegli_jpeg_benchmarks=(
     "--num_reps=3"
   )
 
@@ -1113,9 +1113,9 @@ cmd_arm_benchmark() {
       # Select the list of flags to use for the current encoder/image pair.
       local img_benchmarks
       if [[ "${src_ext}" == "jpg" ]]; then
-        img_benchmarks=("${jpegli_jpeg_benchmarks[@]}")
+        img_benchmarks=("${pdfcore_jpegli_jpeg_benchmarks[@]}")
       else
-        img_benchmarks=("${jpegli_png_benchmarks[@]}")
+        img_benchmarks=("${pdfcore_jpegli_png_benchmarks[@]}")
       fi
 
       for flags in "${img_benchmarks[@]}"; do
@@ -1205,7 +1205,7 @@ cmd_fuzz() {
   local nprocs=$(nproc --all || echo 1)
   (
    cd "${TOOLS_DIR}"
-   djpegli_fuzzer "${fuzzer_crash_dir}" "${corpus_dir}" \
+   dpdfcore_jpegli_fuzzer "${fuzzer_crash_dir}" "${corpus_dir}" \
      -max_total_time="${FUZZER_MAX_TIME}" -jobs=${nprocs} \
      -artifact_prefix="${fuzzer_crash_dir}/"
   )
@@ -1439,8 +1439,8 @@ cmd_bump_version() {
   fi
 
   if [[ -z "${newver}" ]]; then
-    local major=$(get_version JPEGLI_MAJOR_VERSION)
-    local minor=$(get_version JPEGLI_MINOR_VERSION)
+    local major=$(get_version PDFCORE_MAJOR_VERSION)
+    local minor=$(get_version PDFCORE_MINOR_VERSION)
     local patch=0
     minor=$(( ${minor}  + 1))
   else
@@ -1458,13 +1458,13 @@ cmd_bump_version() {
 
   echo "Bumping version to ${newver} (${major}.${minor}.${patch})"
   sed -E \
-    -e "s/(set\\(JPEGLI_MAJOR_VERSION) [0-9]+\\)/\\1 ${major})/" \
-    -e "s/(set\\(JPEGLI_MINOR_VERSION) [0-9]+\\)/\\1 ${minor})/" \
-    -e "s/(set\\(JPEGLI_PATCH_VERSION) [0-9]+\\)/\\1 ${patch})/" \
+    -e "s/(set\\(PDFCORE_MAJOR_VERSION) [0-9]+\\)/\\1 ${major})/" \
+    -e "s/(set\\(PDFCORE_MINOR_VERSION) [0-9]+\\)/\\1 ${minor})/" \
+    -e "s/(set\\(PDFCORE_PATCH_VERSION) [0-9]+\\)/\\1 ${patch})/" \
     -i lib/CMakeLists.txt
   sed -E \
-    -e "s/(LIBJPEGLI_VERSION: )\"[0-9.]+\"/\\1\"${major}.${minor}.${patch}\"/" \
-    -e "s/(LIBJPEGLI_ABI_VERSION: )\"[0-9.]+\"/\\1\"${major}.${minor}\"/" \
+    -e "s/(LIBPDFCORE_VERSION: )\"[0-9.]+\"/\\1\"${major}.${minor}.${patch}\"/" \
+    -e "s/(LIBPDFCORE_ABI_VERSION: )\"[0-9.]+\"/\\1\"${major}.${minor}\"/" \
     -i .github/workflows/conformance.yml
 
   # Update lib.gni
@@ -1534,7 +1534,7 @@ oss-fuzz commands:
  ossfuzz_msan   Build the local source inside oss-fuzz docker with msan.
  ossfuzz_ubsan  Build the local source inside oss-fuzz docker with ubsan.
  ossfuzz_ninja  Run ninja on the BUILD_DIR inside the oss-fuzz docker. Extra
-                parameters are passed to ninja, for example "djpegli_fuzzer" will
+                parameters are passed to ninja, for example "dpdfcore_jpegli_fuzzer" will
                 only build that ninja target. Use for faster build iteration
                 after one of the ossfuzz_*san commands.
 

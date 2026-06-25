@@ -5,11 +5,11 @@
 // https://developers.google.com/open-source/licenses/bsd
 //
 
-// C++ implementation using std::thread of a ::JpegliParallelRunner.
+// C++ implementation using std::thread of a ::PdfcoreParallelRunner.
 
 // The main class in this module, ThreadParallelRunner, implements a static
 // method ThreadParallelRunner::Runner than can be passed as a
-// JpegliParallelRunner when using the JPEGLI library. This uses std::thread
+// PdfcoreParallelRunner when using the JPEGLI library. This uses std::thread
 // internally and related synchronization functions. The number of threads
 // created is fixed at construction time and the threads are re-used for every
 // ThreadParallelRunner::Runner call. Only one concurrent Runner() call per
@@ -27,11 +27,11 @@
 //
 // Usage:
 //   ThreadParallelRunner runner;
-//   JpegliDecode(
+//   PdfcoreDecode(
 //       ... , &ThreadParallelRunner::Runner, static_cast<void*>(&runner));
 
-#ifndef JPEGLI_LIB_THREADS_THREAD_PARALLEL_RUNNER_INTERNAL_H_
-#define JPEGLI_LIB_THREADS_THREAD_PARALLEL_RUNNER_INTERNAL_H_
+#ifndef PDFCORE_LIB_THREADS_THREAD_PARALLEL_RUNNER_INTERNAL_H_
+#define PDFCORE_LIB_THREADS_THREAD_PARALLEL_RUNNER_INTERNAL_H_
 
 #include <atomic>
 #include <condition_variable>  //NOLINT
@@ -45,15 +45,15 @@
 #include "lib/base/memory_manager.h"
 #include "lib/base/parallel_runner.h"
 
-namespace jpegli {
+namespace pdfcore {
 
-// Main helper class implementing the ::JpegliParallelRunner interface.
+// Main helper class implementing the ::PdfcoreParallelRunner interface.
 class ThreadParallelRunner {
  public:
-  // ::JpegliParallelRunner interface.
-  static JpegliParallelRetCode Runner(void* runner_opaque, void* jpegli_opaque,
-                                      JpegliParallelRunInit init,
-                                      JpegliParallelRunFunction func,
+  // ::PdfcoreParallelRunner interface.
+  static PdfcoreParallelRetCode Runner(void* runner_opaque, void* pdfcore_jpegli_opaque,
+                                      PdfcoreParallelRunInit init,
+                                      PdfcoreParallelRunFunction func,
                                       uint32_t start_range, uint32_t end_range);
 
   // Starts the given number of worker threads and blocks until they are ready.
@@ -81,13 +81,13 @@ class ThreadParallelRunner {
     }
 
     data_func_ =
-        reinterpret_cast<JpegliParallelRunFunction>(&CallClosure<Func>);
-    jpegli_opaque_ = const_cast<void*>(static_cast<const void*>(&func));
+        reinterpret_cast<PdfcoreParallelRunFunction>(&CallClosure<Func>);
+    pdfcore_jpegli_opaque_ = const_cast<void*>(static_cast<const void*>(&func));
     StartWorkers(kWorkerOnce);
     WorkersReadyBarrier();
   }
 
-  JpegliMemoryManager memory_manager;
+  PdfcoreMemoryManager memory_manager;
 
  private:
   // After construction and between calls to Run, workers are "ready", i.e.
@@ -105,7 +105,7 @@ class ThreadParallelRunner {
   static constexpr WorkerCommand kWorkerExit = ~3ULL;
 
   // Calls f(task, thread). Used for type erasure of Func arguments. The
-  // signature must match JpegliParallelRunFunction, hence a void* argument.
+  // signature must match PdfcoreParallelRunFunction, hence a void* argument.
   template <class Closure>
   static void CallClosure(void* f, const uint32_t task, const size_t thread) {
     (*reinterpret_cast<const Closure*>(f))(task, thread);
@@ -155,8 +155,8 @@ class ThreadParallelRunner {
   WorkerCommand worker_start_command_;
 
   // Written by main thread, read by workers (after mutex lock/unlock).
-  JpegliParallelRunFunction data_func_;
-  void* jpegli_opaque_;
+  PdfcoreParallelRunFunction data_func_;
+  void* pdfcore_jpegli_opaque_;
 
   // Updated by workers; padding avoids false sharing.
   uint8_t padding1[64];
@@ -164,6 +164,6 @@ class ThreadParallelRunner {
   uint8_t padding2[64];
 };
 
-}  // namespace jpegli
+}  // namespace pdfcore
 
-#endif  // JPEGLI_LIB_THREADS_THREAD_PARALLEL_RUNNER_INTERNAL_H_
+#endif  // PDFCORE_LIB_THREADS_THREAD_PARALLEL_RUNNER_INTERNAL_H_

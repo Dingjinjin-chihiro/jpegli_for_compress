@@ -18,8 +18,8 @@
 
 namespace {
 
-// Default JpegliMemoryManager using malloc and free for the jpegli_threads
-// library. Same as the default JpegliMemoryManager for the jpegli library
+// Default PdfcoreMemoryManager using malloc and free for the pdfcore_jpegli_threads
+// library. Same as the default PdfcoreMemoryManager for the jpegli library
 // itself.
 
 // Default alloc and free functions.
@@ -36,8 +36,8 @@ void ThreadMemoryManagerDefaultFree(void* opaque, void* address) {
 // functions which will be initialized with the default ones. If either alloc
 // or free are NULL, then both must be NULL, otherwise this function returns an
 // error.
-bool ThreadMemoryManagerInit(JpegliMemoryManager* self,
-                             const JpegliMemoryManager* memory_manager) {
+bool ThreadMemoryManagerInit(PdfcoreMemoryManager* self,
+                             const PdfcoreMemoryManager* memory_manager) {
   if (memory_manager) {
     *self = *memory_manager;
   } else {
@@ -54,50 +54,50 @@ bool ThreadMemoryManagerInit(JpegliMemoryManager* self,
   return true;
 }
 
-void* ThreadMemoryManagerAlloc(const JpegliMemoryManager* memory_manager,
+void* ThreadMemoryManagerAlloc(const PdfcoreMemoryManager* memory_manager,
                                size_t size) {
   return memory_manager->alloc(memory_manager->opaque, size);
 }
 
-void ThreadMemoryManagerFree(const JpegliMemoryManager* memory_manager,
+void ThreadMemoryManagerFree(const PdfcoreMemoryManager* memory_manager,
                              void* address) {
   memory_manager->free(memory_manager->opaque, address);
 }
 
 }  // namespace
 
-JpegliParallelRetCode JpegliThreadParallelRunner(
-    void* runner_opaque, void* jpegli_opaque, JpegliParallelRunInit init,
-    JpegliParallelRunFunction func, uint32_t start_range, uint32_t end_range) {
-  return jpegli::ThreadParallelRunner::Runner(
-      runner_opaque, jpegli_opaque, init, func, start_range, end_range);
+PdfcoreParallelRetCode PdfcoreThreadParallelRunner(
+    void* runner_opaque, void* pdfcore_jpegli_opaque, PdfcoreParallelRunInit init,
+    PdfcoreParallelRunFunction func, uint32_t start_range, uint32_t end_range) {
+  return pdfcore::ThreadParallelRunner::Runner(
+      runner_opaque, pdfcore_jpegli_opaque, init, func, start_range, end_range);
 }
 
 /// Starts the given number of worker threads and blocks until they are ready.
 /// "num_worker_threads" defaults to one per hyperthread. If zero, all tasks
 /// run on the main thread.
-void* JpegliThreadParallelRunnerCreate(
-    const JpegliMemoryManager* memory_manager, size_t num_worker_threads) {
-  JpegliMemoryManager local_memory_manager;
+void* PdfcoreThreadParallelRunnerCreate(
+    const PdfcoreMemoryManager* memory_manager, size_t num_worker_threads) {
+  PdfcoreMemoryManager local_memory_manager;
   if (!ThreadMemoryManagerInit(&local_memory_manager, memory_manager))
     return nullptr;
 
   void* alloc = ThreadMemoryManagerAlloc(&local_memory_manager,
-                                         sizeof(jpegli::ThreadParallelRunner));
+                                         sizeof(pdfcore::ThreadParallelRunner));
   if (!alloc) return nullptr;
   // Placement new constructor on allocated memory
-  jpegli::ThreadParallelRunner* runner =
-      new (alloc) jpegli::ThreadParallelRunner(num_worker_threads);
+  pdfcore::ThreadParallelRunner* runner =
+      new (alloc) pdfcore::ThreadParallelRunner(num_worker_threads);
   runner->memory_manager = local_memory_manager;
 
   return runner;
 }
 
-void JpegliThreadParallelRunnerDestroy(void* runner_opaque) {
-  jpegli::ThreadParallelRunner* runner =
-      reinterpret_cast<jpegli::ThreadParallelRunner*>(runner_opaque);
+void PdfcoreThreadParallelRunnerDestroy(void* runner_opaque) {
+  pdfcore::ThreadParallelRunner* runner =
+      reinterpret_cast<pdfcore::ThreadParallelRunner*>(runner_opaque);
   if (runner) {
-    JpegliMemoryManager local_memory_manager = runner->memory_manager;
+    PdfcoreMemoryManager local_memory_manager = runner->memory_manager;
     // Call destructor directly since custom free function is used.
     runner->~ThreadParallelRunner();
     ThreadMemoryManagerFree(&local_memory_manager, runner);
@@ -105,7 +105,7 @@ void JpegliThreadParallelRunnerDestroy(void* runner_opaque) {
 }
 
 // Get default value for num_worker_threads parameter of
-// InitJpegliThreadParallelRunner.
-size_t JpegliThreadParallelRunnerDefaultNumWorkerThreads() {
+// InitPdfcoreThreadParallelRunner.
+size_t PdfcoreThreadParallelRunnerDefaultNumWorkerThreads() {
   return std::thread::hardware_concurrency();
 }

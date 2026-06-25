@@ -23,7 +23,7 @@
 #include "lib/jpegli/test_utils.h"
 #include "lib/jpegli/testing.h"
 
-namespace jpegli {
+namespace pdfcore {
 namespace {
 
 constexpr uint8_t kFakeEoiMarker[2] = {0xff, 0xd9};
@@ -41,7 +41,7 @@ struct SourceManager {
     pub_.next_input_byte = nullptr;
     pub_.bytes_in_buffer = 0;
     pub_.skip_input_data = skip_input_data;
-    pub_.resync_to_restart = jpegli_resync_to_restart;
+    pub_.resync_to_restart = pdfcore_jpegli_resync_to_restart;
     pub_.term_source = term_source;
     if (max_chunk_size_ == 0) max_chunk_size_ = len;
   }
@@ -129,7 +129,7 @@ boolean test_marker_processor(j_decompress_ptr cinfo) {
   return TRUE;
 }
 
-jpegli::Status ReadOutputImage(const DecompressParams& dparams,
+pdfcore::Status ReadOutputImage(const DecompressParams& dparams,
                                j_decompress_ptr cinfo, SourceManager* src,
                                TestImage* output) {
   output->ysize = cinfo->output_height;
@@ -170,8 +170,8 @@ jpegli::Status ReadOutputImage(const DecompressParams& dparams,
         data[c] = rowdata[c].data();
       }
       while ((num_output_lines =
-                  jpegli_read_raw_data(cinfo, data.data(), max_lines)) == 0) {
-        JPEGLI_ENSURE(src && src->LoadNextChunk());
+                  pdfcore_jpegli_read_raw_data(cinfo, data.data(), max_lines)) == 0) {
+        PDFCORE_ENSURE(src && src->LoadNextChunk());
       }
     } else {
       size_t max_output_lines = dparams.max_output_lines;
@@ -184,15 +184,15 @@ jpegli::Status ReadOutputImage(const DecompressParams& dparams,
         size_t yidx = cinfo->output_scanline + i;
         scanlines[i] = &output->pixels[yidx * stride];
       }
-      while ((num_output_lines = jpegli_read_scanlines(cinfo, scanlines.data(),
+      while ((num_output_lines = pdfcore_jpegli_read_scanlines(cinfo, scanlines.data(),
                                                        max_lines)) == 0) {
-        JPEGLI_ENSURE(src && src->LoadNextChunk());
+        PDFCORE_ENSURE(src && src->LoadNextChunk());
       }
     }
     total_output_lines += num_output_lines;
     EXPECT_EQ(total_output_lines, cinfo->output_scanline);
     if (num_output_lines < max_lines) {
-      JPEGLI_ENSURE(src && src->LoadNextChunk());
+      PDFCORE_ENSURE(src && src->LoadNextChunk());
     }
   }
   return true;
@@ -207,13 +207,13 @@ struct TestConfig {
   float max_rms_dist = 1.0f;
 };
 
-jpegli::StatusOr<std::vector<uint8_t>> GetTestJpegData(TestConfig& config) {
+pdfcore::StatusOr<std::vector<uint8_t>> GetTestJpegData(TestConfig& config) {
   std::vector<uint8_t> compressed;
   if (!config.fn.empty()) {
-    JPEGLI_ASSIGN_OR_RETURN(compressed, ReadTestData(config.fn));
+    PDFCORE_ASSIGN_OR_RETURN(compressed, ReadTestData(config.fn));
   } else {
     GeneratePixels(&config.input);
-    JPEGLI_RETURN_IF_ERROR(
+    PDFCORE_RETURN_IF_ERROR(
         EncodeWithJpegli(config.input, config.jparams, &compressed));
   }
   return compressed;
@@ -231,7 +231,7 @@ class InputSuspensionTestParam : public ::testing::TestWithParam<TestConfig> {};
 TEST_P(InputSuspensionTestParam, InputOutputLockStepNonBuffered) {
   TestConfig config = GetParam();
   const DecompressParams& dparams = config.dparams;
-  JPEGLI_ASSIGN_OR_QUIT(std::vector<uint8_t> compressed,
+  PDFCORE_ASSIGN_OR_QUIT(std::vector<uint8_t> compressed,
                         GetTestJpegData(config), "Failed to create test data.");
   bool is_partial = config.dparams.size_factor < 1.0f;
   if (is_partial) {
@@ -243,49 +243,49 @@ TEST_P(InputSuspensionTestParam, InputOutputLockStepNonBuffered) {
   jpeg_decompress_struct cinfo;
   const auto try_catch_block = [&]() -> bool {
     ERROR_HANDLER_SETUP(jpegli);
-    jpegli_create_decompress(&cinfo);
+    pdfcore_jpegli_create_decompress(&cinfo);
     cinfo.src = reinterpret_cast<jpeg_source_mgr*>(&src);
 
     if (config.jparams.add_marker) {
-      jpegli_save_markers(&cinfo, kSpecialMarker0, 0xffff);
-      jpegli_save_markers(&cinfo, kSpecialMarker1, 0xffff);
+      pdfcore_jpegli_save_markers(&cinfo, kSpecialMarker0, 0xffff);
+      pdfcore_jpegli_save_markers(&cinfo, kSpecialMarker1, 0xffff);
       num_markers_seen = 0;
-      jpegli_set_marker_processor(&cinfo, 0xe6, test_marker_processor);
-      jpegli_set_marker_processor(&cinfo, 0xe7, test_marker_processor);
-      jpegli_set_marker_processor(&cinfo, 0xe8, test_marker_processor);
+      pdfcore_jpegli_set_marker_processor(&cinfo, 0xe6, test_marker_processor);
+      pdfcore_jpegli_set_marker_processor(&cinfo, 0xe7, test_marker_processor);
+      pdfcore_jpegli_set_marker_processor(&cinfo, 0xe8, test_marker_processor);
     }
-    while (jpegli_read_header(&cinfo, TRUE) == JPEG_SUSPENDED) {
-      JPEGLI_TEST_ENSURE_TRUE(src.LoadNextChunk());
+    while (pdfcore_jpegli_read_header(&cinfo, TRUE) == JPEG_SUSPENDED) {
+      PDFCORE_TEST_ENSURE_TRUE(src.LoadNextChunk());
     }
     SetDecompressParams(dparams, &cinfo);
-    jpegli_set_output_format(&cinfo, dparams.data_type, dparams.endianness);
+    pdfcore_jpegli_set_output_format(&cinfo, dparams.data_type, dparams.endianness);
     if (config.jparams.add_marker) {
       EXPECT_EQ(num_markers_seen, kMarkerSequenceLen);
       EXPECT_EQ(0, memcmp(markers_seen, kMarkerSequence, num_markers_seen));
     }
     VerifyHeader(config.jparams, &cinfo);
-    cinfo.raw_data_out = TO_JPEGLI_BOOL(dparams.output_mode == RAW_DATA);
+    cinfo.raw_data_out = TO_PDFCORE_BOOL(dparams.output_mode == RAW_DATA);
 
     if (dparams.output_mode == COEFFICIENTS) {
       jvirt_barray_ptr* coef_arrays;
-      while ((coef_arrays = jpegli_read_coefficients(&cinfo)) == nullptr) {
-        JPEGLI_TEST_ENSURE_TRUE(src.LoadNextChunk());
+      while ((coef_arrays = pdfcore_jpegli_read_coefficients(&cinfo)) == nullptr) {
+        PDFCORE_TEST_ENSURE_TRUE(src.LoadNextChunk());
       }
       CopyCoefficients(&cinfo, coef_arrays, &output0);
     } else {
-      while (!jpegli_start_decompress(&cinfo)) {
-        JPEGLI_TEST_ENSURE_TRUE(src.LoadNextChunk());
+      while (!pdfcore_jpegli_start_decompress(&cinfo)) {
+        PDFCORE_TEST_ENSURE_TRUE(src.LoadNextChunk());
       }
-      JPEGLI_TEST_ENSURE_TRUE(ReadOutputImage(dparams, &cinfo, &src, &output0));
+      PDFCORE_TEST_ENSURE_TRUE(ReadOutputImage(dparams, &cinfo, &src, &output0));
     }
 
-    while (!jpegli_finish_decompress(&cinfo)) {
-      JPEGLI_TEST_ENSURE_TRUE(src.LoadNextChunk());
+    while (!pdfcore_jpegli_finish_decompress(&cinfo)) {
+      PDFCORE_TEST_ENSURE_TRUE(src.LoadNextChunk());
     }
     return true;
   };
   ASSERT_TRUE(try_catch_block());
-  jpegli_destroy_decompress(&cinfo);
+  pdfcore_jpegli_destroy_decompress(&cinfo);
 
   TestImage output1;
   DecodeWithLibjpeg(config.jparams, dparams, compressed, &output1);
@@ -296,7 +296,7 @@ TEST_P(InputSuspensionTestParam, InputOutputLockStepBuffered) {
   TestConfig config = GetParam();
   if (config.jparams.add_marker) return;
   const DecompressParams& dparams = config.dparams;
-  JPEGLI_ASSIGN_OR_QUIT(std::vector<uint8_t> compressed,
+  PDFCORE_ASSIGN_OR_QUIT(std::vector<uint8_t> compressed,
                         GetTestJpegData(config), "Failed to create test data.");
   bool is_partial = config.dparams.size_factor < 1.0f;
   if (is_partial) {
@@ -308,53 +308,53 @@ TEST_P(InputSuspensionTestParam, InputOutputLockStepBuffered) {
   jpeg_decompress_struct cinfo;
   const auto try_catch_block = [&]() -> bool {
     ERROR_HANDLER_SETUP(jpegli);
-    jpegli_create_decompress(&cinfo);
+    pdfcore_jpegli_create_decompress(&cinfo);
 
     cinfo.src = reinterpret_cast<jpeg_source_mgr*>(&src);
 
-    while (jpegli_read_header(&cinfo, TRUE) == JPEG_SUSPENDED) {
-      JPEGLI_TEST_ENSURE_TRUE(src.LoadNextChunk());
+    while (pdfcore_jpegli_read_header(&cinfo, TRUE) == JPEG_SUSPENDED) {
+      PDFCORE_TEST_ENSURE_TRUE(src.LoadNextChunk());
     }
     SetDecompressParams(dparams, &cinfo);
-    jpegli_set_output_format(&cinfo, dparams.data_type, dparams.endianness);
+    pdfcore_jpegli_set_output_format(&cinfo, dparams.data_type, dparams.endianness);
 
     cinfo.buffered_image = TRUE;
-    cinfo.raw_data_out = TO_JPEGLI_BOOL(dparams.output_mode == RAW_DATA);
+    cinfo.raw_data_out = TO_PDFCORE_BOOL(dparams.output_mode == RAW_DATA);
 
-    EXPECT_TRUE(jpegli_start_decompress(&cinfo));
-    EXPECT_FALSE(jpegli_input_complete(&cinfo));
+    EXPECT_TRUE(pdfcore_jpegli_start_decompress(&cinfo));
+    EXPECT_FALSE(pdfcore_jpegli_input_complete(&cinfo));
     EXPECT_EQ(0, cinfo.output_scan_number);
 
     int sos_marker_cnt = 1;  // read_header reads the first SOS marker
-    while (!jpegli_input_complete(&cinfo)) {
+    while (!pdfcore_jpegli_input_complete(&cinfo)) {
       EXPECT_EQ(cinfo.input_scan_number, sos_marker_cnt);
-      EXPECT_TRUE(jpegli_start_output(&cinfo, cinfo.input_scan_number));
+      EXPECT_TRUE(pdfcore_jpegli_start_output(&cinfo, cinfo.input_scan_number));
       // start output sets output_scan_number, but does not change
       // input_scan_number
       EXPECT_EQ(cinfo.output_scan_number, cinfo.input_scan_number);
       EXPECT_EQ(cinfo.input_scan_number, sos_marker_cnt);
       TestImage output;
-      JPEGLI_TEST_ENSURE_TRUE(ReadOutputImage(dparams, &cinfo, &src, &output));
+      PDFCORE_TEST_ENSURE_TRUE(ReadOutputImage(dparams, &cinfo, &src, &output));
       output_progression0.emplace_back(std::move(output));
       // read scanlines/read raw data does not change input/output scan number
       EXPECT_EQ(cinfo.input_scan_number, sos_marker_cnt);
       EXPECT_EQ(cinfo.output_scan_number, cinfo.input_scan_number);
-      while (!jpegli_finish_output(&cinfo)) {
-        JPEGLI_TEST_ENSURE_TRUE(src.LoadNextChunk());
+      while (!pdfcore_jpegli_finish_output(&cinfo)) {
+        PDFCORE_TEST_ENSURE_TRUE(src.LoadNextChunk());
       }
       ++sos_marker_cnt;  // finish output reads the next SOS marker or EOI
       if (dparams.output_mode == COEFFICIENTS) {
-        jvirt_barray_ptr* coef_arrays = jpegli_read_coefficients(&cinfo);
-        JPEGLI_TEST_ENSURE_TRUE(coef_arrays != nullptr);
+        jvirt_barray_ptr* coef_arrays = pdfcore_jpegli_read_coefficients(&cinfo);
+        PDFCORE_TEST_ENSURE_TRUE(coef_arrays != nullptr);
         CopyCoefficients(&cinfo, coef_arrays, &output_progression0.back());
       }
     }
 
-    EXPECT_TRUE(jpegli_finish_decompress(&cinfo));
+    EXPECT_TRUE(pdfcore_jpegli_finish_decompress(&cinfo));
     return true;
   };
   ASSERT_TRUE(try_catch_block());
-  jpegli_destroy_decompress(&cinfo);
+  pdfcore_jpegli_destroy_decompress(&cinfo);
 
   std::vector<TestImage> output_progression1;
   DecodeAllScansWithLibjpeg(config.jparams, dparams, compressed,
@@ -371,7 +371,7 @@ TEST_P(InputSuspensionTestParam, PreConsumeInputBuffered) {
   TestConfig config = GetParam();
   if (config.jparams.add_marker) return;
   const DecompressParams& dparams = config.dparams;
-  JPEGLI_ASSIGN_OR_QUIT(std::vector<uint8_t> compressed,
+  PDFCORE_ASSIGN_OR_QUIT(std::vector<uint8_t> compressed,
                         GetTestJpegData(config), "Failed to create test data.");
   bool is_partial = config.dparams.size_factor < 1.0f;
   if (is_partial) {
@@ -386,56 +386,56 @@ TEST_P(InputSuspensionTestParam, PreConsumeInputBuffered) {
   jpeg_decompress_struct cinfo;
   const auto try_catch_block = [&]() -> bool {
     ERROR_HANDLER_SETUP(jpegli);
-    jpegli_create_decompress(&cinfo);
+    pdfcore_jpegli_create_decompress(&cinfo);
     cinfo.src = reinterpret_cast<jpeg_source_mgr*>(&src);
 
     int status;
-    while ((status = jpegli_consume_input(&cinfo)) != JPEG_REACHED_SOS) {
+    while ((status = pdfcore_jpegli_consume_input(&cinfo)) != JPEG_REACHED_SOS) {
       if (status == JPEG_SUSPENDED) {
-        JPEGLI_TEST_ENSURE_TRUE(src.LoadNextChunk());
+        PDFCORE_TEST_ENSURE_TRUE(src.LoadNextChunk());
       }
     }
-    EXPECT_EQ(JPEG_REACHED_SOS, jpegli_consume_input(&cinfo));
+    EXPECT_EQ(JPEG_REACHED_SOS, pdfcore_jpegli_consume_input(&cinfo));
     cinfo.buffered_image = TRUE;
-    cinfo.raw_data_out = TO_JPEGLI_BOOL(dparams.output_mode == RAW_DATA);
-    cinfo.do_block_smoothing = TO_JPEGLI_BOOL(dparams.do_block_smoothing);
+    cinfo.raw_data_out = TO_PDFCORE_BOOL(dparams.output_mode == RAW_DATA);
+    cinfo.do_block_smoothing = TO_PDFCORE_BOOL(dparams.do_block_smoothing);
 
-    EXPECT_TRUE(jpegli_start_decompress(&cinfo));
-    EXPECT_FALSE(jpegli_input_complete(&cinfo));
+    EXPECT_TRUE(pdfcore_jpegli_start_decompress(&cinfo));
+    EXPECT_FALSE(pdfcore_jpegli_input_complete(&cinfo));
     EXPECT_EQ(1, cinfo.input_scan_number);
     EXPECT_EQ(0, cinfo.output_scan_number);
 
-    while ((status = jpegli_consume_input(&cinfo)) != JPEG_REACHED_EOI) {
+    while ((status = pdfcore_jpegli_consume_input(&cinfo)) != JPEG_REACHED_EOI) {
       if (status == JPEG_SUSPENDED) {
-        JPEGLI_TEST_ENSURE_TRUE(src.LoadNextChunk());
+        PDFCORE_TEST_ENSURE_TRUE(src.LoadNextChunk());
       }
     }
 
     size_t input_scan_number = cinfo.input_scan_number;
-    EXPECT_TRUE(jpegli_input_complete(&cinfo));
+    EXPECT_TRUE(pdfcore_jpegli_input_complete(&cinfo));
     EXPECT_EQ(output_progression1.size(), input_scan_number);
     EXPECT_EQ(0, cinfo.output_scan_number);
 
-    EXPECT_TRUE(jpegli_start_output(&cinfo, cinfo.input_scan_number));
+    EXPECT_TRUE(pdfcore_jpegli_start_output(&cinfo, cinfo.input_scan_number));
     EXPECT_EQ(output_progression1.size(), input_scan_number);
     EXPECT_EQ(cinfo.output_scan_number, cinfo.input_scan_number);
 
-    JPEGLI_TEST_ENSURE_TRUE(
+    PDFCORE_TEST_ENSURE_TRUE(
         ReadOutputImage(dparams, &cinfo, nullptr, &output0));
     EXPECT_EQ(output_progression1.size(), input_scan_number);
     EXPECT_EQ(cinfo.output_scan_number, cinfo.input_scan_number);
 
-    EXPECT_TRUE(jpegli_finish_output(&cinfo));
+    EXPECT_TRUE(pdfcore_jpegli_finish_output(&cinfo));
     if (dparams.output_mode == COEFFICIENTS) {
-      jvirt_barray_ptr* coef_arrays = jpegli_read_coefficients(&cinfo);
-      JPEGLI_TEST_ENSURE_TRUE(coef_arrays != nullptr);
+      jvirt_barray_ptr* coef_arrays = pdfcore_jpegli_read_coefficients(&cinfo);
+      PDFCORE_TEST_ENSURE_TRUE(coef_arrays != nullptr);
       CopyCoefficients(&cinfo, coef_arrays, &output0);
     }
-    EXPECT_TRUE(jpegli_finish_decompress(&cinfo));
+    EXPECT_TRUE(pdfcore_jpegli_finish_decompress(&cinfo));
     return true;
   };
   ASSERT_TRUE(try_catch_block());
-  jpegli_destroy_decompress(&cinfo);
+  pdfcore_jpegli_destroy_decompress(&cinfo);
 
   VerifyOutputImage(output_progression1.back(), output0, config.max_rms_dist);
 }
@@ -444,7 +444,7 @@ TEST_P(InputSuspensionTestParam, PreConsumeInputNonBuffered) {
   TestConfig config = GetParam();
   if (config.jparams.add_marker || IsSequential(config)) return;
   const DecompressParams& dparams = config.dparams;
-  JPEGLI_ASSIGN_OR_QUIT(std::vector<uint8_t> compressed,
+  PDFCORE_ASSIGN_OR_QUIT(std::vector<uint8_t> compressed,
                         GetTestJpegData(config), "Failed to create test data.");
   bool is_partial = config.dparams.size_factor < 1.0f;
   if (is_partial) {
@@ -456,47 +456,47 @@ TEST_P(InputSuspensionTestParam, PreConsumeInputNonBuffered) {
   jpeg_decompress_struct cinfo;
   const auto try_catch_block = [&]() -> bool {
     ERROR_HANDLER_SETUP(jpegli);
-    jpegli_create_decompress(&cinfo);
+    pdfcore_jpegli_create_decompress(&cinfo);
     cinfo.src = reinterpret_cast<jpeg_source_mgr*>(&src);
 
     int status;
-    while ((status = jpegli_consume_input(&cinfo)) != JPEG_REACHED_SOS) {
+    while ((status = pdfcore_jpegli_consume_input(&cinfo)) != JPEG_REACHED_SOS) {
       if (status == JPEG_SUSPENDED) {
-        JPEGLI_TEST_ENSURE_TRUE(src.LoadNextChunk());
+        PDFCORE_TEST_ENSURE_TRUE(src.LoadNextChunk());
       }
     }
-    EXPECT_EQ(JPEG_REACHED_SOS, jpegli_consume_input(&cinfo));
-    cinfo.raw_data_out = TO_JPEGLI_BOOL(dparams.output_mode == RAW_DATA);
-    cinfo.do_block_smoothing = TO_JPEGLI_BOOL(dparams.do_block_smoothing);
+    EXPECT_EQ(JPEG_REACHED_SOS, pdfcore_jpegli_consume_input(&cinfo));
+    cinfo.raw_data_out = TO_PDFCORE_BOOL(dparams.output_mode == RAW_DATA);
+    cinfo.do_block_smoothing = TO_PDFCORE_BOOL(dparams.do_block_smoothing);
 
     if (dparams.output_mode == COEFFICIENTS) {
-      jpegli_read_coefficients(&cinfo);
+      pdfcore_jpegli_read_coefficients(&cinfo);
     } else {
-      while (!jpegli_start_decompress(&cinfo)) {
-        JPEGLI_TEST_ENSURE_TRUE(src.LoadNextChunk());
+      while (!pdfcore_jpegli_start_decompress(&cinfo)) {
+        PDFCORE_TEST_ENSURE_TRUE(src.LoadNextChunk());
       }
     }
 
-    while ((status = jpegli_consume_input(&cinfo)) != JPEG_REACHED_EOI) {
+    while ((status = pdfcore_jpegli_consume_input(&cinfo)) != JPEG_REACHED_EOI) {
       if (status == JPEG_SUSPENDED) {
-        JPEGLI_TEST_ENSURE_TRUE(src.LoadNextChunk());
+        PDFCORE_TEST_ENSURE_TRUE(src.LoadNextChunk());
       }
     }
 
     if (dparams.output_mode == COEFFICIENTS) {
-      jvirt_barray_ptr* coef_arrays = jpegli_read_coefficients(&cinfo);
-      JPEGLI_TEST_ENSURE_TRUE(coef_arrays != nullptr);
+      jvirt_barray_ptr* coef_arrays = pdfcore_jpegli_read_coefficients(&cinfo);
+      PDFCORE_TEST_ENSURE_TRUE(coef_arrays != nullptr);
       CopyCoefficients(&cinfo, coef_arrays, &output0);
     } else {
-      JPEGLI_TEST_ENSURE_TRUE(
+      PDFCORE_TEST_ENSURE_TRUE(
           ReadOutputImage(dparams, &cinfo, nullptr, &output0));
     }
 
-    EXPECT_TRUE(jpegli_finish_decompress(&cinfo));
+    EXPECT_TRUE(pdfcore_jpegli_finish_decompress(&cinfo));
     return true;
   };
   ASSERT_TRUE(try_catch_block());
-  jpegli_destroy_decompress(&cinfo);
+  pdfcore_jpegli_destroy_decompress(&cinfo);
 
   TestImage output1;
   DecodeWithLibjpeg(config.jparams, dparams, compressed, &output1);
@@ -625,9 +625,9 @@ std::string TestDescription(
   return name.str();
 }
 
-JPEGLI_INSTANTIATE_TEST_SUITE_P(InputSuspensionTest, InputSuspensionTestParam,
+PDFCORE_INSTANTIATE_TEST_SUITE_P(InputSuspensionTest, InputSuspensionTestParam,
                                 testing::ValuesIn(GenerateTests()),
                                 TestDescription);
 
 }  // namespace
-}  // namespace jpegli
+}  // namespace pdfcore

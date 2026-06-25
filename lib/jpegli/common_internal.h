@@ -4,8 +4,8 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
-#ifndef JPEGLI_LIB_JPEGLI_COMMON_INTERNAL_H_
-#define JPEGLI_LIB_JPEGLI_COMMON_INTERNAL_H_
+#ifndef PDFCORE_LIB_PDFCORE_COMMON_INTERNAL_H_
+#define PDFCORE_LIB_PDFCORE_COMMON_INTERNAL_H_
 
 #include <algorithm>
 #include <cstddef>
@@ -18,7 +18,7 @@
 #include "lib/jpegli/memory_manager.h"
 #include "lib/jpegli/simd.h"
 
-namespace jpegli {
+namespace pdfcore {
 
 enum State {
   kDecNull,
@@ -93,7 +93,7 @@ class RowBuffer {
     ysize_ = num_rows;
     stride_ = memstride / sizeof(T);
     offset_ = alignment / sizeof(T);
-    data_ = ::jpegli::Allocate<T>(cinfo, ysize_ * stride_, JPOOL_IMAGE_ALIGNED);
+    data_ = ::pdfcore::Allocate<T>(cinfo, ysize_ * stride_, JPOOL_IMAGE_ALIGNED);
   }
 
   T* Row(ptrdiff_t y) const {
@@ -135,6 +135,6 @@ class RowBuffer {
   T* data_;
 };
 
-}  // namespace jpegli
+}  // namespace pdfcore
 
-#endif  // JPEGLI_LIB_JPEGLI_COMMON_INTERNAL_H_
+#endif  // PDFCORE_LIB_PDFCORE_COMMON_INTERNAL_H_

@@ -23,7 +23,7 @@
 #include "lib/jpegli/error.h"
 #include "lib/jpegli/memory_manager.h"
 
-namespace jpegli {
+namespace pdfcore {
 
 namespace {
 
@@ -60,7 +60,7 @@ void ChooseColorMap1Pass(j_decompress_ptr cinfo) {
     ++num;
   }
   if (num == 1) {
-    JPEGLI_ERROR("Too few colors (%d) in requested colormap", desired);
+    PDFCORE_ERROR("Too few colors (%d) in requested colormap", desired);
   }
   int actual = Pow(num, components);
   for (int i = 0; i < components; ++i) {
@@ -264,7 +264,7 @@ int BuildRGBColorIndex(const uint8_t* const image, int const num_pixels,
 
 void ChooseColorMap2Pass(j_decompress_ptr cinfo) {
   if (cinfo->out_color_space != JCS_RGB) {
-    JPEGLI_ERROR("Two-pass quantizer must use RGB output color space.");
+    PDFCORE_ERROR("Two-pass quantizer must use RGB output color space.");
   }
   jpeg_decomp_master* m = cinfo->master;
   const size_t num_pixels =
@@ -272,11 +272,11 @@ void ChooseColorMap2Pass(j_decompress_ptr cinfo) {
   const int max_color_count = std::max<size_t>(num_pixels, 1u << 18);
   const int max_palette_size = cinfo->desired_number_of_colors;
   auto red_storage =
-      jpegli::make_uninitialized_vector<uint8_t>(max_color_count);
+      pdfcore::make_uninitialized_vector<uint8_t>(max_color_count);
   auto green_storage =
-      jpegli::make_uninitialized_vector<uint8_t>(max_color_count);
+      pdfcore::make_uninitialized_vector<uint8_t>(max_color_count);
   auto blue_storage =
-      jpegli::make_uninitialized_vector<uint8_t>(max_color_count);
+      pdfcore::make_uninitialized_vector<uint8_t>(max_color_count);
   uint8_t* red = red_storage.data();
   uint8_t* green = green_storage.data();
   uint8_t* blue = blue_storage.data();
@@ -455,8 +455,8 @@ void FindCandidatesForCell(j_decompress_ptr cinfo, int ncomp, const int cell[],
 void CreateInverseColorMap(j_decompress_ptr cinfo) {
   jpeg_decomp_master* m = cinfo->master;
   int ncomp = cinfo->out_color_components;
-  JPEGLI_CHECK(ncomp > 0);
-  JPEGLI_CHECK(ncomp <= kMaxComponents);
+  PDFCORE_CHECK(ncomp > 0);
+  PDFCORE_CHECK(ncomp <= kMaxComponents);
   int num_cells = 1;
   for (int c = 0; c < ncomp; ++c) {
     num_cells *= (1 << kNumColorCellBits[c]);
@@ -491,7 +491,7 @@ int LookupColorIndex(j_decompress_ptr cinfo, const JSAMPLE* pixel) {
       cell_idx += (pixel[c] >> (8 - kNumColorCellBits[c])) * stride;
       stride <<= kNumColorCellBits[c];
     }
-    JPEGLI_CHECK(cell_idx < m->candidate_lists_.size());
+    PDFCORE_CHECK(cell_idx < m->candidate_lists_.size());
     int mindist = std::numeric_limits<int>::max();
     const auto& candidates = m->candidate_lists_[cell_idx];
     for (uint8_t i : candidates) {
@@ -506,7 +506,7 @@ int LookupColorIndex(j_decompress_ptr cinfo, const JSAMPLE* pixel) {
       }
     }
   }
-  JPEGLI_CHECK(index < cinfo->actual_number_of_colors);
+  PDFCORE_CHECK(index < cinfo->actual_number_of_colors);
   return index;
 }
 
@@ -551,4 +551,4 @@ void InitFSDitherState(j_decompress_ptr cinfo) {
   }
 }
 
-}  // namespace jpegli
+}  // namespace pdfcore

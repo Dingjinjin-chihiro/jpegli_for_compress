@@ -4,14 +4,14 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
-#ifndef JPEGLI_LIB_JPEGLI_ENTROPY_CODING_H_
-#define JPEGLI_LIB_JPEGLI_ENTROPY_CODING_H_
+#ifndef PDFCORE_LIB_PDFCORE_ENTROPY_CODING_H_
+#define PDFCORE_LIB_PDFCORE_ENTROPY_CODING_H_
 
 #include <cstddef>
 
 #include "lib/jpegli/common.h"
 
-namespace jpegli {
+namespace pdfcore {
 
 size_t MaxNumTokensPerMCURow(j_compress_ptr cinfo);
 
@@ -26,6 +26,6 @@ void OptimizeHuffmanCodes(j_compress_ptr cinfo);
 
 void InitEntropyCoder(j_compress_ptr cinfo);
 
-}  // namespace jpegli
+}  // namespace pdfcore
 
-#endif  // JPEGLI_LIB_JPEGLI_ENTROPY_CODING_H_
+#endif  // PDFCORE_LIB_PDFCORE_ENTROPY_CODING_H_

@@ -4,8 +4,8 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
-#ifndef JPEGLI_TOOLS_CMDLINE_H_
-#define JPEGLI_TOOLS_CMDLINE_H_
+#ifndef PDFCORE_TOOLS_CMDLINE_H_
+#define PDFCORE_TOOLS_CMDLINE_H_
 
 #include <cstdint>
 #include <cstdio>
@@ -16,7 +16,7 @@
 #include <utility>
 #include <vector>
 
-namespace jpegli_tools {
+namespace pdfcore_jpegli_tools {
 
 class CommandLineParser {
  public:
@@ -436,16 +436,16 @@ static inline bool SetBooleanFalse(bool* out) {
   return true;
 }
 
-}  // namespace jpegli_tools
+}  // namespace pdfcore_jpegli_tools
 
-#define JPEGLI_TOOLS_ABORT(M)                      \
-  fprintf(stderr, "JPEGLI_TOOLS_ABORT: %s\n", #M); \
+#define PDFCORE_TOOLS_ABORT(M)                      \
+  fprintf(stderr, "PDFCORE_TOOLS_ABORT: %s\n", #M); \
   std::exit(EXIT_FAILURE);
 
-#define JPEGLI_TOOLS_CHECK(C)                        \
+#define PDFCORE_TOOLS_CHECK(C)                        \
   if (!(C)) {                                        \
-    fprintf(stderr, "JPEGLI_TOOLS_CHECK: %s\n", #C); \
+    fprintf(stderr, "PDFCORE_TOOLS_CHECK: %s\n", #C); \
     std::exit(EXIT_FAILURE);                         \
   }
 
-#endif  // JPEGLI_TOOLS_CMDLINE_H_
+#endif  // PDFCORE_TOOLS_CMDLINE_H_

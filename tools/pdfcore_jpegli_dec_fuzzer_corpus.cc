@@ -46,7 +46,7 @@ std::mutex stderr_mutex;
 std::vector<uint8_t> GetSomeTestImage(size_t xsize, size_t ysize,
                                       size_t num_channels, uint16_t seed) {
   // Cause more significant image difference for successive seeds.
-  jpegli::Rng generator(seed);
+  pdfcore::Rng generator(seed);
 
   // Returns random integer in interval [0, max_value)
   auto rng = [&generator](size_t max_value) -> size_t {
@@ -154,7 +154,7 @@ bool EncodeWithJpegli(const ImageSpec& spec, const std::vector<uint8_t>& pixels,
   const auto try_catch_block = [&]() -> bool {
     jpeg_error_mgr jerr;
     jmp_buf env;
-    cinfo.err = jpegli_std_error(&jerr);
+    cinfo.err = pdfcore_jpegli_std_error(&jerr);
     if (setjmp(env)) {
       return false;
     }
@@ -162,39 +162,39 @@ bool EncodeWithJpegli(const ImageSpec& spec, const std::vector<uint8_t>& pixels,
     cinfo.err->error_exit = [](j_common_ptr cinfo) {
       (*cinfo->err->output_message)(cinfo);
       jmp_buf* env = reinterpret_cast<jmp_buf*>(cinfo->client_data);
-      jpegli_destroy(cinfo);
+      pdfcore_jpegli_destroy(cinfo);
       longjmp(*env, 1);
     };
-    jpegli_create_compress(&cinfo);
-    jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
+    pdfcore_jpegli_create_compress(&cinfo);
+    pdfcore_jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
     cinfo.image_width = spec.width;
     cinfo.image_height = spec.height;
     cinfo.input_components = spec.num_channels;
     cinfo.in_color_space = spec.num_channels == 1 ? JCS_GRAYSCALE : JCS_RGB;
-    jpegli_set_defaults(&cinfo);
-    jpegli_set_quality(&cinfo, spec.quality, TRUE);
+    pdfcore_jpegli_set_defaults(&cinfo);
+    pdfcore_jpegli_set_quality(&cinfo, spec.quality, TRUE);
     uint32_t sampling = spec.sampling;
     for (int c = 0; c < cinfo.num_components; ++c) {
       cinfo.comp_info[c].h_samp_factor = sampling & 0xf;
       cinfo.comp_info[c].v_samp_factor = (sampling >> 4) & 0xf;
       sampling >>= 8;
     }
-    jpegli_set_progressive_level(&cinfo, spec.progressive_level);
+    pdfcore_jpegli_set_progressive_level(&cinfo, spec.progressive_level);
     cinfo.restart_interval = spec.restart_interval;
-    jpegli_start_compress(&cinfo, TRUE);
+    pdfcore_jpegli_start_compress(&cinfo, TRUE);
     size_t stride =
         cinfo.image_width * static_cast<size_t>(cinfo.input_components);
     std::vector<uint8_t> row_bytes(stride);
     for (size_t y = 0; y < cinfo.image_height; ++y) {
       memcpy(row_bytes.data(), &pixels[y * stride], stride);
       JSAMPROW row[] = {row_bytes.data()};
-      jpegli_write_scanlines(&cinfo, row, 1);
+      pdfcore_jpegli_write_scanlines(&cinfo, row, 1);
     }
-    jpegli_finish_compress(&cinfo);
+    pdfcore_jpegli_finish_compress(&cinfo);
     return true;
   };
   bool success = try_catch_block();
-  jpegli_destroy_compress(&cinfo);
+  pdfcore_jpegli_destroy_compress(&cinfo);
   if (success) {
     buffer_size = buffer_size * spec.fraction / 100;
     compressed->assign(buffer, buffer + buffer_size);
@@ -240,14 +240,14 @@ bool GenerateFile(const char* output_dir, const ImageSpec& spec,
     return false;
   }
 
-  // Append 4 bytes with the flags used by jpegli_dec_fuzzer to select the
+  // Append 4 bytes with the flags used by pdfcore_jpegli_dec_fuzzer to select the
   // decoding output.
   std::uniform_int_distribution<> dis256(0, 255);
   for (size_t i = 0; i < 4; ++i) {
     compressed.push_back(dis256(mt));
   }
 
-  if (!jpegli_tools::WriteFile(output_fn, compressed)) {
+  if (!pdfcore_jpegli_tools::WriteFile(output_fn, compressed)) {
     return false;
   }
   if (!quiet) {
@@ -359,15 +359,15 @@ int main(int argc, const char** argv) {
     }
   }
 
-  jpegli_tools::ThreadPoolInternal pool{num_threads};
+  pdfcore_jpegli_tools::ThreadPoolInternal pool{num_threads};
   const auto generate = [&specs, dest_dir, regenerate, quiet](
                             const uint32_t task,
-                            size_t /* thread */) -> jpegli::Status {
+                            size_t /* thread */) -> pdfcore::Status {
     const ImageSpec& spec = specs[task];
-    JPEGLI_RETURN_IF_ERROR(GenerateFile(dest_dir, spec, regenerate, quiet));
+    PDFCORE_RETURN_IF_ERROR(GenerateFile(dest_dir, spec, regenerate, quiet));
     return true;
   };
-  if (!RunOnPool(pool.get(), 0, specs.size(), jpegli::ThreadPool::NoInit,
+  if (!RunOnPool(pool.get(), 0, specs.size(), pdfcore::ThreadPool::NoInit,
                  generate, "FuzzerCorpus")) {
     std::cerr << "Error generating fuzzer corpus\n";
     return EXIT_FAILURE;

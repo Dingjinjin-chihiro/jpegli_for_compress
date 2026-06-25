@@ -3,15 +3,15 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-#ifndef JPEGLI_LIB_BASE_SANITIZERS_H_
-#define JPEGLI_LIB_BASE_SANITIZERS_H_
+#ifndef PDFCORE_LIB_BASE_SANITIZERS_H_
+#define PDFCORE_LIB_BASE_SANITIZERS_H_
 
 #include <cstddef>
 
 #include "lib/base/compiler_specific.h"
 #include "lib/base/sanitizer_definitions.h"
 
-#if JPEGLI_MEMORY_SANITIZER
+#if PDFCORE_MEMORY_SANITIZER
 #include <algorithm>
 #include <cinttypes>  // PRId64
 #include <cstdio>
@@ -23,33 +23,33 @@
 #include "sanitizer/msan_interface.h"
 #endif
 
-namespace jpegli {
+namespace pdfcore {
 namespace msan {
 
-#if JPEGLI_MEMORY_SANITIZER
+#if PDFCORE_MEMORY_SANITIZER
 
 // Chosen so that kSanitizerSentinel is four copies of kSanitizerSentinelByte.
 constexpr uint8_t kSanitizerSentinelByte = 0x48;
 constexpr float kSanitizerSentinel = 205089.125f;
 
-static JPEGLI_INLINE JPEGLI_MAYBE_UNUSED void PoisonMemory(
+static PDFCORE_INLINE PDFCORE_MAYBE_UNUSED void PoisonMemory(
     const volatile void* m, size_t size) {
   __msan_poison(m, size);
 }
 
-static JPEGLI_INLINE JPEGLI_MAYBE_UNUSED void UnpoisonMemory(
+static PDFCORE_INLINE PDFCORE_MAYBE_UNUSED void UnpoisonMemory(
     const volatile void* m, size_t size) {
   __msan_unpoison(m, size);
 }
 
-static JPEGLI_INLINE JPEGLI_MAYBE_UNUSED void MemoryIsInitialized(
+static PDFCORE_INLINE PDFCORE_MAYBE_UNUSED void MemoryIsInitialized(
     const volatile void* m, size_t size) {
   __msan_check_mem_is_initialized(m, size);
 }
 
 // Mark all the bytes of an image (including padding) as poisoned bytes.
 template <typename Pixels>
-static JPEGLI_INLINE JPEGLI_MAYBE_UNUSED void PoisonImage(const Pixels& im) {
+static PDFCORE_INLINE PDFCORE_MAYBE_UNUSED void PoisonImage(const Pixels& im) {
   PoisonMemory(im.bytes(), im.bytes_per_row() * im.ysize());
 }
 
@@ -57,7 +57,7 @@ namespace {
 
 // Print the uninitialized regions of an image.
 template <typename Pixels>
-static JPEGLI_INLINE JPEGLI_MAYBE_UNUSED void PrintImageUninitialized(
+static PDFCORE_INLINE PDFCORE_MAYBE_UNUSED void PrintImageUninitialized(
     const Pixels& im) {
   fprintf(stderr,
           "Uninitialized regions for image of size %" PRIu64 "x%" PRIu64 ":\n",
@@ -157,17 +157,17 @@ static JPEGLI_INLINE JPEGLI_MAYBE_UNUSED void PrintImageUninitialized(
 // Check that all the pixels in the provided rect of the image are initialized
 // (not poisoned). If any of the values is poisoned it will abort.
 template <typename Pixels>
-static JPEGLI_INLINE JPEGLI_MAYBE_UNUSED void CheckImageInitialized(
+static PDFCORE_INLINE PDFCORE_MAYBE_UNUSED void CheckImageInitialized(
     const Pixels& im, const Rect& r, size_t c, const char* message) {
-  JPEGLI_DASSERT(r.x0() <= im.xsize());
-  JPEGLI_DASSERT(r.x0() + r.xsize() <= im.xsize());
-  JPEGLI_DASSERT(r.y0() <= im.ysize());
-  JPEGLI_DASSERT(r.y0() + r.ysize() <= im.ysize());
+  PDFCORE_DASSERT(r.x0() <= im.xsize());
+  PDFCORE_DASSERT(r.x0() + r.xsize() <= im.xsize());
+  PDFCORE_DASSERT(r.y0() <= im.ysize());
+  PDFCORE_DASSERT(r.y0() + r.ysize() <= im.ysize());
   for (size_t y = r.y0(); y < r.y0() + r.ysize(); y++) {
     const auto* row = im.Row(y);
     ptrdiff_t ret = __msan_test_shadow(row + r.x0(), sizeof(*row) * r.xsize());
     if (ret != -1) {
-      JPEGLI_DEBUG(
+      PDFCORE_DEBUG(
           1,
           "Checking an image of %" PRIu64 " x %" PRIu64 ", rect x0=%" PRIu64
           ", y0=%" PRIu64
@@ -177,7 +177,7 @@ static JPEGLI_INLINE JPEGLI_MAYBE_UNUSED void CheckImageInitialized(
           static_cast<uint64_t>(r.x0()), static_cast<uint64_t>(r.y0()),
           static_cast<uint64_t>(r.xsize()), static_cast<uint64_t>(r.ysize()));
       size_t x = ret / sizeof(*row);
-      JPEGLI_DEBUG(1,
+      PDFCORE_DEBUG(1,
                    "CheckImageInitialized failed at x=%" PRIu64 ", y=%" PRIu64
                    ", c=%" PRIu64 ": %s",
                    static_cast<uint64_t>(r.x0() + x), static_cast<uint64_t>(y),
@@ -190,7 +190,7 @@ static JPEGLI_INLINE JPEGLI_MAYBE_UNUSED void CheckImageInitialized(
 }
 
 template <typename Image>
-static JPEGLI_INLINE JPEGLI_MAYBE_UNUSED void CheckImageInitialized(
+static PDFCORE_INLINE PDFCORE_MAYBE_UNUSED void CheckImageInitialized(
     const Image& im, const Rect& r, const char* message) {
   for (size_t c = 0; c < 3; c++) {
     std::string str_message(message);
@@ -201,35 +201,35 @@ static JPEGLI_INLINE JPEGLI_MAYBE_UNUSED void CheckImageInitialized(
 
 }  // namespace
 
-#define JPEGLI_CHECK_IMAGE_INITIALIZED(im, r) \
-  ::jpegli::msan::CheckImageInitialized(im, r, "im=" #im ", r=" #r);
+#define PDFCORE_CHECK_IMAGE_INITIALIZED(im, r) \
+  ::pdfcore::msan::CheckImageInitialized(im, r, "im=" #im ", r=" #r);
 
-#define JPEGLI_CHECK_PLANE_INITIALIZED(im, r, c)  \
-  ::jpegli::msan::CheckImageInitialized(im, r, c, \
+#define PDFCORE_CHECK_PLANE_INITIALIZED(im, r, c)  \
+  ::pdfcore::msan::CheckImageInitialized(im, r, c, \
                                         "im=" #im ", r=" #r ", c=" #c);
 
-#else  // JPEGLI_MEMORY_SANITIZER
+#else  // PDFCORE_MEMORY_SANITIZER
 
 // In non-msan mode these functions don't use volatile since it is not needed
 // for the empty functions.
 
-static JPEGLI_INLINE JPEGLI_MAYBE_UNUSED void PoisonMemory(const void* m,
+static PDFCORE_INLINE PDFCORE_MAYBE_UNUSED void PoisonMemory(const void* m,
                                                            size_t size) {}
-static JPEGLI_INLINE JPEGLI_MAYBE_UNUSED void UnpoisonMemory(const void* m,
+static PDFCORE_INLINE PDFCORE_MAYBE_UNUSED void UnpoisonMemory(const void* m,
                                                              size_t size) {}
-static JPEGLI_INLINE JPEGLI_MAYBE_UNUSED void MemoryIsInitialized(const void* m,
+static PDFCORE_INLINE PDFCORE_MAYBE_UNUSED void MemoryIsInitialized(const void* m,
                                                                   size_t size) {
 }
 
 template <typename Pixels>
-static JPEGLI_INLINE JPEGLI_MAYBE_UNUSED void PoisonImage(const Pixels& im) {}
+static PDFCORE_INLINE PDFCORE_MAYBE_UNUSED void PoisonImage(const Pixels& im) {}
 
-#define JPEGLI_CHECK_IMAGE_INITIALIZED(im, r)
-#define JPEGLI_CHECK_PLANE_INITIALIZED(im, r, c)
+#define PDFCORE_CHECK_IMAGE_INITIALIZED(im, r)
+#define PDFCORE_CHECK_PLANE_INITIALIZED(im, r, c)
 
 #endif
 
 }  // namespace msan
-}  // namespace jpegli
+}  // namespace pdfcore
 
-#endif  // JPEGLI_LIB_BASE_SANITIZERS_H_
+#endif  // PDFCORE_LIB_BASE_SANITIZERS_H_

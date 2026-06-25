@@ -18,7 +18,7 @@
 #include "lib/base/status.h"
 #include "lib/extras/simd_util.h"
 
-namespace jpegli {
+namespace pdfcore {
 
 namespace {
 
@@ -30,18 +30,18 @@ void MemoryManagerDefaultFree(void* opaque, void* address) { free(address); }
 
 }  // namespace
 
-void* MemoryManagerAlloc(const JpegliMemoryManager* memory_manager,
+void* MemoryManagerAlloc(const PdfcoreMemoryManager* memory_manager,
                          size_t size) {
   return memory_manager->alloc(memory_manager->opaque, size);
 }
 
-void MemoryManagerFree(const JpegliMemoryManager* memory_manager,
+void MemoryManagerFree(const PdfcoreMemoryManager* memory_manager,
                        void* address) {
   memory_manager->free(memory_manager->opaque, address);
 }
 
-Status MemoryManagerInit(JpegliMemoryManager* self,
-                         const JpegliMemoryManager* memory_manager) {
+Status MemoryManagerInit(PdfcoreMemoryManager* self,
+                         const PdfcoreMemoryManager* memory_manager) {
   if (memory_manager) {
     *self = *memory_manager;
   } else {
@@ -52,8 +52,8 @@ Status MemoryManagerInit(JpegliMemoryManager* self,
   if (is_default_alloc != is_default_free) {
     return false;
   }
-  if (is_default_alloc) self->alloc = jpegli::MemoryManagerDefaultAlloc;
-  if (is_default_free) self->free = jpegli::MemoryManagerDefaultFree;
+  if (is_default_alloc) self->alloc = pdfcore::MemoryManagerDefaultAlloc;
+  if (is_default_free) self->free = pdfcore::MemoryManagerDefaultFree;
 
   return true;
 }
@@ -86,27 +86,27 @@ size_t BytesPerRow(const size_t xsize, const size_t sizeof_t) {
     bytes_per_row += align;
   }
 
-  JPEGLI_DASSERT(bytes_per_row % align == 0);
+  PDFCORE_DASSERT(bytes_per_row % align == 0);
   return bytes_per_row;
 }
 
 StatusOr<AlignedMemory> AlignedMemory::Create(
-    JpegliMemoryManager* memory_manager, size_t size, size_t pre_padding) {
-  JPEGLI_ENSURE(pre_padding <= memory_manager_internal::kAlias);
+    PdfcoreMemoryManager* memory_manager, size_t size, size_t pre_padding) {
+  PDFCORE_ENSURE(pre_padding <= memory_manager_internal::kAlias);
   size_t allocation_size = size + pre_padding + memory_manager_internal::kAlias;
   if (size > allocation_size) {
-    return JPEGLI_FAILURE("Requested allocation is too large");
+    return PDFCORE_FAILURE("Requested allocation is too large");
   }
-  JPEGLI_ENSURE(memory_manager);
+  PDFCORE_ENSURE(memory_manager);
   void* allocated =
       memory_manager->alloc(memory_manager->opaque, allocation_size);
   if (allocated == nullptr) {
-    return JPEGLI_FAILURE("Allocation failed");
+    return PDFCORE_FAILURE("Allocation failed");
   }
   return AlignedMemory(memory_manager, allocated, pre_padding);
 }
 
-AlignedMemory::AlignedMemory(JpegliMemoryManager* memory_manager,
+AlignedMemory::AlignedMemory(PdfcoreMemoryManager* memory_manager,
                              void* allocation, size_t pre_padding)
     : allocation_(allocation), memory_manager_(memory_manager) {
   // Congruence to `offset` (mod kAlias) reduces cache conflicts and load/store
@@ -155,4 +155,4 @@ AlignedMemory::~AlignedMemory() {
   memory_manager_->free(memory_manager_->opaque, allocation_);
 }
 
-}  // namespace jpegli
+}  // namespace pdfcore

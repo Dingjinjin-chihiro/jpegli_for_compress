@@ -4,15 +4,15 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
-#ifndef JPEGLI_LIB_EXTRAS_SIMD_UTIL_H_
-#define JPEGLI_LIB_EXTRAS_SIMD_UTIL_H_
+#ifndef PDFCORE_LIB_EXTRAS_SIMD_UTIL_H_
+#define PDFCORE_LIB_EXTRAS_SIMD_UTIL_H_
 #include <stddef.h>
 
-namespace jpegli {
+namespace pdfcore {
 
 // Maximal vector size in bytes.
 size_t MaxVectorSize();
 
-}  // namespace jpegli
+}  // namespace pdfcore
 
-#endif  // JPEGLI_LIB_EXTRAS_SIMD_UTIL_H_
+#endif  // PDFCORE_LIB_EXTRAS_SIMD_UTIL_H_

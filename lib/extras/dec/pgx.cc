@@ -18,7 +18,7 @@
 #include "lib/extras/packed_image.h"
 #include "lib/extras/size_constraints.h"
 
-namespace jpegli {
+namespace pdfcore {
 namespace extras {
 namespace {
 
@@ -46,8 +46,8 @@ class Parser {
 
   // Exposed for testing
   Status ParseUnsigned(size_t* number) {
-    if (pos_ == end_) return JPEGLI_FAILURE("PGX: reached end before number");
-    if (!IsDigit(*pos_)) return JPEGLI_FAILURE("PGX: expected unsigned number");
+    if (pos_ == end_) return PDFCORE_FAILURE("PGX: reached end before number");
+    if (!IsDigit(*pos_)) return PDFCORE_FAILURE("PGX: expected unsigned number");
 
     *number = 0;
     while (pos_ < end_ && *pos_ >= '0' && *pos_ <= '9') {
@@ -67,16 +67,16 @@ class Parser {
   }
 
   Status SkipSpace() {
-    if (pos_ == end_) return JPEGLI_FAILURE("PGX: reached end before space");
+    if (pos_ == end_) return PDFCORE_FAILURE("PGX: reached end before space");
     const uint8_t c = *pos_;
-    if (c != ' ') return JPEGLI_FAILURE("PGX: expected space");
+    if (c != ' ') return PDFCORE_FAILURE("PGX: expected space");
     ++pos_;
     return true;
   }
 
   Status SkipLineBreak() {
     if (pos_ == end_)
-      return JPEGLI_FAILURE("PGX: reached end before line break");
+      return PDFCORE_FAILURE("PGX: reached end before line break");
     // Line break can be either "\n" (0a) or "\r\n" (0d 0a).
     if (*pos_ == '\n') {
       pos_++;
@@ -85,63 +85,63 @@ class Parser {
       pos_ += 2;
       return true;
     }
-    return JPEGLI_FAILURE("PGX: expected line break");
+    return PDFCORE_FAILURE("PGX: expected line break");
   }
 
   Status SkipSingleWhitespace() {
     if (pos_ == end_)
-      return JPEGLI_FAILURE("PGX: reached end before whitespace");
-    if (!IsWhitespace(*pos_)) return JPEGLI_FAILURE("PGX: expected whitespace");
+      return PDFCORE_FAILURE("PGX: reached end before whitespace");
+    if (!IsWhitespace(*pos_)) return PDFCORE_FAILURE("PGX: expected whitespace");
     ++pos_;
     return true;
   }
 
   Status ParseHeaderPGX(HeaderPGX* header, const uint8_t** pos) {
-    JPEGLI_RETURN_IF_ERROR(SkipSpace());
-    if (pos_ + 2 > end_) return JPEGLI_FAILURE("PGX: header too small");
+    PDFCORE_RETURN_IF_ERROR(SkipSpace());
+    if (pos_ + 2 > end_) return PDFCORE_FAILURE("PGX: header too small");
     if (*pos_ == 'M' && *(pos_ + 1) == 'L') {
       header->big_endian = true;
     } else if (*pos_ == 'L' && *(pos_ + 1) == 'M') {
       header->big_endian = false;
     } else {
-      return JPEGLI_FAILURE("PGX: invalid endianness");
+      return PDFCORE_FAILURE("PGX: invalid endianness");
     }
     pos_ += 2;
-    JPEGLI_RETURN_IF_ERROR(SkipSpace());
-    if (pos_ == end_) return JPEGLI_FAILURE("PGX: header too small");
+    PDFCORE_RETURN_IF_ERROR(SkipSpace());
+    if (pos_ == end_) return PDFCORE_FAILURE("PGX: header too small");
     if (*pos_ == '+') {
       header->is_signed = false;
     } else if (*pos_ == '-') {
       header->is_signed = true;
     } else {
-      return JPEGLI_FAILURE("PGX: invalid signedness");
+      return PDFCORE_FAILURE("PGX: invalid signedness");
     }
     pos_++;
     // Skip optional space
     if (pos_ < end_ && *pos_ == ' ') pos_++;
-    JPEGLI_RETURN_IF_ERROR(ParseUnsigned(&header->bits_per_sample));
-    JPEGLI_RETURN_IF_ERROR(SkipSingleWhitespace());
-    JPEGLI_RETURN_IF_ERROR(ParseUnsigned(&header->xsize));
-    JPEGLI_RETURN_IF_ERROR(SkipSingleWhitespace());
-    JPEGLI_RETURN_IF_ERROR(ParseUnsigned(&header->ysize));
+    PDFCORE_RETURN_IF_ERROR(ParseUnsigned(&header->bits_per_sample));
+    PDFCORE_RETURN_IF_ERROR(SkipSingleWhitespace());
+    PDFCORE_RETURN_IF_ERROR(ParseUnsigned(&header->xsize));
+    PDFCORE_RETURN_IF_ERROR(SkipSingleWhitespace());
+    PDFCORE_RETURN_IF_ERROR(ParseUnsigned(&header->ysize));
     // 0xa, or 0xd 0xa.
-    JPEGLI_RETURN_IF_ERROR(SkipLineBreak());
+    PDFCORE_RETURN_IF_ERROR(SkipLineBreak());
 
     // TODO(jon): could do up to 24-bit by converting the values to
-    // JPEGLI_TYPE_FLOAT.
+    // PDFCORE_TYPE_FLOAT.
     if (header->bits_per_sample > 16) {
-      return JPEGLI_FAILURE("PGX: >16 bits not yet supported");
+      return PDFCORE_FAILURE("PGX: >16 bits not yet supported");
     }
     // TODO(lode): support signed integers. This may require changing the way
     // external_image works.
     if (header->is_signed) {
-      return JPEGLI_FAILURE("PGX: signed not yet supported");
+      return PDFCORE_FAILURE("PGX: signed not yet supported");
     }
 
     size_t numpixels = header->xsize * header->ysize;
     size_t bytes_per_pixel = header->bits_per_sample <= 8 ? 1 : 2;
     if (pos_ + numpixels * bytes_per_pixel > end_) {
-      return JPEGLI_FAILURE("PGX: data too small");
+      return PDFCORE_FAILURE("PGX: data too small");
     }
 
     *pos = pos_;
@@ -161,13 +161,13 @@ Status DecodeImagePGX(const Span<const uint8_t> bytes,
   HeaderPGX header = {};
   const uint8_t* pos = nullptr;
   if (!parser.ParseHeader(&header, &pos)) return false;
-  JPEGLI_RETURN_IF_ERROR(
+  PDFCORE_RETURN_IF_ERROR(
       VerifyDimensions(constraints, header.xsize, header.ysize));
   if (header.bits_per_sample == 0 || header.bits_per_sample > 32) {
-    return JPEGLI_FAILURE("PGX: bits_per_sample invalid");
+    return PDFCORE_FAILURE("PGX: bits_per_sample invalid");
   }
 
-  JPEGLI_RETURN_IF_ERROR(ApplyColorHints(color_hints,
+  PDFCORE_RETURN_IF_ERROR(ApplyColorHints(color_hints,
                                          /*color_already_set=*/false,
                                          /*is_gray=*/true, ppf));
   ppf->info.xsize = header.xsize;
@@ -175,32 +175,32 @@ Status DecodeImagePGX(const Span<const uint8_t> bytes,
   // Original data is uint, so exponent_bits_per_sample = 0.
   ppf->info.bits_per_sample = header.bits_per_sample;
   ppf->info.exponent_bits_per_sample = 0;
-  ppf->info.uses_original_profile = JPEGLI_TRUE;
+  ppf->info.uses_original_profile = PDFCORE_TRUE;
 
   // No alpha in PGX
   ppf->info.alpha_bits = 0;
   ppf->info.alpha_exponent_bits = 0;
   ppf->info.num_color_channels = 1;  // Always grayscale
-  ppf->info.orientation = JPEGLI_ORIENT_IDENTITY;
+  ppf->info.orientation = PDFCORE_ORIENT_IDENTITY;
 
-  JpegliDataType data_type;
+  PdfcoreDataType data_type;
   if (header.bits_per_sample > 8) {
-    data_type = JPEGLI_TYPE_UINT16;
+    data_type = PDFCORE_TYPE_UINT16;
   } else {
-    data_type = JPEGLI_TYPE_UINT8;
+    data_type = PDFCORE_TYPE_UINT8;
   }
 
-  const JpegliPixelFormat format{
+  const PdfcorePixelFormat format{
       /*num_channels=*/1,
       /*data_type=*/data_type,
-      /*endianness=*/header.big_endian ? JPEGLI_BIG_ENDIAN
-                                       : JPEGLI_LITTLE_ENDIAN,
+      /*endianness=*/header.big_endian ? PDFCORE_BIG_ENDIAN
+                                       : PDFCORE_LITTLE_ENDIAN,
       /*align=*/0,
   };
   ppf->frames.clear();
   // Allocates the frame buffer.
   {
-    JPEGLI_ASSIGN_OR_RETURN(
+    PDFCORE_ASSIGN_OR_RETURN(
         PackedFrame frame,
         PackedFrame::Create(header.xsize, header.ysize, format));
     ppf->frames.emplace_back(std::move(frame));
@@ -208,11 +208,11 @@ Status DecodeImagePGX(const Span<const uint8_t> bytes,
   const auto& frame = ppf->frames.back();
   size_t pgx_remaining_size = bytes.data() + bytes.size() - pos;
   if (pgx_remaining_size < frame.color.pixels_size) {
-    return JPEGLI_FAILURE("PGX file too small");
+    return PDFCORE_FAILURE("PGX file too small");
   }
   memcpy(frame.color.pixels(), pos, frame.color.pixels_size);
   return true;
 }
 
 }  // namespace extras
-}  // namespace jpegli
+}  // namespace pdfcore

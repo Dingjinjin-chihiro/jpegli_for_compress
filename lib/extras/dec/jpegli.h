@@ -4,8 +4,8 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
-#ifndef JPEGLI_LIB_EXTRAS_DEC_JPEGLI_H_
-#define JPEGLI_LIB_EXTRAS_DEC_JPEGLI_H_
+#ifndef PDFCORE_LIB_EXTRAS_DEC_PDFCORE_H_
+#define PDFCORE_LIB_EXTRAS_DEC_PDFCORE_H_
 
 // Decodes JPG pixels and metadata in memory using the libjpegli library.
 
@@ -16,14 +16,14 @@
 #include "lib/base/status.h"
 #include "lib/base/types.h"
 
-namespace jpegli {
+namespace pdfcore {
 namespace extras {
 
 class PackedPixelFile;
 
 struct JpegDecompressParams {
-  JpegliDataType output_data_type = JPEGLI_TYPE_UINT8;
-  JpegliEndianness output_endianness = JPEGLI_NATIVE_ENDIAN;
+  PdfcoreDataType output_data_type = PDFCORE_TYPE_UINT8;
+  PdfcoreEndianness output_endianness = PDFCORE_NATIVE_ENDIAN;
   bool force_rgb = false;
   bool force_grayscale = false;
   int num_colors = 0;
@@ -37,6 +37,6 @@ Status DecodeJpeg(const std::vector<uint8_t>& compressed,
                   PackedPixelFile* ppf);
 
 }  // namespace extras
-}  // namespace jpegli
+}  // namespace pdfcore
 
-#endif  // JPEGLI_LIB_EXTRAS_DEC_JPEGLI_H_
+#endif  // PDFCORE_LIB_EXTRAS_DEC_PDFCORE_H_

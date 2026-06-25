@@ -14,15 +14,15 @@
 // IWYU pragma: no_include "OpenEXRConfig.h"
 #include "lib/extras/enc/encode.h"
 
-#if !JPEGLI_ENABLE_EXR
+#if !PDFCORE_ENABLE_EXR
 
-namespace jpegli {
+namespace pdfcore {
 namespace extras {
 std::unique_ptr<Encoder> GetEXREncoder() { return nullptr; }
 }  // namespace extras
-}  // namespace jpegli
+}  // namespace pdfcore
 
-#else  // JPEGLI_ENABLE_EXR
+#else  // PDFCORE_ENABLE_EXR
 
 #include <ImathVec.h>
 #include <ImfIO.h>
@@ -49,7 +49,7 @@ std::unique_ptr<Encoder> GetEXREncoder() { return nullptr; }
 #include "lib/extras/codestream_header.h"
 #include "lib/extras/packed_image.h"
 
-namespace jpegli {
+namespace pdfcore {
 namespace extras {
 namespace {
 
@@ -105,8 +105,8 @@ float LoadLEFloat(const uint8_t* p) {
   return result;
 }
 
-Status EncodeImageEXR(const PackedImage& image, const JpegliBasicInfo& info,
-                      const JpegliColorEncoding& c_enc, ThreadPool* pool,
+Status EncodeImageEXR(const PackedImage& image, const PdfcoreBasicInfo& info,
+                      const PdfcoreColorEncoding& c_enc, ThreadPool* pool,
                       std::vector<uint8_t>* bytes) {
   OpenEXR::setGlobalThreadCount(0);
 
@@ -114,40 +114,40 @@ Status EncodeImageEXR(const PackedImage& image, const JpegliBasicInfo& info,
   const size_t ysize = info.ysize;
   const bool has_alpha = info.alpha_bits > 0;
   const bool alpha_is_premultiplied =
-      FROM_JPEGLI_BOOL(info.alpha_premultiplied);
+      FROM_PDFCORE_BOOL(info.alpha_premultiplied);
 
   if (info.num_color_channels != 3) {
-    return JPEGLI_FAILURE("OpenEXR encoding: expected 3 color channels, got %u",
+    return PDFCORE_FAILURE("OpenEXR encoding: expected 3 color channels, got %u",
                           static_cast<unsigned>(info.num_color_channels));
   }
-  if (c_enc.color_space != JPEGLI_COLOR_SPACE_RGB &&
-      c_enc.color_space != JPEGLI_COLOR_SPACE_GRAY) {
-    return JPEGLI_FAILURE(
+  if (c_enc.color_space != PDFCORE_COLOR_SPACE_RGB &&
+      c_enc.color_space != PDFCORE_COLOR_SPACE_GRAY) {
+    return PDFCORE_FAILURE(
         "OpenEXR encoding: expected RGB (%d) or grayscale (%d) colorspace, got "
         "%d",
-        static_cast<int>(JPEGLI_COLOR_SPACE_RGB),
-        static_cast<int>(JPEGLI_COLOR_SPACE_GRAY),
+        static_cast<int>(PDFCORE_COLOR_SPACE_RGB),
+        static_cast<int>(PDFCORE_COLOR_SPACE_GRAY),
         static_cast<int>(c_enc.color_space));
   }
-  if (c_enc.transfer_function != JPEGLI_TRANSFER_FUNCTION_LINEAR) {
-    return JPEGLI_FAILURE(
+  if (c_enc.transfer_function != PDFCORE_TRANSFER_FUNCTION_LINEAR) {
+    return PDFCORE_FAILURE(
         "OpenEXR encoding: expected linear transfer function (%d), got %d",
-        static_cast<int>(JPEGLI_TRANSFER_FUNCTION_LINEAR),
+        static_cast<int>(PDFCORE_TRANSFER_FUNCTION_LINEAR),
         static_cast<int>(c_enc.transfer_function));
   }
 
   const size_t num_channels = 3 + (has_alpha ? 1 : 0);
-  const JpegliPixelFormat format = image.format;
+  const PdfcorePixelFormat format = image.format;
 
-  if (format.data_type != JPEGLI_TYPE_FLOAT) {
-    return JPEGLI_FAILURE("Unsupported pixel format for OpenEXR output");
+  if (format.data_type != PDFCORE_TYPE_FLOAT) {
+    return PDFCORE_FAILURE("Unsupported pixel format for OpenEXR output");
   }
 
   const uint8_t* in = static_cast<const uint8_t*>(image.pixels());
   size_t in_stride = num_channels * 4 * xsize;
 
   OpenEXR::Header header(xsize, ysize);
-  if (c_enc.color_space == JPEGLI_COLOR_SPACE_RGB) {
+  if (c_enc.color_space == PDFCORE_COLOR_SPACE_RGB) {
     OpenEXR::Chromaticities chromaticities;
     chromaticities.red =
         Imath::V2f(c_enc.primaries_red_xy[0], c_enc.primaries_red_xy[1]);
@@ -162,7 +162,7 @@ Status EncodeImageEXR(const PackedImage& image, const JpegliBasicInfo& info,
   OpenEXR::addWhiteLuminance(header, info.intensity_target);
 
   auto loadFloat =
-      format.endianness == JPEGLI_BIG_ENDIAN ? LoadBEFloat : LoadLEFloat;
+      format.endianness == PDFCORE_BIG_ENDIAN ? LoadBEFloat : LoadLEFloat;
   auto loadAlpha =
       has_alpha ? loadFloat : [](const uint8_t* p) -> float { return 1.0f; };
 
@@ -172,7 +172,7 @@ Status EncodeImageEXR(const PackedImage& image, const JpegliBasicInfo& info,
     InMemoryOStream os(bytes);
     OpenEXR::RgbaOutputFile output(
         os, header,
-        c_enc.color_space == JPEGLI_COLOR_SPACE_GRAY
+        c_enc.color_space == PDFCORE_COLOR_SPACE_GRAY
             ? (has_alpha ? OpenEXR::WRITE_YA : OpenEXR::WRITE_Y)
             : (has_alpha ? OpenEXR::WRITE_RGBA : OpenEXR::WRITE_RGB));
     // How many rows to write at once. Again, the OpenEXR documentation
@@ -187,7 +187,7 @@ Status EncodeImageEXR(const PackedImage& image, const JpegliBasicInfo& info,
                             /*xStride=*/1, /*yStride=*/xsize);
       for (size_t y = start_y; y <= end_y; ++y) {
         const uint8_t* in_row = &in[(y - start_y) * in_stride];
-        OpenEXR::Rgba* const JPEGLI_RESTRICT row_data =
+        OpenEXR::Rgba* const PDFCORE_RESTRICT row_data =
             &output_rows[(y - start_y) * xsize];
         for (size_t x = 0; x < xsize; ++x) {
           const uint8_t* in_pixel = &in_row[4 * num_channels * x];
@@ -211,13 +211,13 @@ Status EncodeImageEXR(const PackedImage& image, const JpegliBasicInfo& info,
 }
 
 class EXREncoder : public Encoder {
-  std::vector<JpegliPixelFormat> AcceptedFormats() const override {
-    std::vector<JpegliPixelFormat> formats;
+  std::vector<PdfcorePixelFormat> AcceptedFormats() const override {
+    std::vector<PdfcorePixelFormat> formats;
     for (const uint32_t num_channels : {3, 4}) {
-      for (const JpegliDataType data_type : {JPEGLI_TYPE_FLOAT}) {
-        for (JpegliEndianness endianness :
-             {JPEGLI_BIG_ENDIAN, JPEGLI_LITTLE_ENDIAN}) {
-          formats.push_back(JpegliPixelFormat{/*num_channels=*/num_channels,
+      for (const PdfcoreDataType data_type : {PDFCORE_TYPE_FLOAT}) {
+        for (PdfcoreEndianness endianness :
+             {PDFCORE_BIG_ENDIAN, PDFCORE_LITTLE_ENDIAN}) {
+          formats.push_back(PdfcorePixelFormat{/*num_channels=*/num_channels,
                                               /*data_type=*/data_type,
                                               /*endianness=*/endianness,
                                               /*align=*/0});
@@ -228,14 +228,14 @@ class EXREncoder : public Encoder {
   }
   Status Encode(const PackedPixelFile& ppf, EncodedImage* encoded_image,
                 ThreadPool* pool) const override {
-    JPEGLI_RETURN_IF_ERROR(VerifyBasicInfo(ppf.info));
+    PDFCORE_RETURN_IF_ERROR(VerifyBasicInfo(ppf.info));
     encoded_image->icc.clear();
     encoded_image->bitstreams.clear();
     encoded_image->bitstreams.reserve(ppf.frames.size());
     for (const auto& frame : ppf.frames) {
-      JPEGLI_RETURN_IF_ERROR(VerifyPackedImage(frame.color, ppf.info));
+      PDFCORE_RETURN_IF_ERROR(VerifyPackedImage(frame.color, ppf.info));
       encoded_image->bitstreams.emplace_back();
-      JPEGLI_RETURN_IF_ERROR(EncodeImageEXR(frame.color, ppf.info,
+      PDFCORE_RETURN_IF_ERROR(EncodeImageEXR(frame.color, ppf.info,
                                             ppf.color_encoding, pool,
                                             &encoded_image->bitstreams.back()));
     }
@@ -246,10 +246,10 @@ class EXREncoder : public Encoder {
 }  // namespace
 
 std::unique_ptr<Encoder> GetEXREncoder() {
-  return jpegli::make_unique<EXREncoder>();
+  return pdfcore::make_unique<EXREncoder>();
 }
 
 }  // namespace extras
-}  // namespace jpegli
+}  // namespace pdfcore
 
-#endif  // JPEGLI_ENABLE_EXR
+#endif  // PDFCORE_ENABLE_EXR

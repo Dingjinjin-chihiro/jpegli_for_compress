@@ -50,10 +50,10 @@
 #include "lib/base/printf_macros.h"
 #endif
 
-#ifndef JPEGLI_BUTTERAUGLI_ONCE
-#define JPEGLI_BUTTERAUGLI_ONCE
+#ifndef PDFCORE_BUTTERAUGLI_ONCE
+#define PDFCORE_BUTTERAUGLI_ONCE
 
-namespace jpegli {
+namespace pdfcore {
 
 static const double wMfMalta = 37.0819870399;
 static const double norm1Mf = 130262059.556;
@@ -108,8 +108,8 @@ void ConvolveBorderColumn(const ImageF& in, const std::vector<float>& kernel,
 Status ConvolutionWithTranspose(const ImageF& in,
                                 const std::vector<float>& kernel,
                                 ImageF* BUTTERAUGLI_RESTRICT out) {
-  JPEGLI_ENSURE(out->xsize() == in.ysize());
-  JPEGLI_ENSURE(out->ysize() == in.xsize());
+  PDFCORE_ENSURE(out->xsize() == in.ysize());
+  PDFCORE_ENSURE(out->ysize() == in.xsize());
   const size_t len = kernel.size();
   const size_t offset = len / 2;
   float weight_no_border = 0.0f;
@@ -206,7 +206,7 @@ Status ConvolutionWithTranspose(const ImageF& in,
       break;
     }
     default:
-      return JPEGLI_UNREACHABLE("kernel size %d not implemented",
+      return PDFCORE_UNREACHABLE("kernel size %d not implemented",
                                 static_cast<int>(len));
   }
   // left border
@@ -249,15 +249,15 @@ Status Blur(const ImageF& in, float sigma, const ButteraugliParams& params,
         {HWY_REP4(w0), HWY_REP4(w1), HWY_REP4(w2)},
         {HWY_REP4(w0), HWY_REP4(w1), HWY_REP4(w2)},
     };
-    JPEGLI_RETURN_IF_ERROR(
+    PDFCORE_RETURN_IF_ERROR(
         Separable5(in, Rect(in), weights, /*pool=*/nullptr, out));
     return true;
   }
 
   ImageF* temp_t;
-  JPEGLI_RETURN_IF_ERROR(temp->GetTransposed(in, &temp_t));
-  JPEGLI_RETURN_IF_ERROR(ConvolutionWithTranspose(in, kernel, temp_t));
-  JPEGLI_RETURN_IF_ERROR(ConvolutionWithTranspose(*temp_t, kernel, out));
+  PDFCORE_RETURN_IF_ERROR(temp->GetTransposed(in, &temp_t));
+  PDFCORE_RETURN_IF_ERROR(ConvolutionWithTranspose(in, kernel, temp_t));
+  PDFCORE_RETURN_IF_ERROR(ConvolutionWithTranspose(*temp_t, kernel, out));
   return true;
 }
 
@@ -265,13 +265,13 @@ Status Blur(const ImageF& in, float sigma, const ButteraugliParams& params,
 struct MaltaTagLF {};
 struct MaltaTag {};
 
-}  // namespace jpegli
+}  // namespace pdfcore
 
-#endif  // JPEGLI_BUTTERAUGLI_ONCE
+#endif  // PDFCORE_BUTTERAUGLI_ONCE
 
 #include <hwy/highway.h>
 HWY_BEFORE_NAMESPACE();
-namespace jpegli {
+namespace pdfcore {
 namespace HWY_NAMESPACE {
 
 // These templates are not found via ADL.
@@ -363,7 +363,7 @@ void XybLowFreqToVals(Image3F* xyb_lf) {
 }
 
 Status SuppressXByY(const ImageF& in_y, ImageF* HWY_RESTRICT inout_x) {
-  JPEGLI_ENSURE(SameSize(*inout_x, in_y));
+  PDFCORE_ENSURE(SameSize(*inout_x, in_y));
   const size_t xsize = in_y.xsize();
   const size_t ysize = in_y.ysize();
   const HWY_FULL(float) d;
@@ -404,7 +404,7 @@ Status SeparateLFAndMF(const ButteraugliParams& params, const Image3F& xyb,
   static const double kSigmaLf = 7.15593339443;
   for (int i = 0; i < 3; ++i) {
     // Extract lf ...
-    JPEGLI_RETURN_IF_ERROR(
+    PDFCORE_RETURN_IF_ERROR(
         Blur(xyb.Plane(i), kSigmaLf, params, blur_temp, &lf->Plane(i)));
     // ... and keep everything else in mf.
     Subtract(xyb.Plane(i), lf->Plane(i), &mf->Plane(i));
@@ -419,12 +419,12 @@ Status SeparateMFAndHF(const ButteraugliParams& params, Image3F* mf, ImageF* hf,
   static const double kSigmaHf = 3.22489901262;
   const size_t xsize = mf->xsize();
   const size_t ysize = mf->ysize();
-  JpegliMemoryManager* memory_manager = mf[0].memory_manager();
-  JPEGLI_ASSIGN_OR_RETURN(hf[0], ImageF::Create(memory_manager, xsize, ysize));
-  JPEGLI_ASSIGN_OR_RETURN(hf[1], ImageF::Create(memory_manager, xsize, ysize));
+  PdfcoreMemoryManager* memory_manager = mf[0].memory_manager();
+  PDFCORE_ASSIGN_OR_RETURN(hf[0], ImageF::Create(memory_manager, xsize, ysize));
+  PDFCORE_ASSIGN_OR_RETURN(hf[1], ImageF::Create(memory_manager, xsize, ysize));
   for (int i = 0; i < 3; ++i) {
     if (i == 2) {
-      JPEGLI_RETURN_IF_ERROR(
+      PDFCORE_RETURN_IF_ERROR(
           Blur(mf->Plane(i), kSigmaHf, params, blur_temp, &mf->Plane(i)));
       break;
     }
@@ -435,7 +435,7 @@ Status SeparateMFAndHF(const ButteraugliParams& params, Image3F* mf, ImageF* hf,
         Store(Load(d, row_mf + x), d, row_hf + x);
       }
     }
-    JPEGLI_RETURN_IF_ERROR(
+    PDFCORE_RETURN_IF_ERROR(
         Blur(mf->Plane(i), kSigmaHf, params, blur_temp, &mf->Plane(i)));
     static const double kRemoveMfRange = 0.29;
     static const double kAddMfRange = 0.1;
@@ -467,7 +467,7 @@ Status SeparateMFAndHF(const ButteraugliParams& params, Image3F* mf, ImageF* hf,
     }
   }
   // Suppress red-green by intensity change in the high freq channels.
-  JPEGLI_RETURN_IF_ERROR(SuppressXByY(hf[1], &hf[0]));
+  PDFCORE_RETURN_IF_ERROR(SuppressXByY(hf[1], &hf[0]));
   return true;
 }
 
@@ -476,10 +476,10 @@ Status SeparateHFAndUHF(const ButteraugliParams& params, ImageF* hf,
   const HWY_FULL(float) d;
   const size_t xsize = hf[0].xsize();
   const size_t ysize = hf[0].ysize();
-  JpegliMemoryManager* memory_manager = hf[0].memory_manager();
+  PdfcoreMemoryManager* memory_manager = hf[0].memory_manager();
   static const double kSigmaUhf = 1.56416327805;
-  JPEGLI_ASSIGN_OR_RETURN(uhf[0], ImageF::Create(memory_manager, xsize, ysize));
-  JPEGLI_ASSIGN_OR_RETURN(uhf[1], ImageF::Create(memory_manager, xsize, ysize));
+  PDFCORE_ASSIGN_OR_RETURN(uhf[0], ImageF::Create(memory_manager, xsize, ysize));
+  PDFCORE_ASSIGN_OR_RETURN(uhf[1], ImageF::Create(memory_manager, xsize, ysize));
   for (int i = 0; i < 2; ++i) {
     // Divide hf into hf and uhf.
     for (size_t y = 0; y < ysize; ++y) {
@@ -489,7 +489,7 @@ Status SeparateHFAndUHF(const ButteraugliParams& params, ImageF* hf,
         row_uhf[x] = row_hf[x];
       }
     }
-    JPEGLI_RETURN_IF_ERROR(Blur(hf[i], kSigmaUhf, params, blur_temp, &hf[i]));
+    PDFCORE_RETURN_IF_ERROR(Blur(hf[i], kSigmaUhf, params, blur_temp, &hf[i]));
     static const double kRemoveHfRange = 1.5;
     static const double kAddHfRange = 0.132;
     static const double kRemoveUhfRange = 0.04;
@@ -543,15 +543,15 @@ void DeallocateHFAndUHF(ImageF* hf, ImageF* uhf) {
 Status SeparateFrequencies(size_t xsize, size_t ysize,
                            const ButteraugliParams& params, BlurTemp* blur_temp,
                            const Image3F& xyb, PsychoImage& ps) {
-  JpegliMemoryManager* memory_manager = xyb.memory_manager();
-  JPEGLI_ASSIGN_OR_RETURN(
+  PdfcoreMemoryManager* memory_manager = xyb.memory_manager();
+  PDFCORE_ASSIGN_OR_RETURN(
       ps.lf, Image3F::Create(memory_manager, xyb.xsize(), xyb.ysize()));
-  JPEGLI_ASSIGN_OR_RETURN(
+  PDFCORE_ASSIGN_OR_RETURN(
       ps.mf, Image3F::Create(memory_manager, xyb.xsize(), xyb.ysize()));
-  JPEGLI_RETURN_IF_ERROR(
+  PDFCORE_RETURN_IF_ERROR(
       SeparateLFAndMF(params, xyb, &ps.lf, &ps.mf, blur_temp));
-  JPEGLI_RETURN_IF_ERROR(SeparateMFAndHF(params, &ps.mf, &ps.hf[0], blur_temp));
-  JPEGLI_RETURN_IF_ERROR(
+  PDFCORE_RETURN_IF_ERROR(SeparateMFAndHF(params, &ps.mf, &ps.hf[0], blur_temp));
+  PDFCORE_RETURN_IF_ERROR(
       SeparateHFAndUHF(params, &ps.hf[0], &ps.uhf[0], blur_temp));
   return true;
 }
@@ -990,7 +990,7 @@ static Status MaltaDiffMapT(const Tag tag, const ImageF& lum0,
                             const double len, const double mulli,
                             ImageF* HWY_RESTRICT diffs,
                             ImageF* HWY_RESTRICT block_diff_ac) {
-  JPEGLI_ENSURE(SameSize(lum0, lum1) && SameSize(lum0, *diffs));
+  PDFCORE_ENSURE(SameSize(lum0, lum1) && SameSize(lum0, *diffs));
   const size_t xsize_ = lum0.xsize();
   const size_t ysize_ = lum0.ysize();
 
@@ -1090,7 +1090,7 @@ Status MaltaDiffMap(const ImageF& lum0, const ImageF& lum1, const double w_0gt1,
                     ImageF* HWY_RESTRICT block_diff_ac) {
   const double len = 3.75;
   static const double mulli = 0.39905817637;
-  JPEGLI_RETURN_IF_ERROR(MaltaDiffMapT(MaltaTag(), lum0, lum1, w_0gt1, w_0lt1,
+  PDFCORE_RETURN_IF_ERROR(MaltaDiffMapT(MaltaTag(), lum0, lum1, w_0gt1, w_0lt1,
                                        norm1, len, mulli, diffs,
                                        block_diff_ac));
   return true;
@@ -1102,7 +1102,7 @@ Status MaltaDiffMapLF(const ImageF& lum0, const ImageF& lum1,
                       ImageF* HWY_RESTRICT block_diff_ac) {
   const double len = 3.75;
   static const double mulli = 0.611612573796;
-  JPEGLI_RETURN_IF_ERROR(MaltaDiffMapT(MaltaTagLF(), lum0, lum1, w_0gt1, w_0lt1,
+  PDFCORE_RETURN_IF_ERROR(MaltaDiffMapT(MaltaTagLF(), lum0, lum1, w_0gt1, w_0lt1,
                                        norm1, len, mulli, diffs,
                                        block_diff_ac));
   return true;
@@ -1218,24 +1218,24 @@ Status Mask(const ImageF& mask0, const ImageF& mask1,
             ImageF* BUTTERAUGLI_RESTRICT diff_ac) {
   const size_t xsize = mask0.xsize();
   const size_t ysize = mask0.ysize();
-  JpegliMemoryManager* memory_manager = mask0.memory_manager();
-  JPEGLI_ASSIGN_OR_RETURN(*mask, ImageF::Create(memory_manager, xsize, ysize));
+  PdfcoreMemoryManager* memory_manager = mask0.memory_manager();
+  PDFCORE_ASSIGN_OR_RETURN(*mask, ImageF::Create(memory_manager, xsize, ysize));
   static const float kMul = 6.19424080439;
   static const float kBias = 12.61050594197;
   static const float kRadius = 2.7;
-  JPEGLI_ASSIGN_OR_RETURN(ImageF diff0,
+  PDFCORE_ASSIGN_OR_RETURN(ImageF diff0,
                           ImageF::Create(memory_manager, xsize, ysize));
-  JPEGLI_ASSIGN_OR_RETURN(ImageF diff1,
+  PDFCORE_ASSIGN_OR_RETURN(ImageF diff1,
                           ImageF::Create(memory_manager, xsize, ysize));
-  JPEGLI_ASSIGN_OR_RETURN(ImageF blurred0,
+  PDFCORE_ASSIGN_OR_RETURN(ImageF blurred0,
                           ImageF::Create(memory_manager, xsize, ysize));
-  JPEGLI_ASSIGN_OR_RETURN(ImageF blurred1,
+  PDFCORE_ASSIGN_OR_RETURN(ImageF blurred1,
                           ImageF::Create(memory_manager, xsize, ysize));
   DiffPrecompute(mask0, kMul, kBias, &diff0);
   DiffPrecompute(mask1, kMul, kBias, &diff1);
-  JPEGLI_RETURN_IF_ERROR(Blur(diff0, kRadius, params, blur_temp, &blurred0));
+  PDFCORE_RETURN_IF_ERROR(Blur(diff0, kRadius, params, blur_temp, &blurred0));
   FuzzyErosion(blurred0, &diff0);
-  JPEGLI_RETURN_IF_ERROR(Blur(diff1, kRadius, params, blur_temp, &blurred1));
+  PDFCORE_RETURN_IF_ERROR(Blur(diff1, kRadius, params, blur_temp, &blurred1));
   for (size_t y = 0; y < ysize; ++y) {
     for (size_t x = 0; x < xsize; ++x) {
       mask->Row(y)[x] = diff0.Row(y)[x];
@@ -1255,14 +1255,14 @@ Status MaskPsychoImage(const PsychoImage& pi0, const PsychoImage& pi1,
                        const ButteraugliParams& params, BlurTemp* blur_temp,
                        ImageF* BUTTERAUGLI_RESTRICT mask,
                        ImageF* BUTTERAUGLI_RESTRICT diff_ac) {
-  JpegliMemoryManager* memory_manager = pi0.hf[0].memory_manager();
-  JPEGLI_ASSIGN_OR_RETURN(ImageF mask0,
+  PdfcoreMemoryManager* memory_manager = pi0.hf[0].memory_manager();
+  PDFCORE_ASSIGN_OR_RETURN(ImageF mask0,
                           ImageF::Create(memory_manager, xsize, ysize));
-  JPEGLI_ASSIGN_OR_RETURN(ImageF mask1,
+  PDFCORE_ASSIGN_OR_RETURN(ImageF mask1,
                           ImageF::Create(memory_manager, xsize, ysize));
   CombineChannelsForMasking(&pi0.hf[0], &pi0.uhf[0], &mask0);
   CombineChannelsForMasking(&pi1.hf[0], &pi1.uhf[0], &mask1);
-  JPEGLI_RETURN_IF_ERROR(Mask(mask0, mask1, params, blur_temp, mask, diff_ac));
+  PDFCORE_RETURN_IF_ERROR(Mask(mask0, mask1, params, blur_temp, mask, diff_ac));
   return true;
 }
 
@@ -1293,7 +1293,7 @@ Status CombineChannelsToDiffmap(const ImageF& mask,
                                 const Image3F& block_diff_dc,
                                 const Image3F& block_diff_ac, float xmul,
                                 ImageF* result) {
-  JPEGLI_ENSURE(SameSize(mask, *result));
+  PDFCORE_ENSURE(SameSize(mask, *result));
   size_t xsize = mask.xsize();
   size_t ysize = mask.ysize();
   for (size_t y = 0; y < ysize; ++y) {
@@ -1424,9 +1424,9 @@ V Gamma(const DF df, V v) {
 
 template <bool Clamp, class DF, class V>
 BUTTERAUGLI_INLINE void OpsinAbsorbance(const DF df, const V& in0, const V& in1,
-                                        const V& in2, V* JPEGLI_RESTRICT out0,
-                                        V* JPEGLI_RESTRICT out1,
-                                        V* JPEGLI_RESTRICT out2) {
+                                        const V& in2, V* PDFCORE_RESTRICT out0,
+                                        V* PDFCORE_RESTRICT out1,
+                                        V* PDFCORE_RESTRICT out2) {
   // https://en.wikipedia.org/wiki/Photopsin absorbance modeling.
   static const double mixi0 = 0.29956550340058319;
   static const double mixi1 = 0.63373087833825936;
@@ -1468,13 +1468,13 @@ BUTTERAUGLI_INLINE void OpsinAbsorbance(const DF df, const V& in0, const V& in1,
 // `blurred` is a temporary image used inside this function and not returned.
 Status OpsinDynamicsImage(const Image3F& rgb, const ButteraugliParams& params,
                           Image3F* blurred, BlurTemp* blur_temp, Image3F* xyb) {
-  JPEGLI_ENSURE(blurred != nullptr);
+  PDFCORE_ENSURE(blurred != nullptr);
   const double kSigma = 1.2;
-  JPEGLI_RETURN_IF_ERROR(
+  PDFCORE_RETURN_IF_ERROR(
       Blur(rgb.Plane(0), kSigma, params, blur_temp, &blurred->Plane(0)));
-  JPEGLI_RETURN_IF_ERROR(
+  PDFCORE_RETURN_IF_ERROR(
       Blur(rgb.Plane(1), kSigma, params, blur_temp, &blurred->Plane(1)));
-  JPEGLI_RETURN_IF_ERROR(
+  PDFCORE_RETURN_IF_ERROR(
       Blur(rgb.Plane(2), kSigma, params, blur_temp, &blurred->Plane(2)));
   const HWY_FULL(float) df;
   const auto intensity_target_multiplier = Set(df, params.intensity_target);
@@ -1546,31 +1546,31 @@ Status ButteraugliDiffmapInPlace(Image3F& image0, Image3F& image1,
   // image0 and image1 are in linear sRGB color space
   const size_t xsize = image0.xsize();
   const size_t ysize = image0.ysize();
-  JpegliMemoryManager* memory_manager = image0.memory_manager();
+  PdfcoreMemoryManager* memory_manager = image0.memory_manager();
   BlurTemp blur_temp;
   {
     // Convert image0 and image1 to XYB in-place
-    JPEGLI_ASSIGN_OR_RETURN(Image3F temp,
+    PDFCORE_ASSIGN_OR_RETURN(Image3F temp,
                             Image3F::Create(memory_manager, xsize, ysize));
-    JPEGLI_RETURN_IF_ERROR(
+    PDFCORE_RETURN_IF_ERROR(
         OpsinDynamicsImage(image0, params, &temp, &blur_temp, &image0));
-    JPEGLI_RETURN_IF_ERROR(
+    PDFCORE_RETURN_IF_ERROR(
         OpsinDynamicsImage(image1, params, &temp, &blur_temp, &image1));
   }
   // image0 and image1 are in XYB color space
-  JPEGLI_ASSIGN_OR_RETURN(ImageF block_diff_dc,
+  PDFCORE_ASSIGN_OR_RETURN(ImageF block_diff_dc,
                           ImageF::Create(memory_manager, xsize, ysize));
   ZeroFillImage(&block_diff_dc);
   {
     // separate out LF components from image0 and image1 and compute the dc
     // diff image from them
-    JPEGLI_ASSIGN_OR_RETURN(Image3F lf0,
+    PDFCORE_ASSIGN_OR_RETURN(Image3F lf0,
                             Image3F::Create(memory_manager, xsize, ysize));
-    JPEGLI_ASSIGN_OR_RETURN(Image3F lf1,
+    PDFCORE_ASSIGN_OR_RETURN(Image3F lf1,
                             Image3F::Create(memory_manager, xsize, ysize));
-    JPEGLI_RETURN_IF_ERROR(
+    PDFCORE_RETURN_IF_ERROR(
         SeparateLFAndMF(params, image0, &lf0, &image0, &blur_temp));
-    JPEGLI_RETURN_IF_ERROR(
+    PDFCORE_RETURN_IF_ERROR(
         SeparateLFAndMF(params, image1, &lf1, &image1, &blur_temp));
     for (size_t c = 0; c < 3; ++c) {
       L2Diff(lf0.Plane(c), lf1.Plane(c), wmul[6 + c], &block_diff_dc);
@@ -1579,21 +1579,21 @@ Status ButteraugliDiffmapInPlace(Image3F& image0, Image3F& image1,
   // image0 and image1 are MF residuals (before blurring) in XYB color space
   ImageF hf0[2];
   ImageF hf1[2];
-  JPEGLI_RETURN_IF_ERROR(SeparateMFAndHF(params, &image0, &hf0[0], &blur_temp));
-  JPEGLI_RETURN_IF_ERROR(SeparateMFAndHF(params, &image1, &hf1[0], &blur_temp));
+  PDFCORE_RETURN_IF_ERROR(SeparateMFAndHF(params, &image0, &hf0[0], &blur_temp));
+  PDFCORE_RETURN_IF_ERROR(SeparateMFAndHF(params, &image1, &hf1[0], &blur_temp));
   // image0 and image1 are MF-images in XYB color space
 
-  JPEGLI_ASSIGN_OR_RETURN(ImageF block_diff_ac,
+  PDFCORE_ASSIGN_OR_RETURN(ImageF block_diff_ac,
                           ImageF::Create(memory_manager, xsize, ysize));
   ZeroFillImage(&block_diff_ac);
   // start accumulating ac diff image from MF images
   {
-    JPEGLI_ASSIGN_OR_RETURN(ImageF diffs,
+    PDFCORE_ASSIGN_OR_RETURN(ImageF diffs,
                             ImageF::Create(memory_manager, xsize, ysize));
-    JPEGLI_RETURN_IF_ERROR(MaltaDiffMapLF(image0.Plane(1), image1.Plane(1),
+    PDFCORE_RETURN_IF_ERROR(MaltaDiffMapLF(image0.Plane(1), image1.Plane(1),
                                           wMfMalta, wMfMalta, norm1Mf, &diffs,
                                           &block_diff_ac));
-    JPEGLI_RETURN_IF_ERROR(MaltaDiffMapLF(image0.Plane(0), image1.Plane(0),
+    PDFCORE_RETURN_IF_ERROR(MaltaDiffMapLF(image0.Plane(0), image1.Plane(0),
                                           wMfMaltaX, wMfMaltaX, norm1MfX,
                                           &diffs, &block_diff_ac));
   }
@@ -1607,26 +1607,26 @@ Status ButteraugliDiffmapInPlace(Image3F& image0, Image3F& image1,
 
   ImageF uhf0[2];
   ImageF uhf1[2];
-  JPEGLI_RETURN_IF_ERROR(
+  PDFCORE_RETURN_IF_ERROR(
       SeparateHFAndUHF(params, &hf0[0], &uhf0[0], &blur_temp));
-  JPEGLI_RETURN_IF_ERROR(
+  PDFCORE_RETURN_IF_ERROR(
       SeparateHFAndUHF(params, &hf1[0], &uhf1[0], &blur_temp));
 
   // continue accumulating ac diff image from HF and UHF images
   const float hf_asymmetry = params.hf_asymmetry;
   {
-    JPEGLI_ASSIGN_OR_RETURN(ImageF diffs,
+    PDFCORE_ASSIGN_OR_RETURN(ImageF diffs,
                             ImageF::Create(memory_manager, xsize, ysize));
-    JPEGLI_RETURN_IF_ERROR(MaltaDiffMap(
+    PDFCORE_RETURN_IF_ERROR(MaltaDiffMap(
         uhf0[1], uhf1[1], wUhfMalta * hf_asymmetry, wUhfMalta / hf_asymmetry,
         norm1Uhf, &diffs, &block_diff_ac));
-    JPEGLI_RETURN_IF_ERROR(MaltaDiffMap(
+    PDFCORE_RETURN_IF_ERROR(MaltaDiffMap(
         uhf0[0], uhf1[0], wUhfMaltaX * hf_asymmetry, wUhfMaltaX / hf_asymmetry,
         norm1UhfX, &diffs, &block_diff_ac));
-    JPEGLI_RETURN_IF_ERROR(MaltaDiffMapLF(
+    PDFCORE_RETURN_IF_ERROR(MaltaDiffMapLF(
         hf0[1], hf1[1], wHfMalta * std::sqrt(hf_asymmetry),
         wHfMalta / std::sqrt(hf_asymmetry), norm1Hf, &diffs, &block_diff_ac));
-    JPEGLI_RETURN_IF_ERROR(MaltaDiffMapLF(
+    PDFCORE_RETURN_IF_ERROR(MaltaDiffMapLF(
         hf0[0], hf1[0], wHfMaltaX * std::sqrt(hf_asymmetry),
         wHfMaltaX / std::sqrt(hf_asymmetry), norm1HfX, &diffs, &block_diff_ac));
   }
@@ -1636,23 +1636,23 @@ Status ButteraugliDiffmapInPlace(Image3F& image0, Image3F& image1,
   }
 
   // compute mask image from HF and UHF X and Y images
-  JPEGLI_ASSIGN_OR_RETURN(ImageF mask,
+  PDFCORE_ASSIGN_OR_RETURN(ImageF mask,
                           ImageF::Create(memory_manager, xsize, ysize));
   {
-    JPEGLI_ASSIGN_OR_RETURN(ImageF mask0,
+    PDFCORE_ASSIGN_OR_RETURN(ImageF mask0,
                             ImageF::Create(memory_manager, xsize, ysize));
-    JPEGLI_ASSIGN_OR_RETURN(ImageF mask1,
+    PDFCORE_ASSIGN_OR_RETURN(ImageF mask1,
                             ImageF::Create(memory_manager, xsize, ysize));
     CombineChannelsForMasking(&hf0[0], &uhf0[0], &mask0);
     CombineChannelsForMasking(&hf1[0], &uhf1[0], &mask1);
     DeallocateHFAndUHF(&hf1[0], &uhf1[0]);
     DeallocateHFAndUHF(&hf0[0], &uhf0[0]);
-    JPEGLI_RETURN_IF_ERROR(
+    PDFCORE_RETURN_IF_ERROR(
         Mask(mask0, mask1, params, &blur_temp, &mask, &block_diff_ac));
   }
 
   // compute final diffmap from mask image and ac and dc diff images
-  JPEGLI_ASSIGN_OR_RETURN(diffmap,
+  PDFCORE_ASSIGN_OR_RETURN(diffmap,
                           ImageF::Create(memory_manager, xsize, ysize));
   for (size_t y = 0; y < ysize; ++y) {
     const float* row_dc = block_diff_dc.Row(y);
@@ -1668,11 +1668,11 @@ Status ButteraugliDiffmapInPlace(Image3F& image0, Image3F& image1,
 
 // NOLINTNEXTLINE(google-readability-namespace-comments)
 }  // namespace HWY_NAMESPACE
-}  // namespace jpegli
+}  // namespace pdfcore
 HWY_AFTER_NAMESPACE();
 
 #if HWY_ONCE
-namespace jpegli {
+namespace pdfcore {
 
 HWY_EXPORT(SeparateFrequencies);        // Local function.
 HWY_EXPORT(MaskPsychoImage);            // Local function.
@@ -1737,8 +1737,8 @@ static inline void CheckImage(const ImageF& image, const char* name) {
 static StatusOr<Image3F> SubSample2x(const Image3F& in) {
   size_t xs = (in.xsize() + 1) / 2;
   size_t ys = (in.ysize() + 1) / 2;
-  JpegliMemoryManager* memory_manager = in.memory_manager();
-  JPEGLI_ASSIGN_OR_RETURN(Image3F retval,
+  PdfcoreMemoryManager* memory_manager = in.memory_manager();
+  PDFCORE_ASSIGN_OR_RETURN(Image3F retval,
                           Image3F::Create(memory_manager, xs, ys));
   for (size_t c = 0; c < 3; ++c) {
     for (size_t y = 0; y < ys; ++y) {
@@ -1798,30 +1798,30 @@ StatusOr<std::unique_ptr<ButteraugliComparator>> ButteraugliComparator::Make(
     const Image3F& rgb0, const ButteraugliParams& params) {
   size_t xsize = rgb0.xsize();
   size_t ysize = rgb0.ysize();
-  JpegliMemoryManager* memory_manager = rgb0.memory_manager();
+  PdfcoreMemoryManager* memory_manager = rgb0.memory_manager();
   std::unique_ptr<ButteraugliComparator> result =
       std::unique_ptr<ButteraugliComparator>(
           new ButteraugliComparator(xsize, ysize, params));
-  JPEGLI_ASSIGN_OR_RETURN(result->temp_,
+  PDFCORE_ASSIGN_OR_RETURN(result->temp_,
                           Image3F::Create(memory_manager, xsize, ysize));
 
   if (xsize < 8 || ysize < 8) {
     return result;
   }
 
-  JPEGLI_ASSIGN_OR_RETURN(Image3F xyb0,
+  PDFCORE_ASSIGN_OR_RETURN(Image3F xyb0,
                           Image3F::Create(memory_manager, xsize, ysize));
-  JPEGLI_RETURN_IF_ERROR(HWY_DYNAMIC_DISPATCH(OpsinDynamicsImage)(
+  PDFCORE_RETURN_IF_ERROR(HWY_DYNAMIC_DISPATCH(OpsinDynamicsImage)(
       rgb0, params, result->Temp(), &result->blur_temp_, &xyb0));
   result->ReleaseTemp();
-  JPEGLI_RETURN_IF_ERROR(HWY_DYNAMIC_DISPATCH(SeparateFrequencies)(
+  PDFCORE_RETURN_IF_ERROR(HWY_DYNAMIC_DISPATCH(SeparateFrequencies)(
       xsize, ysize, params, &result->blur_temp_, xyb0, result->pi0_));
 
   // Awful recursive construction of samples of different resolution.
   // This is an after-thought and possibly somewhat parallel in
   // functionality with the PsychoImage multi-resolution approach.
-  JPEGLI_ASSIGN_OR_RETURN(Image3F subsampledRgb0, SubSample2x(rgb0));
-  JPEGLI_ASSIGN_OR_RETURN(result->sub_,
+  PDFCORE_ASSIGN_OR_RETURN(Image3F subsampledRgb0, SubSample2x(rgb0));
+  PDFCORE_ASSIGN_OR_RETURN(result->sub_,
                           ButteraugliComparator::Make(subsampledRgb0, params));
   return result;
 }
@@ -1833,30 +1833,30 @@ Status ButteraugliComparator::Mask(ImageF* BUTTERAUGLI_RESTRICT mask) const {
 
 Status ButteraugliComparator::Diffmap(const Image3F& rgb1,
                                       ImageF& result) const {
-  JpegliMemoryManager* memory_manager = rgb1.memory_manager();
+  PdfcoreMemoryManager* memory_manager = rgb1.memory_manager();
   if (xsize_ < 8 || ysize_ < 8) {
     ZeroFillImage(&result);
     return true;
   }
-  JPEGLI_ASSIGN_OR_RETURN(Image3F xyb1,
+  PDFCORE_ASSIGN_OR_RETURN(Image3F xyb1,
                           Image3F::Create(memory_manager, xsize_, ysize_));
-  JPEGLI_RETURN_IF_ERROR(HWY_DYNAMIC_DISPATCH(OpsinDynamicsImage)(
+  PDFCORE_RETURN_IF_ERROR(HWY_DYNAMIC_DISPATCH(OpsinDynamicsImage)(
       rgb1, params_, Temp(), &blur_temp_, &xyb1));
   ReleaseTemp();
-  JPEGLI_RETURN_IF_ERROR(DiffmapOpsinDynamicsImage(xyb1, result));
+  PDFCORE_RETURN_IF_ERROR(DiffmapOpsinDynamicsImage(xyb1, result));
   if (sub_) {
     if (sub_->xsize_ < 8 || sub_->ysize_ < 8) {
       return true;
     }
-    JPEGLI_ASSIGN_OR_RETURN(
+    PDFCORE_ASSIGN_OR_RETURN(
         Image3F sub_xyb,
         Image3F::Create(memory_manager, sub_->xsize_, sub_->ysize_));
-    JPEGLI_ASSIGN_OR_RETURN(Image3F subsampledRgb1, SubSample2x(rgb1));
-    JPEGLI_RETURN_IF_ERROR(HWY_DYNAMIC_DISPATCH(OpsinDynamicsImage)(
+    PDFCORE_ASSIGN_OR_RETURN(Image3F subsampledRgb1, SubSample2x(rgb1));
+    PDFCORE_RETURN_IF_ERROR(HWY_DYNAMIC_DISPATCH(OpsinDynamicsImage)(
         subsampledRgb1, params_, sub_->Temp(), &sub_->blur_temp_, &sub_xyb));
     sub_->ReleaseTemp();
     ImageF subresult;
-    JPEGLI_RETURN_IF_ERROR(sub_->DiffmapOpsinDynamicsImage(sub_xyb, subresult));
+    PDFCORE_RETURN_IF_ERROR(sub_->DiffmapOpsinDynamicsImage(sub_xyb, subresult));
     AddSupersampled2x(subresult, 0.5, result);
   }
   return true;
@@ -1864,15 +1864,15 @@ Status ButteraugliComparator::Diffmap(const Image3F& rgb1,
 
 Status ButteraugliComparator::DiffmapOpsinDynamicsImage(const Image3F& xyb1,
                                                         ImageF& result) const {
-  JpegliMemoryManager* memory_manager = xyb1.memory_manager();
+  PdfcoreMemoryManager* memory_manager = xyb1.memory_manager();
   if (xsize_ < 8 || ysize_ < 8) {
     ZeroFillImage(&result);
     return true;
   }
   PsychoImage pi1;
-  JPEGLI_RETURN_IF_ERROR(HWY_DYNAMIC_DISPATCH(SeparateFrequencies)(
+  PDFCORE_RETURN_IF_ERROR(HWY_DYNAMIC_DISPATCH(SeparateFrequencies)(
       xsize_, ysize_, params_, &blur_temp_, xyb1, pi1));
-  JPEGLI_ASSIGN_OR_RETURN(result,
+  PDFCORE_ASSIGN_OR_RETURN(result,
                           ImageF::Create(memory_manager, xsize_, ysize_));
   return DiffmapPsychoImage(pi1, result);
 }
@@ -1899,7 +1899,7 @@ Status MaltaDiffMapLF(const ImageF& lum0, const ImageF& lum1,
 
 Status ButteraugliComparator::DiffmapPsychoImage(const PsychoImage& pi1,
                                                  ImageF& diffmap) const {
-  JpegliMemoryManager* memory_manager = diffmap.memory_manager();
+  PdfcoreMemoryManager* memory_manager = diffmap.memory_manager();
   if (xsize_ < 8 || ysize_ < 8) {
     ZeroFillImage(&diffmap);
     return true;
@@ -1908,32 +1908,32 @@ Status ButteraugliComparator::DiffmapPsychoImage(const PsychoImage& pi1,
   const float hf_asymmetry_ = params_.hf_asymmetry;
   const float xmul_ = params_.xmul;
 
-  JPEGLI_ASSIGN_OR_RETURN(ImageF diffs,
+  PDFCORE_ASSIGN_OR_RETURN(ImageF diffs,
                           ImageF::Create(memory_manager, xsize_, ysize_));
-  JPEGLI_ASSIGN_OR_RETURN(Image3F block_diff_ac,
+  PDFCORE_ASSIGN_OR_RETURN(Image3F block_diff_ac,
                           Image3F::Create(memory_manager, xsize_, ysize_));
   ZeroFillImage(&block_diff_ac);
-  JPEGLI_RETURN_IF_ERROR(MaltaDiffMap(
+  PDFCORE_RETURN_IF_ERROR(MaltaDiffMap(
       pi0_.uhf[1], pi1.uhf[1], wUhfMalta * hf_asymmetry_,
       wUhfMalta / hf_asymmetry_, norm1Uhf, &diffs, &block_diff_ac, 1));
-  JPEGLI_RETURN_IF_ERROR(MaltaDiffMap(
+  PDFCORE_RETURN_IF_ERROR(MaltaDiffMap(
       pi0_.uhf[0], pi1.uhf[0], wUhfMaltaX * hf_asymmetry_,
       wUhfMaltaX / hf_asymmetry_, norm1UhfX, &diffs, &block_diff_ac, 0));
-  JPEGLI_RETURN_IF_ERROR(MaltaDiffMapLF(
+  PDFCORE_RETURN_IF_ERROR(MaltaDiffMapLF(
       pi0_.hf[1], pi1.hf[1], wHfMalta * std::sqrt(hf_asymmetry_),
       wHfMalta / std::sqrt(hf_asymmetry_), norm1Hf, &diffs, &block_diff_ac, 1));
-  JPEGLI_RETURN_IF_ERROR(MaltaDiffMapLF(pi0_.hf[0], pi1.hf[0],
+  PDFCORE_RETURN_IF_ERROR(MaltaDiffMapLF(pi0_.hf[0], pi1.hf[0],
                                         wHfMaltaX * std::sqrt(hf_asymmetry_),
                                         wHfMaltaX / std::sqrt(hf_asymmetry_),
                                         norm1HfX, &diffs, &block_diff_ac, 0));
-  JPEGLI_RETURN_IF_ERROR(MaltaDiffMapLF(pi0_.mf.Plane(1), pi1.mf.Plane(1),
+  PDFCORE_RETURN_IF_ERROR(MaltaDiffMapLF(pi0_.mf.Plane(1), pi1.mf.Plane(1),
                                         wMfMalta, wMfMalta, norm1Mf, &diffs,
                                         &block_diff_ac, 1));
-  JPEGLI_RETURN_IF_ERROR(MaltaDiffMapLF(pi0_.mf.Plane(0), pi1.mf.Plane(0),
+  PDFCORE_RETURN_IF_ERROR(MaltaDiffMapLF(pi0_.mf.Plane(0), pi1.mf.Plane(0),
                                         wMfMaltaX, wMfMaltaX, norm1MfX, &diffs,
                                         &block_diff_ac, 0));
 
-  JPEGLI_ASSIGN_OR_RETURN(Image3F block_diff_dc,
+  PDFCORE_ASSIGN_OR_RETURN(Image3F block_diff_dc,
                           Image3F::Create(memory_manager, xsize_, ysize_));
   for (size_t c = 0; c < 3; ++c) {
     if (c < 2) {  // No blue channel error accumulated at HF.
@@ -1948,11 +1948,11 @@ Status ButteraugliComparator::DiffmapPsychoImage(const PsychoImage& pi1,
   }
 
   ImageF mask;
-  JPEGLI_RETURN_IF_ERROR(HWY_DYNAMIC_DISPATCH(MaskPsychoImage)(
+  PDFCORE_RETURN_IF_ERROR(HWY_DYNAMIC_DISPATCH(MaskPsychoImage)(
       pi0_, pi1, xsize_, ysize_, params_, &blur_temp_, &mask,
       &block_diff_ac.Plane(1)));
 
-  JPEGLI_RETURN_IF_ERROR(HWY_DYNAMIC_DISPATCH(CombineChannelsToDiffmap)(
+  PDFCORE_RETURN_IF_ERROR(HWY_DYNAMIC_DISPATCH(CombineChannelsToDiffmap)(
       mask, block_diff_dc, block_diff_ac, xmul_, &diffmap));
   return true;
 }
@@ -1982,7 +1982,7 @@ bool ButteraugliDiffmapSmall(const Image3F& rgb0, const Image3F& rgb1,
                              const ButteraugliParams& params, ImageF& diffmap) {
   const size_t xsize = rgb0.xsize();
   const size_t ysize = rgb0.ysize();
-  JpegliMemoryManager* memory_manager = rgb0.memory_manager();
+  PdfcoreMemoryManager* memory_manager = rgb0.memory_manager();
   // Butteraugli values for small (where xsize or ysize is smaller
   // than 8 pixels) images are non-sensical, but most likely it is
   // less disruptive to try to compute something than just give up.
@@ -1991,9 +1991,9 @@ bool ButteraugliDiffmapSmall(const Image3F& rgb0, const Image3F& rgb1,
   size_t yborder = ysize < kMax ? (kMax - ysize) / 2 : 0;
   size_t xscaled = std::max<size_t>(kMax, xsize);
   size_t yscaled = std::max<size_t>(kMax, ysize);
-  JPEGLI_ASSIGN_OR_RETURN(Image3F scaled0,
+  PDFCORE_ASSIGN_OR_RETURN(Image3F scaled0,
                           Image3F::Create(memory_manager, xscaled, yscaled));
-  JPEGLI_ASSIGN_OR_RETURN(Image3F scaled1,
+  PDFCORE_ASSIGN_OR_RETURN(Image3F scaled1,
                           Image3F::Create(memory_manager, xscaled, yscaled));
   for (int i = 0; i < 3; ++i) {
     for (size_t y = 0; y < yscaled; ++y) {
@@ -2007,7 +2007,7 @@ bool ButteraugliDiffmapSmall(const Image3F& rgb0, const Image3F& rgb1,
   }
   ImageF diffmap_scaled;
   const bool ok = ButteraugliDiffmap(scaled0, scaled1, params, diffmap_scaled);
-  JPEGLI_ASSIGN_OR_RETURN(diffmap,
+  PDFCORE_ASSIGN_OR_RETURN(diffmap,
                           ImageF::Create(memory_manager, xsize, ysize));
   for (size_t y = 0; y < ysize; ++y) {
     for (size_t x = 0; x < xsize; ++x) {
@@ -2022,18 +2022,18 @@ Status ButteraugliDiffmap(const Image3F& rgb0, const Image3F& rgb1,
   const size_t xsize = rgb0.xsize();
   const size_t ysize = rgb0.ysize();
   if (xsize < 1 || ysize < 1) {
-    return JPEGLI_FAILURE("Zero-sized image");
+    return PDFCORE_FAILURE("Zero-sized image");
   }
   if (!SameSize(rgb0, rgb1)) {
-    return JPEGLI_FAILURE("Size mismatch");
+    return PDFCORE_FAILURE("Size mismatch");
   }
   static const int kMax = 8;
   if (xsize < kMax || ysize < kMax) {
     return ButteraugliDiffmapSmall<kMax>(rgb0, rgb1, params, diffmap);
   }
-  JPEGLI_ASSIGN_OR_RETURN(std::unique_ptr<ButteraugliComparator> butteraugli,
+  PDFCORE_ASSIGN_OR_RETURN(std::unique_ptr<ButteraugliComparator> butteraugli,
                           ButteraugliComparator::Make(rgb0, params));
-  JPEGLI_RETURN_IF_ERROR(butteraugli->Diffmap(rgb1, diffmap));
+  PDFCORE_RETURN_IF_ERROR(butteraugli->Diffmap(rgb1, diffmap));
   return true;
 }
 
@@ -2062,10 +2062,10 @@ Status ButteraugliInterfaceInPlace(Image3F&& rgb0, Image3F&& rgb1,
   const size_t xsize = rgb0.xsize();
   const size_t ysize = rgb0.ysize();
   if (xsize < 1 || ysize < 1) {
-    return JPEGLI_FAILURE("Zero-sized image");
+    return PDFCORE_FAILURE("Zero-sized image");
   }
   if (!SameSize(rgb0, rgb1)) {
-    return JPEGLI_FAILURE("Size mismatch");
+    return PDFCORE_FAILURE("Size mismatch");
   }
   static const int kMax = 8;
   if (xsize < kMax || ysize < kMax) {
@@ -2075,12 +2075,12 @@ Status ButteraugliInterfaceInPlace(Image3F&& rgb0, Image3F&& rgb1,
   }
   ImageF subdiffmap;
   if (xsize >= 15 && ysize >= 15) {
-    JPEGLI_ASSIGN_OR_RETURN(Image3F rgb0_sub, SubSample2x(rgb0));
-    JPEGLI_ASSIGN_OR_RETURN(Image3F rgb1_sub, SubSample2x(rgb1));
-    JPEGLI_RETURN_IF_ERROR(HWY_DYNAMIC_DISPATCH(ButteraugliDiffmapInPlace)(
+    PDFCORE_ASSIGN_OR_RETURN(Image3F rgb0_sub, SubSample2x(rgb0));
+    PDFCORE_ASSIGN_OR_RETURN(Image3F rgb1_sub, SubSample2x(rgb1));
+    PDFCORE_RETURN_IF_ERROR(HWY_DYNAMIC_DISPATCH(ButteraugliDiffmapInPlace)(
         rgb0_sub, rgb1_sub, params, subdiffmap));
   }
-  JPEGLI_RETURN_IF_ERROR(HWY_DYNAMIC_DISPATCH(ButteraugliDiffmapInPlace)(
+  PDFCORE_RETURN_IF_ERROR(HWY_DYNAMIC_DISPATCH(ButteraugliDiffmapInPlace)(
       rgb0, rgb1, params, diffmap));
   if (xsize >= 15 && ysize >= 15) {
     AddSupersampled2x(subdiffmap, 0.5, diffmap);
@@ -2172,8 +2172,8 @@ void ScoreToRgb(double score, double good_threshold, double bad_threshold,
 StatusOr<Image3F> CreateHeatMapImage(const ImageF& distmap,
                                      double good_threshold,
                                      double bad_threshold) {
-  JpegliMemoryManager* memory_manager = distmap.memory_manager();
-  JPEGLI_ASSIGN_OR_RETURN(
+  PdfcoreMemoryManager* memory_manager = distmap.memory_manager();
+  PDFCORE_ASSIGN_OR_RETURN(
       Image3F heatmap,
       Image3F::Create(memory_manager, distmap.xsize(), distmap.ysize()));
   for (size_t y = 0; y < distmap.ysize(); ++y) {
@@ -2193,5 +2193,5 @@ StatusOr<Image3F> CreateHeatMapImage(const ImageF& distmap,
   return heatmap;
 }
 
-}  // namespace jpegli
+}  // namespace pdfcore
 #endif  // HWY_ONCE

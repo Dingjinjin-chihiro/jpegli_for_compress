@@ -3,15 +3,15 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-#ifndef JPEGLI_TOOLS_NO_MEMORY_MANAGER_H_
-#define JPEGLI_TOOLS_NO_MEMORY_MANAGER_H_
+#ifndef PDFCORE_TOOLS_NO_MEMORY_MANAGER_H_
+#define PDFCORE_TOOLS_NO_MEMORY_MANAGER_H_
 
 #include "lib/base/memory_manager.h"
 
-namespace jpegli_tools {
+namespace pdfcore_jpegli_tools {
 
-JpegliMemoryManager* NoMemoryManager();
+PdfcoreMemoryManager* NoMemoryManager();
 
-}  // namespace jpegli_tools
+}  // namespace pdfcore_jpegli_tools
 
-#endif  // JPEGLI_TOOLS_NO_MEMORY_MANAGER_H_
+#endif  // PDFCORE_TOOLS_NO_MEMORY_MANAGER_H_

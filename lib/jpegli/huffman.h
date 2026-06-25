@@ -4,15 +4,15 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
-#ifndef JPEGLI_LIB_JPEGLI_HUFFMAN_H_
-#define JPEGLI_LIB_JPEGLI_HUFFMAN_H_
+#ifndef PDFCORE_LIB_PDFCORE_HUFFMAN_H_
+#define PDFCORE_LIB_PDFCORE_HUFFMAN_H_
 
 #include <stdint.h>
 #include <stdlib.h>
 
 #include "lib/jpegli/common.h"
 
-namespace jpegli {
+namespace pdfcore {
 
 constexpr int kJpegHuffmanRootTableBits = 8;
 // Maximum huffman lookup table size.
@@ -54,6 +54,6 @@ void ValidateHuffmanTable(j_common_ptr cinfo, const JHUFF_TBL* table,
 
 void AddStandardHuffmanTables(j_common_ptr cinfo, bool is_dc);
 
-}  // namespace jpegli
+}  // namespace pdfcore
 
-#endif  // JPEGLI_LIB_JPEGLI_HUFFMAN_H_
+#endif  // PDFCORE_LIB_PDFCORE_HUFFMAN_H_

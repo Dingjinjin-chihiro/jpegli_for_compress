@@ -15,18 +15,18 @@
 #include <hwy/highway.h>
 
 HWY_BEFORE_NAMESPACE();
-namespace jpegli {
+namespace pdfcore {
 namespace HWY_NAMESPACE {
 
 size_t GetVectorSize() { return HWY_LANES(uint8_t); }
 
 // NOLINTNEXTLINE(google-readability-namespace-comments)
 }  // namespace HWY_NAMESPACE
-}  // namespace jpegli
+}  // namespace pdfcore
 HWY_AFTER_NAMESPACE();
 
 #if HWY_ONCE
-namespace jpegli {
+namespace pdfcore {
 namespace {
 
 HWY_EXPORT(GetVectorSize);  // Local function.
@@ -38,5 +38,5 @@ size_t VectorSize() {
   return bytes;
 }
 
-}  // namespace jpegli
+}  // namespace pdfcore
 #endif  // HWY_ONCE

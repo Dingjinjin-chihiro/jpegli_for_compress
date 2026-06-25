@@ -4,8 +4,8 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
-#ifndef JPEGLI_LIB_JPEGLI_MEMORY_MANAGER_H_
-#define JPEGLI_LIB_JPEGLI_MEMORY_MANAGER_H_
+#ifndef PDFCORE_LIB_PDFCORE_MEMORY_MANAGER_H_
+#define PDFCORE_LIB_PDFCORE_MEMORY_MANAGER_H_
 
 #include <cstdlib>
 
@@ -14,7 +14,7 @@
 #define JPOOL_PERMANENT_ALIGNED (JPOOL_NUMPOOLS + JPOOL_PERMANENT)
 #define JPOOL_IMAGE_ALIGNED (JPOOL_NUMPOOLS + JPOOL_IMAGE)
 
-namespace jpegli {
+namespace pdfcore {
 
 void InitMemoryManager(j_common_ptr cinfo);
 
@@ -42,6 +42,6 @@ JBLOCKARRAY GetBlockRow(T cinfo, int c, JDIMENSION by) {
       by, 1, true);
 }
 
-}  // namespace jpegli
+}  // namespace pdfcore
 
-#endif  // JPEGLI_LIB_JPEGLI_MEMORY_MANAGER_H_
+#endif  // PDFCORE_LIB_PDFCORE_MEMORY_MANAGER_H_

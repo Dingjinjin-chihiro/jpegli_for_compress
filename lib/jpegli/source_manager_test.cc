@@ -21,12 +21,12 @@
 #include "lib/jpegli/test_utils.h"
 #include "lib/jpegli/testing.h"
 
-namespace jpegli {
+namespace pdfcore {
 namespace {
 
 void ReadOutputImage(j_decompress_ptr cinfo, TestImage* output) {
-  jpegli_read_header(cinfo, /*require_image=*/TRUE);
-  jpegli_start_decompress(cinfo);
+  pdfcore_jpegli_read_header(cinfo, /*require_image=*/TRUE);
+  pdfcore_jpegli_start_decompress(cinfo);
   output->ysize = cinfo->output_height;
   output->xsize = cinfo->output_width;
   output->components = cinfo->num_components;
@@ -34,9 +34,9 @@ void ReadOutputImage(j_decompress_ptr cinfo, TestImage* output) {
   size_t stride = cinfo->output_width * cinfo->num_components;
   while (cinfo->output_scanline < cinfo->output_height) {
     JSAMPROW scanline = &output->pixels[cinfo->output_scanline * stride];
-    jpegli_read_scanlines(cinfo, &scanline, 1);
+    pdfcore_jpegli_read_scanlines(cinfo, &scanline, 1);
   }
-  jpegli_finish_decompress(cinfo);
+  pdfcore_jpegli_finish_decompress(cinfo);
 }
 
 struct TestConfig {
@@ -59,7 +59,7 @@ FILE* MemOpen(const std::vector<uint8_t>& data) {
 
 TEST_P(SourceManagerTestParam, TestStdioSourceManager) {
   TestConfig config = GetParam();
-  JPEGLI_ASSIGN_OR_QUIT(std::vector<uint8_t> compressed,
+  PDFCORE_ASSIGN_OR_QUIT(std::vector<uint8_t> compressed,
                         ReadTestData(config.fn), "Failed to read test data.");
   if (config.dparams.size_factor < 1.0) {
     compressed.resize(compressed.size() * config.dparams.size_factor);
@@ -70,15 +70,15 @@ TEST_P(SourceManagerTestParam, TestStdioSourceManager) {
   jpeg_decompress_struct cinfo;
   const auto try_catch_block = [&]() -> bool {
     ERROR_HANDLER_SETUP(jpegli);
-    jpegli_create_decompress(&cinfo);
-    jpegli_stdio_src(&cinfo, src);
+    pdfcore_jpegli_create_decompress(&cinfo);
+    pdfcore_jpegli_stdio_src(&cinfo, src);
     ReadOutputImage(&cinfo, &output0);
     return true;
   };
   bool ok = try_catch_block();
   fclose(src);
   ASSERT_TRUE(ok);
-  jpegli_destroy_decompress(&cinfo);
+  pdfcore_jpegli_destroy_decompress(&cinfo);
 
   TestImage output1;
   DecodeWithLibjpeg(CompressParams(), DecompressParams(), compressed, &output1);
@@ -87,7 +87,7 @@ TEST_P(SourceManagerTestParam, TestStdioSourceManager) {
 
 TEST_P(SourceManagerTestParam, TestMemSourceManager) {
   TestConfig config = GetParam();
-  JPEGLI_ASSIGN_OR_QUIT(std::vector<uint8_t> compressed,
+  PDFCORE_ASSIGN_OR_QUIT(std::vector<uint8_t> compressed,
                         ReadTestData(config.fn), "Failed to read test data.");
   if (config.dparams.size_factor < 1.0f) {
     compressed.resize(compressed.size() * config.dparams.size_factor);
@@ -96,13 +96,13 @@ TEST_P(SourceManagerTestParam, TestMemSourceManager) {
   jpeg_decompress_struct cinfo;
   const auto try_catch_block = [&]() -> bool {
     ERROR_HANDLER_SETUP(jpegli);
-    jpegli_create_decompress(&cinfo);
-    jpegli_mem_src(&cinfo, compressed.data(), compressed.size());
+    pdfcore_jpegli_create_decompress(&cinfo);
+    pdfcore_jpegli_mem_src(&cinfo, compressed.data(), compressed.size());
     ReadOutputImage(&cinfo, &output0);
     return true;
   };
   ASSERT_TRUE(try_catch_block());
-  jpegli_destroy_decompress(&cinfo);
+  pdfcore_jpegli_destroy_decompress(&cinfo);
 
   TestImage output1;
   DecodeWithLibjpeg(CompressParams(), DecompressParams(), compressed, &output1);
@@ -145,9 +145,9 @@ std::string TestDescription(
   return name.str();
 }
 
-JPEGLI_INSTANTIATE_TEST_SUITE_P(SourceManagerTest, SourceManagerTestParam,
+PDFCORE_INSTANTIATE_TEST_SUITE_P(SourceManagerTest, SourceManagerTestParam,
                                 testing::ValuesIn(GenerateTests()),
                                 TestDescription);
 
 }  // namespace
-}  // namespace jpegli
+}  // namespace pdfcore

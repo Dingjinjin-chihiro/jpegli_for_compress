@@ -15,9 +15,9 @@
 #include "lib/base/testing.h"
 #include "lib/threads/test_utils.h"
 
-using ::jpegli::test::ThreadPoolForTests;
+using ::pdfcore::test::ThreadPoolForTests;
 
-namespace jpegli {
+namespace pdfcore {
 namespace {
 
 int PopulationCount(uint64_t bits) {
@@ -41,7 +41,7 @@ TEST(ThreadParallelRunnerTest, TestPool) {
         std::fill(mementos.begin(), mementos.end(), 0);
         const auto do_task = [begin, num_tasks, &mementos](
                                  const int task,
-                                 const int thread) -> jpegli::Status {
+                                 const int thread) -> pdfcore::Status {
           // Parameter is in the given range
           EXPECT_GE(task, begin);
           EXPECT_LT(task, begin + num_tasks);
@@ -51,7 +51,7 @@ TEST(ThreadParallelRunnerTest, TestPool) {
           return true;
         };
         EXPECT_TRUE(RunOnPool(pool.get(), begin, begin + num_tasks,
-                              jpegli::ThreadPool::NoInit, do_task, "TestPool"));
+                              pdfcore::ThreadPool::NoInit, do_task, "TestPool"));
         for (int task = begin; task < begin + num_tasks; ++task) {
           EXPECT_EQ(1000 + task, mementos.at(task - begin));
         }
@@ -71,7 +71,7 @@ TEST(ThreadParallelRunnerTest, TestSmallAssignments) {
     std::atomic<uint32_t> num_calls{0};
     const auto do_task = [&num_calls, num_threads, &id_bits](
                              const int task,
-                             const int thread) -> jpegli::Status {
+                             const int thread) -> pdfcore::Status {
       num_calls.fetch_add(1, std::memory_order_relaxed);
 
       EXPECT_LT(static_cast<size_t>(thread), num_threads);
@@ -82,7 +82,7 @@ TEST(ThreadParallelRunnerTest, TestSmallAssignments) {
       return true;
     };
     EXPECT_TRUE(RunOnPool(pool.get(), 0, num_threads,
-                          jpegli::ThreadPool::NoInit, do_task,
+                          pdfcore::ThreadPool::NoInit, do_task,
                           "TestSmallAssignments"));
 
     // Correct number of tasks.
@@ -111,11 +111,11 @@ TEST(ThreadParallelRunnerTest, TestCounter) {
 
   const int kNumTasks = kNumThreads * 19;
   const auto count = [&counters](const int task,
-                                 const int thread) -> jpegli::Status {
+                                 const int thread) -> pdfcore::Status {
     counters[thread].counter += task;
     return true;
   };
-  EXPECT_TRUE(RunOnPool(pool.get(), 0, kNumTasks, jpegli::ThreadPool::NoInit,
+  EXPECT_TRUE(RunOnPool(pool.get(), 0, kNumTasks, pdfcore::ThreadPool::NoInit,
                         count, "TestCounter"));
 
   int expected = 0;
@@ -130,4 +130,4 @@ TEST(ThreadParallelRunnerTest, TestCounter) {
 }
 
 }  // namespace
-}  // namespace jpegli
+}  // namespace pdfcore

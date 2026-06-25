@@ -29,7 +29,7 @@
 #include "lib/jpegli/entropy_coding-inl.h"
 
 HWY_BEFORE_NAMESPACE();
-namespace jpegli {
+namespace pdfcore {
 namespace HWY_NAMESPACE {
 
 static const int kStreamingModeCoefficients = 0;
@@ -37,7 +37,7 @@ static const int kStreamingModeTokens = 1;
 static const int kStreamingModeBits = 2;
 
 namespace {
-void ZigZagShuffle(int32_t* JPEGLI_RESTRICT block) {
+void ZigZagShuffle(int32_t* PDFCORE_RESTRICT block) {
   // TODO(szabadka) SIMDify this.
   int32_t tmp[DCTSIZE2];
   tmp[0] = block[0];
@@ -118,7 +118,7 @@ void ProcessiMCURow(j_compress_ptr cinfo) {
   int32_t* block = m->block_tmp;
   int32_t* symbols = m->block_tmp + DCTSIZE2;
   int32_t* nonzero_idx = m->block_tmp + 3 * DCTSIZE2;
-  coeff_t* JPEGLI_RESTRICT last_dc_coeff = m->last_dc_coeff;
+  coeff_t* PDFCORE_RESTRICT last_dc_coeff = m->last_dc_coeff;
   bool adaptive_quant = m->use_adaptive_quantization && m->psnr_target == 0;
   JBLOCKARRAY blocks[kMaxComponents];
   if (kMode == kStreamingModeCoefficients) {
@@ -167,7 +167,7 @@ void ProcessiMCURow(j_compress_ptr cinfo) {
         dc_code = &m->coding_tables[m->context_map[c]];
         ac_code = &m->coding_tables[m->context_map[c + 4]];
       }
-      float* JPEGLI_RESTRICT qmc = m->quant_mul[c];
+      float* PDFCORE_RESTRICT qmc = m->quant_mul[c];
       const size_t stride = m->raw_data[c]->stride();
       const int h_factor = m->h_factor[c];
       const float* zero_bias_offset = m->zero_bias_offset[c];
@@ -240,11 +240,11 @@ void WriteiMCURow(j_compress_ptr cinfo) {
 
 // NOLINTNEXTLINE(google-readability-namespace-comments)
 }  // namespace HWY_NAMESPACE
-}  // namespace jpegli
+}  // namespace pdfcore
 HWY_AFTER_NAMESPACE();
 
 #if HWY_ONCE
-namespace jpegli {
+namespace pdfcore {
 HWY_EXPORT(ComputeCoefficientsForiMCURow);
 HWY_EXPORT(ComputeTokensForiMCURow);
 HWY_EXPORT(WriteiMCURow);
@@ -261,5 +261,5 @@ void WriteiMCURow(j_compress_ptr cinfo) {
   HWY_DYNAMIC_DISPATCH(WriteiMCURow)(cinfo);
 }
 
-}  // namespace jpegli
+}  // namespace pdfcore
 #endif  // HWY_ONCE

@@ -37,8 +37,8 @@ void Consume(const It& begin, const It& end) {
 // Options for the fuzzing
 struct FuzzSpec {
   size_t chunk_size;
-  JpegliDataType output_type;
-  JpegliEndianness output_endianness;
+  PdfcoreDataType output_type;
+  PdfcoreEndianness output_endianness;
   int crop_output;
 };
 
@@ -50,7 +50,7 @@ class SourceManager {
   SourceManager(const uint8_t* data, size_t len, size_t max_chunk_size)
       : data_(data), len_(len), max_chunk_size_(max_chunk_size) {
     pub_.skip_input_data = skip_input_data;
-    pub_.resync_to_restart = jpegli_resync_to_restart;
+    pub_.resync_to_restart = pdfcore_jpegli_resync_to_restart;
     pub_.term_source = term_source;
     pub_.init_source = init_source;
     pub_.fill_input_buffer = fill_input_buffer;
@@ -128,47 +128,47 @@ bool DecodeJpeg(const uint8_t* data, size_t size, size_t max_pixels,
   const auto try_catch_block = [&]() -> bool {
     jpeg_error_mgr jerr;
     jmp_buf env;
-    cinfo.err = jpegli_std_error(&jerr);
+    cinfo.err = pdfcore_jpegli_std_error(&jerr);
     if (setjmp(env)) {
       return false;
     }
     cinfo.client_data = reinterpret_cast<void*>(&env);
     cinfo.err->error_exit = [](j_common_ptr cinfo) {
       jmp_buf* env = reinterpret_cast<jmp_buf*>(cinfo->client_data);
-      jpegli_destroy(cinfo);
+      pdfcore_jpegli_destroy(cinfo);
       longjmp(*env, 1);
     };
     cinfo.err->emit_message = [](j_common_ptr cinfo, int msg_level) {};
-    jpegli_create_decompress(&cinfo);
+    pdfcore_jpegli_create_decompress(&cinfo);
     cinfo.src = reinterpret_cast<jpeg_source_mgr*>(&src);
-    jpegli_read_header(&cinfo, TRUE);
+    pdfcore_jpegli_read_header(&cinfo, TRUE);
     *xsize = cinfo.image_width;
     *ysize = cinfo.image_height;
     size_t num_pixels = *xsize * *ysize;
     if (num_pixels > max_pixels) return false;
-    jpegli_set_output_format(&cinfo, spec.output_type, spec.output_endianness);
-    jpegli_start_decompress(&cinfo);
+    pdfcore_jpegli_set_output_format(&cinfo, spec.output_type, spec.output_endianness);
+    pdfcore_jpegli_start_decompress(&cinfo);
     if (spec.crop_output) {
       JDIMENSION xoffset = cinfo.output_width / 3;
       JDIMENSION xsize_cropped = cinfo.output_width / 3;
-      jpegli_crop_scanline(&cinfo, &xoffset, &xsize_cropped);
+      pdfcore_jpegli_crop_scanline(&cinfo, &xoffset, &xsize_cropped);
     }
 
-    size_t bytes_per_sample = jpegli_bytes_per_sample(spec.output_type);
+    size_t bytes_per_sample = pdfcore_jpegli_bytes_per_sample(spec.output_type);
     size_t stride =
         bytes_per_sample * cinfo.output_components * cinfo.output_width;
     size_t buffer_size = *ysize * stride;
     pixels->resize(buffer_size);
     for (size_t y = 0; y < *ysize; ++y) {
       JSAMPROW rows[] = {pixels->data() + y * stride};
-      jpegli_read_scanlines(&cinfo, rows, 1);
+      pdfcore_jpegli_read_scanlines(&cinfo, rows, 1);
     }
     Consume(pixels->cbegin(), pixels->cend());
-    jpegli_finish_decompress(&cinfo);
+    pdfcore_jpegli_finish_decompress(&cinfo);
     return true;
   };
   bool success = try_catch_block();
-  jpegli_destroy_decompress(&cinfo);
+  pdfcore_jpegli_destroy_decompress(&cinfo);
   return success;
 }
 
@@ -192,9 +192,9 @@ int DoTestOneInput(const uint8_t* data, size_t size) {
   };
 
   FuzzSpec spec;
-  spec.output_type = static_cast<JpegliDataType>(getFlag(JPEGLI_TYPE_UINT16));
+  spec.output_type = static_cast<PdfcoreDataType>(getFlag(PDFCORE_TYPE_UINT16));
   spec.output_endianness =
-      static_cast<JpegliEndianness>(getFlag(JPEGLI_BIG_ENDIAN));
+      static_cast<PdfcoreEndianness>(getFlag(PDFCORE_BIG_ENDIAN));
   uint32_t chunks = getFlag(15);
   spec.chunk_size = chunks ? 1u << (chunks - 1) : 0;
   spec.crop_output = getFlag(1);
@@ -220,7 +220,7 @@ struct FuzzTestSink {
   }
 };
 #define FUZZ_TEST(A, B) \
-  const JPEGLI_MAYBE_UNUSED FuzzTestSink unused##A##B = FuzzTestSink()
+  const PDFCORE_MAYBE_UNUSED FuzzTestSink unused##A##B = FuzzTestSink()
 #endif
 
 }  // namespace
@@ -233,4 +233,4 @@ void TestOneInput(const std::vector<uint8_t>& data) {
   DoTestOneInput(data.data(), data.size());
 }
 
-FUZZ_TEST(JpegliDecFuzzTest, TestOneInput);
+FUZZ_TEST(PdfcoreDecFuzzTest, TestOneInput);

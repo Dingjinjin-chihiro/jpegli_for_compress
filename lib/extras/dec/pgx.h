@@ -4,8 +4,8 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
-#ifndef JPEGLI_LIB_EXTRAS_DEC_PGX_H_
-#define JPEGLI_LIB_EXTRAS_DEC_PGX_H_
+#ifndef PDFCORE_LIB_EXTRAS_DEC_PGX_H_
+#define PDFCORE_LIB_EXTRAS_DEC_PGX_H_
 
 // Decodes PGX pixels in memory.
 
@@ -14,7 +14,7 @@
 #include "lib/base/span.h"
 #include "lib/base/status.h"
 
-namespace jpegli {
+namespace pdfcore {
 
 struct SizeConstraints;
 
@@ -29,6 +29,6 @@ Status DecodeImagePGX(Span<const uint8_t> bytes, const ColorHints& color_hints,
                       const SizeConstraints* constraints = nullptr);
 
 }  // namespace extras
-}  // namespace jpegli
+}  // namespace pdfcore
 
-#endif  // JPEGLI_LIB_EXTRAS_DEC_PGX_H_
+#endif  // PDFCORE_LIB_EXTRAS_DEC_PGX_H_

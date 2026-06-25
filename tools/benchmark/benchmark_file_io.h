@@ -7,17 +7,17 @@
 // File utilities for benchmarking and testing, but which are not needed for
 // main jpegli itself.
 
-#ifndef JPEGLI_TOOLS_BENCHMARK_BENCHMARK_FILE_IO_H_
-#define JPEGLI_TOOLS_BENCHMARK_BENCHMARK_FILE_IO_H_
+#ifndef PDFCORE_TOOLS_BENCHMARK_BENCHMARK_FILE_IO_H_
+#define PDFCORE_TOOLS_BENCHMARK_BENCHMARK_FILE_IO_H_
 
 #include <string>
 #include <vector>
 
 #include "lib/base/status.h"
 
-namespace jpegli_tools {
+namespace pdfcore_jpegli_tools {
 
-using ::jpegli::Status;
+using ::pdfcore::Status;
 
 // Checks if the file exists, either as file or as directory
 bool PathExists(const std::string& fname);
@@ -50,6 +50,6 @@ Status MatchFiles(const std::string& pattern, std::vector<std::string>* list);
 
 std::string JoinPath(const std::string& first, const std::string& second);
 
-}  // namespace jpegli_tools
+}  // namespace pdfcore_jpegli_tools
 
-#endif  // JPEGLI_TOOLS_BENCHMARK_BENCHMARK_FILE_IO_H_
+#endif  // PDFCORE_TOOLS_BENCHMARK_BENCHMARK_FILE_IO_H_

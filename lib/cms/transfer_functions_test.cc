@@ -21,7 +21,7 @@
 #include <hwy/highway.h>
 #include <hwy/tests/hwy_gtest.h>
 HWY_BEFORE_NAMESPACE();
-namespace jpegli {
+namespace pdfcore {
 namespace HWY_NAMESPACE {
 namespace {
 
@@ -96,11 +96,11 @@ HWY_NOINLINE void TestHlgDisplayFromEncoded() {
 }  // namespace
 // NOLINTNEXTLINE(google-readability-namespace-comments)
 }  // namespace HWY_NAMESPACE
-}  // namespace jpegli
+}  // namespace pdfcore
 HWY_AFTER_NAMESPACE();
 
 #if HWY_ONCE
-namespace jpegli {
+namespace pdfcore {
 
 class TransferFunctionsTargetTest : public hwy::TestWithParamTarget {};
 HWY_TARGET_INSTANTIATE_TEST_SUITE_P(TransferFunctionsTargetTest);
@@ -110,5 +110,5 @@ HWY_EXPORT_AND_TEST_P(TransferFunctionsTargetTest, TestHlgEncodedFromDisplay);
 HWY_EXPORT_AND_TEST_P(TransferFunctionsTargetTest, TestPqDisplayFromEncoded);
 HWY_EXPORT_AND_TEST_P(TransferFunctionsTargetTest, TestHlgDisplayFromEncoded);
 
-}  // namespace jpegli
+}  // namespace pdfcore
 #endif  // HWY_ONCE

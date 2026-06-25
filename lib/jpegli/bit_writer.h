@@ -4,8 +4,8 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
-#ifndef JPEGLI_LIB_JPEGLI_BIT_WRITER_H_
-#define JPEGLI_LIB_JPEGLI_BIT_WRITER_H_
+#ifndef PDFCORE_LIB_PDFCORE_BIT_WRITER_H_
+#define PDFCORE_LIB_PDFCORE_BIT_WRITER_H_
 
 #include <cstdint>
 #include <cstring>
@@ -14,7 +14,7 @@
 #include "lib/base/compiler_specific.h"
 #include "lib/jpegli/common.h"
 
-namespace jpegli {
+namespace pdfcore {
 
 // Handles the packing of bits into output bytes.
 struct JpegBitWriter {
@@ -36,7 +36,7 @@ void JumpToByteBoundary(JpegBitWriter* bw);
 
 // Returns non-zero if and only if x has a zero byte, i.e. one of
 // x & 0xff, x & 0xff00, ..., x & 0xff00000000000000 is zero.
-static JPEGLI_INLINE uint64_t HasZeroByte(uint64_t x) {
+static PDFCORE_INLINE uint64_t HasZeroByte(uint64_t x) {
   return (x - 0x0101010101010101ULL) & ~x & 0x8080808080808080ULL;
 }
 
@@ -46,12 +46,12 @@ static JPEGLI_INLINE uint64_t HasZeroByte(uint64_t x) {
  * This method is "careless" - caller must make sure that there is enough
  * space in the output buffer. Emits up to 2 bytes to buffer.
  */
-static JPEGLI_INLINE void EmitByte(JpegBitWriter* bw, int byte) {
+static PDFCORE_INLINE void EmitByte(JpegBitWriter* bw, int byte) {
   bw->data[bw->pos++] = byte;
   if (byte == 0xFF) bw->data[bw->pos++] = 0;
 }
 
-static JPEGLI_INLINE void DischargeBitBuffer(JpegBitWriter* bw) {
+static PDFCORE_INLINE void DischargeBitBuffer(JpegBitWriter* bw) {
   // At this point we are ready to emit the bytes of put_buffer to the output.
   // The JPEG format requires that after every 0xff byte in the entropy
   // coded section, there is a zero byte, therefore we first check if any of
@@ -74,7 +74,7 @@ static JPEGLI_INLINE void DischargeBitBuffer(JpegBitWriter* bw) {
   }
 }
 
-static JPEGLI_INLINE void WriteBits(JpegBitWriter* bw, int nbits,
+static PDFCORE_INLINE void WriteBits(JpegBitWriter* bw, int nbits,
                                     uint64_t bits) {
   // This is an optimization; if everything goes well,
   // then |nbits| is positive; if non-existing Huffman symbol is going to be
@@ -96,5 +96,5 @@ static JPEGLI_INLINE void WriteBits(JpegBitWriter* bw, int nbits,
   bw->put_buffer |= bits;
 }
 
-}  // namespace jpegli
-#endif  // JPEGLI_LIB_JPEGLI_BIT_WRITER_H_
+}  // namespace pdfcore
+#endif  // PDFCORE_LIB_PDFCORE_BIT_WRITER_H_

@@ -6,22 +6,22 @@
 
 include(jpegli_lists.cmake)
 
-if (BUILD_TESTING OR JPEGLI_ENABLE_TOOLS)
+if (BUILD_TESTING OR PDFCORE_ENABLE_TOOLS)
 # Library with test-only code shared between all tests / fuzzers.
-add_library(jpegli_testlib-internal STATIC ${JPEGLI_INTERNAL_TESTLIB_FILES})
-target_compile_options(jpegli_testlib-internal PRIVATE
-  ${JPEGLI_INTERNAL_FLAGS}
-  ${JPEGLI_COVERAGE_FLAGS}
+add_library(pdfcore_jpegli_testlib-internal STATIC ${PDFCORE_INTERNAL_TESTLIB_FILES})
+target_compile_options(pdfcore_jpegli_testlib-internal PRIVATE
+  ${PDFCORE_INTERNAL_FLAGS}
+  ${PDFCORE_COVERAGE_FLAGS}
 )
-target_compile_definitions(jpegli_testlib-internal PUBLIC
-  -DTEST_DATA_PATH="${JPEGLI_TEST_DATA_PATH}")
-target_include_directories(jpegli_testlib-internal PUBLIC
+target_compile_definitions(pdfcore_jpegli_testlib-internal PUBLIC
+  -DTEST_DATA_PATH="${PDFCORE_TEST_DATA_PATH}")
+target_include_directories(pdfcore_jpegli_testlib-internal PUBLIC
   "${PROJECT_SOURCE_DIR}"
 )
-target_link_libraries(jpegli_testlib-internal
+target_link_libraries(pdfcore_jpegli_testlib-internal
   hwy
-  jpegli_cms
-  jpegli_threads
+  pdfcore_jpegli_cms
+  pdfcore_jpegli_threads
 )
 endif()
 
@@ -33,16 +33,16 @@ if (NOT PNG_FOUND)
   message(FATAL_ERROR "PNG library is required by some tests")
 endif()
 
-list(APPEND JPEGLI_INTERNAL_TESTS
+list(APPEND PDFCORE_INTERNAL_TESTS
   # TODO(deymo): Move this to tools/
   ../tools/gauss_blur_test.cc
 )
 
-set(JPEGLI_WASM_TEST_LINK_FLAGS "")
+set(PDFCORE_WASM_TEST_LINK_FLAGS "")
 if (EMSCRIPTEN)
   # The emscripten linking step takes too much memory and crashes during the
   # wasm-opt step when using -O2 optimization level
-  set(JPEGLI_WASM_TEST_LINK_FLAGS "\
+  set(PDFCORE_WASM_TEST_LINK_FLAGS "\
     -O1 \
     -s USE_LIBPNG=1 \
     -s ALLOW_MEMORY_GROWTH=1 \
@@ -50,8 +50,8 @@ if (EMSCRIPTEN)
     -s EXIT_RUNTIME=1 \
     -s NODERAWFS=1 \
   ")
-  if (JPEGLI_ENABLE_WASM_THREADS)
-    set(JPEGLI_WASM_TEST_LINK_FLAGS "${JPEGLI_WASM_TEST_LINK_FLAGS} \
+  if (PDFCORE_ENABLE_WASM_THREADS)
+    set(PDFCORE_WASM_TEST_LINK_FLAGS "${PDFCORE_WASM_TEST_LINK_FLAGS} \
       -s PROXY_TO_PTHREAD \
       -s USE_PTHREADS=1 \
     ")
@@ -60,29 +60,29 @@ endif()  # EMSCRIPTEN
 
 # Individual test binaries:
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/tests)
-foreach (TESTFILE IN LISTS JPEGLI_INTERNAL_TESTS)
+foreach (TESTFILE IN LISTS PDFCORE_INTERNAL_TESTS)
   # The TESTNAME is the name without the extension or directory.
   get_filename_component(TESTNAME ${TESTFILE} NAME_WE)
   add_executable(${TESTNAME} ${TESTFILE})
   if(EMSCRIPTEN)
-    set_target_properties(${TESTNAME} PROPERTIES LINK_FLAGS "${JPEGLI_WASM_TEST_LINK_FLAGS}")
+    set_target_properties(${TESTNAME} PROPERTIES LINK_FLAGS "${PDFCORE_WASM_TEST_LINK_FLAGS}")
   else()
-    set_target_properties(${TESTNAME} PROPERTIES LINK_FLAGS "${JPEGLI_COVERAGE_LINK_FLAGS}")
+    set_target_properties(${TESTNAME} PROPERTIES LINK_FLAGS "${PDFCORE_COVERAGE_LINK_FLAGS}")
   endif()
   target_compile_options(${TESTNAME} PRIVATE
-    ${JPEGLI_INTERNAL_FLAGS}
+    ${PDFCORE_INTERNAL_FLAGS}
     # Add coverage flags to the test binary so code in the private headers of
     # the library is also instrumented when running tests that execute it.
-    ${JPEGLI_COVERAGE_FLAGS}
+    ${PDFCORE_COVERAGE_FLAGS}
   )
   target_link_libraries(${TESTNAME}
     gtest
     gtest_main
-    jpegli_testlib-internal
-    jpegli_extras-internal
+    pdfcore_jpegli_testlib-internal
+    pdfcore_jpegli_extras-internal
   )
   if(TESTFILE STREQUAL ../tools/gauss_blur_test.cc)
-    target_link_libraries(${TESTNAME} jpegli_gauss_blur)
+    target_link_libraries(${TESTNAME} pdfcore_jpegli_gauss_blur)
   endif()
 
   # Output test targets in the test directory.

@@ -20,7 +20,7 @@
 #include "lib/cms/opsin_params.h"
 
 HWY_BEFORE_NAMESPACE();
-namespace jpegli {
+namespace pdfcore {
 namespace HWY_NAMESPACE {
 
 // These templates are not found via ADL.
@@ -32,12 +32,12 @@ using hwy::HWY_NAMESPACE::ZeroIfNegative;
 
 // 4x3 matrix * 3x1 SIMD vectors
 template <class V>
-JPEGLI_INLINE void OpsinAbsorbance(const V r, const V g, const V b,
-                                   const float* JPEGLI_RESTRICT premul_absorb,
-                                   V* JPEGLI_RESTRICT mixed0,
-                                   V* JPEGLI_RESTRICT mixed1,
-                                   V* JPEGLI_RESTRICT mixed2) {
-  const float* bias = jpegli::cms::kOpsinAbsorbanceBias.data();
+PDFCORE_INLINE void OpsinAbsorbance(const V r, const V g, const V b,
+                                   const float* PDFCORE_RESTRICT premul_absorb,
+                                   V* PDFCORE_RESTRICT mixed0,
+                                   V* PDFCORE_RESTRICT mixed1,
+                                   V* PDFCORE_RESTRICT mixed2) {
+  const float* bias = pdfcore::cms::kOpsinAbsorbanceBias.data();
   const HWY_FULL(float) d;
   const size_t N = Lanes(d);
   const auto m0 = Load(d, premul_absorb + 0 * N);
@@ -55,8 +55,8 @@ JPEGLI_INLINE void OpsinAbsorbance(const V r, const V g, const V b,
 }
 
 template <class V>
-void StoreXYB(const V r, V g, const V b, float* JPEGLI_RESTRICT valx,
-              float* JPEGLI_RESTRICT valy, float* JPEGLI_RESTRICT valz) {
+void StoreXYB(const V r, V g, const V b, float* PDFCORE_RESTRICT valx,
+              float* PDFCORE_RESTRICT valy, float* PDFCORE_RESTRICT valz) {
   const HWY_FULL(float) d;
   const V half = Set(d, 0.5f);
   Store(Mul(half, Sub(r, g)), d, valx);
@@ -67,9 +67,9 @@ void StoreXYB(const V r, V g, const V b, float* JPEGLI_RESTRICT valx,
 // Converts one RGB vector to XYB.
 template <class V>
 void LinearRGBToXYB(const V r, const V g, const V b,
-                    const float* JPEGLI_RESTRICT premul_absorb,
-                    float* JPEGLI_RESTRICT valx, float* JPEGLI_RESTRICT valy,
-                    float* JPEGLI_RESTRICT valz) {
+                    const float* PDFCORE_RESTRICT premul_absorb,
+                    float* PDFCORE_RESTRICT valx, float* PDFCORE_RESTRICT valy,
+                    float* PDFCORE_RESTRICT valz) {
   V mixed0;
   V mixed1;
   V mixed2;
@@ -90,9 +90,9 @@ void LinearRGBToXYB(const V r, const V g, const V b,
   // For wide-gamut inputs, r/g/b and valx (but not y/z) are often negative.
 }
 
-void LinearRGBRowToXYB(float* JPEGLI_RESTRICT row0, float* JPEGLI_RESTRICT row1,
-                       float* JPEGLI_RESTRICT row2,
-                       const float* JPEGLI_RESTRICT premul_absorb,
+void LinearRGBRowToXYB(float* PDFCORE_RESTRICT row0, float* PDFCORE_RESTRICT row1,
+                       float* PDFCORE_RESTRICT row2,
+                       const float* PDFCORE_RESTRICT premul_absorb,
                        size_t xsize) {
   const HWY_FULL(float) d;
   for (size_t x = 0; x < xsize; x += Lanes(d)) {
@@ -110,29 +110,29 @@ void ComputePremulAbsorb(float intensity_target, float* premul_absorb) {
   for (size_t j = 0; j < 3; ++j) {
     for (size_t i = 0; i < 3; ++i) {
       const auto absorb =
-          Set(d, jpegli::cms::kOpsinAbsorbanceMatrix[j][i] * mul);
+          Set(d, pdfcore::cms::kOpsinAbsorbanceMatrix[j][i] * mul);
       Store(absorb, d, premul_absorb + (j * 3 + i) * N);
     }
   }
   for (size_t i = 0; i < 3; ++i) {
     const auto neg_bias_cbrt =
-        Set(d, -cbrtf(jpegli::cms::kOpsinAbsorbanceBias[i]));
+        Set(d, -cbrtf(pdfcore::cms::kOpsinAbsorbanceBias[i]));
     Store(neg_bias_cbrt, d, premul_absorb + (9 + i) * N);
   }
 }
 
 // NOLINTNEXTLINE(google-readability-namespace-comments)
 }  // namespace HWY_NAMESPACE
-}  // namespace jpegli
+}  // namespace pdfcore
 HWY_AFTER_NAMESPACE();
 
 #if HWY_ONCE
-namespace jpegli {
+namespace pdfcore {
 
 HWY_EXPORT(LinearRGBRowToXYB);
-void LinearRGBRowToXYB(float* JPEGLI_RESTRICT row0, float* JPEGLI_RESTRICT row1,
-                       float* JPEGLI_RESTRICT row2,
-                       const float* JPEGLI_RESTRICT premul_absorb,
+void LinearRGBRowToXYB(float* PDFCORE_RESTRICT row0, float* PDFCORE_RESTRICT row1,
+                       float* PDFCORE_RESTRICT row2,
+                       const float* PDFCORE_RESTRICT premul_absorb,
                        size_t xsize) {
   HWY_DYNAMIC_DISPATCH(LinearRGBRowToXYB)
   (row0, row1, row2, premul_absorb, xsize);
@@ -143,16 +143,16 @@ void ComputePremulAbsorb(float intensity_target, float* premul_absorb) {
   HWY_DYNAMIC_DISPATCH(ComputePremulAbsorb)(intensity_target, premul_absorb);
 }
 
-void ScaleXYBRow(float* JPEGLI_RESTRICT row0, float* JPEGLI_RESTRICT row1,
-                 float* JPEGLI_RESTRICT row2, size_t xsize) {
+void ScaleXYBRow(float* PDFCORE_RESTRICT row0, float* PDFCORE_RESTRICT row1,
+                 float* PDFCORE_RESTRICT row2, size_t xsize) {
   for (size_t x = 0; x < xsize; x++) {
-    row2[x] = (row2[x] - row1[x] + jpegli::cms::kScaledXYBOffset[2]) *
-              jpegli::cms::kScaledXYBScale[2];
-    row0[x] = (row0[x] + jpegli::cms::kScaledXYBOffset[0]) *
-              jpegli::cms::kScaledXYBScale[0];
-    row1[x] = (row1[x] + jpegli::cms::kScaledXYBOffset[1]) *
-              jpegli::cms::kScaledXYBScale[1];
+    row2[x] = (row2[x] - row1[x] + pdfcore::cms::kScaledXYBOffset[2]) *
+              pdfcore::cms::kScaledXYBScale[2];
+    row0[x] = (row0[x] + pdfcore::cms::kScaledXYBOffset[0]) *
+              pdfcore::cms::kScaledXYBScale[0];
+    row1[x] = (row1[x] + pdfcore::cms::kScaledXYBOffset[1]) *
+              pdfcore::cms::kScaledXYBScale[1];
   }
 }
-}  // namespace jpegli
+}  // namespace pdfcore
 #endif  // HWY_ONCE

@@ -23,7 +23,7 @@
 #include "lib/jpegli/testing.h"
 #include "lib/jpegli/types.h"
 
-namespace jpegli {
+namespace pdfcore {
 namespace {
 
 struct TestConfig {
@@ -85,17 +85,17 @@ TEST(EncodeAPITest, ReuseCinfoSameImageTwice) {
   jpeg_compress_struct cinfo;
   const auto try_catch_block = [&]() -> bool {
     ERROR_HANDLER_SETUP(jpegli);
-    jpegli_create_compress(&cinfo);
-    jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
+    pdfcore_jpegli_create_compress(&cinfo);
+    pdfcore_jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
     EncodeWithJpegli(input, jparams, &cinfo);
     compressed0.assign(buffer, buffer + buffer_size);
-    jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
+    pdfcore_jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
     EncodeWithJpegli(input, jparams, &cinfo);
     compressed1.assign(buffer, buffer + buffer_size);
     return true;
   };
   EXPECT_TRUE(try_catch_block());
-  jpegli_destroy_compress(&cinfo);
+  pdfcore_jpegli_destroy_compress(&cinfo);
   if (buffer) free(buffer);
   ASSERT_EQ(compressed0.size(), compressed1.size());
   EXPECT_EQ(0,
@@ -132,15 +132,15 @@ TEST(EncodeAPITest, ReuseCinfoSameMemOutput) {
     jpeg_compress_struct cinfo;
     const auto try_catch_block = [&]() -> bool {
       ERROR_HANDLER_SETUP(jpegli);
-      jpegli_create_compress(&cinfo);
-      jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
+      pdfcore_jpegli_create_compress(&cinfo);
+      pdfcore_jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
       for (const TestConfig& config : all_configs) {
         EncodeWithJpegli(config.input, config.jparams, &cinfo);
       }
       return true;
     };
     EXPECT_TRUE(try_catch_block());
-    jpegli_destroy_compress(&cinfo);
+    pdfcore_jpegli_destroy_compress(&cinfo);
   }
   size_t pos = 0;
   for (auto& config : all_configs) {
@@ -160,15 +160,15 @@ TEST(EncodeAPITest, ReuseCinfoSameStdOutput) {
     jpeg_compress_struct cinfo;
     const auto try_catch_block = [&]() -> bool {
       ERROR_HANDLER_SETUP(jpegli);
-      jpegli_create_compress(&cinfo);
-      jpegli_stdio_dest(&cinfo, tmpf);
+      pdfcore_jpegli_create_compress(&cinfo);
+      pdfcore_jpegli_stdio_dest(&cinfo, tmpf);
       for (const TestConfig& config : all_configs) {
         EncodeWithJpegli(config.input, config.jparams, &cinfo);
       }
       return true;
     };
     EXPECT_TRUE(try_catch_block());
-    jpegli_destroy_compress(&cinfo);
+    pdfcore_jpegli_destroy_compress(&cinfo);
   }
   size_t total_size = ftell(tmpf);
   fseek(tmpf, 0, SEEK_SET);
@@ -201,7 +201,7 @@ TEST(EncodeAPITest, ReuseCinfoChangeParams) {
   };
   const auto try_catch_block = [&]() -> bool {
     ERROR_HANDLER_SETUP(jpegli);
-    jpegli_create_compress(&cinfo);
+    pdfcore_jpegli_create_compress(&cinfo);
     input.xsize = 129;
     input.ysize = 73;
     dparams.set_out_color_space = true;
@@ -222,15 +222,15 @@ TEST(EncodeAPITest, ReuseCinfoChangeParams) {
                   "input mode %d progressive_mode %d\n",
                   quality, h_samp, v_samp, input_mode, progr);
               GenerateInput(input_mode, jparams, &input);
-              jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
+              pdfcore_jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
               if (input_mode != COEFFICIENTS) {
                 cinfo.image_width = input.xsize;
                 cinfo.image_height = input.ysize;
                 cinfo.input_components = input.components;
-                jpegli_set_defaults(&cinfo);
-                jpegli_start_compress(&cinfo, TRUE);
-                jpegli_abort_compress(&cinfo);
-                jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
+                pdfcore_jpegli_set_defaults(&cinfo);
+                pdfcore_jpegli_start_compress(&cinfo, TRUE);
+                pdfcore_jpegli_abort_compress(&cinfo);
+                pdfcore_jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
               }
               EncodeWithJpegli(input, jparams, &cinfo);
               compressed.resize(buffer_size);
@@ -250,7 +250,7 @@ TEST(EncodeAPITest, ReuseCinfoChangeParams) {
     return true;
   };
   EXPECT_TRUE(try_catch_block());
-  jpegli_destroy_compress(&cinfo);
+  pdfcore_jpegli_destroy_compress(&cinfo);
   if (buffer) free(buffer);
 }
 
@@ -263,27 +263,27 @@ TEST(EncodeAPITest, AbbreviatedStreams) {
     jpeg_compress_struct cinfo;
     const auto try_catch_block = [&]() -> bool {
       ERROR_HANDLER_SETUP(jpegli);
-      jpegli_create_compress(&cinfo);
-      jpegli_mem_dest(&cinfo, &table_stream, &table_stream_size);
+      pdfcore_jpegli_create_compress(&cinfo);
+      pdfcore_jpegli_mem_dest(&cinfo, &table_stream, &table_stream_size);
       cinfo.input_components = 3;
       cinfo.in_color_space = JCS_RGB;
-      jpegli_set_defaults(&cinfo);
-      jpegli_write_tables(&cinfo);
-      jpegli_mem_dest(&cinfo, &data_stream, &data_stream_size);
+      pdfcore_jpegli_set_defaults(&cinfo);
+      pdfcore_jpegli_write_tables(&cinfo);
+      pdfcore_jpegli_mem_dest(&cinfo, &data_stream, &data_stream_size);
       cinfo.image_width = 1;
       cinfo.image_height = 1;
       cinfo.optimize_coding = FALSE;
-      jpegli_set_progressive_level(&cinfo, 0);
-      jpegli_start_compress(&cinfo, FALSE);
+      pdfcore_jpegli_set_progressive_level(&cinfo, 0);
+      pdfcore_jpegli_start_compress(&cinfo, FALSE);
       JSAMPLE image[3] = {0};
       JSAMPROW row[] = {image};
-      jpegli_write_scanlines(&cinfo, row, 1);
-      jpegli_finish_compress(&cinfo);
+      pdfcore_jpegli_write_scanlines(&cinfo, row, 1);
+      pdfcore_jpegli_finish_compress(&cinfo);
       return true;
     };
     EXPECT_TRUE(try_catch_block());
     EXPECT_LT(data_stream_size, 50u);
-    jpegli_destroy_compress(&cinfo);
+    pdfcore_jpegli_destroy_compress(&cinfo);
   }
   TestImage output;
   DecodeWithLibjpeg(CompressParams(), DecompressParams(), table_stream,
@@ -309,30 +309,30 @@ void CopyQuantTables(j_compress_ptr cinfo, uint16_t* quant_tables) {
 }
 
 TEST(EncodeAPITest, QualitySettings) {
-  // Test that jpegli_set_quality, jpegli_set_linear_quality and
-  // jpegli_quality_scaling are consistent with each other.
+  // Test that pdfcore_jpegli_set_quality, pdfcore_jpegli_set_linear_quality and
+  // pdfcore_jpegli_quality_scaling are consistent with each other.
   uint16_t quant_tables0[3 * DCTSIZE2];
   uint16_t quant_tables1[3 * DCTSIZE2];
   jpeg_compress_struct cinfo;
   const auto try_catch_block = [&]() -> bool {
     ERROR_HANDLER_SETUP(jpegli);
-    jpegli_create_compress(&cinfo);
+    pdfcore_jpegli_create_compress(&cinfo);
     cinfo.input_components = 3;
     cinfo.in_color_space = JCS_RGB;
-    jpegli_set_defaults(&cinfo);
+    pdfcore_jpegli_set_defaults(&cinfo);
     for (boolean baseline : {FALSE, TRUE}) {
       for (int q = 1; q <= 100; ++q) {
-        jpegli_set_quality(&cinfo, q, baseline);
+        pdfcore_jpegli_set_quality(&cinfo, q, baseline);
         CopyQuantTables(&cinfo, quant_tables0);
-        jpegli_set_linear_quality(&cinfo, jpegli_quality_scaling(q), baseline);
+        pdfcore_jpegli_set_linear_quality(&cinfo, pdfcore_jpegli_quality_scaling(q), baseline);
         CopyQuantTables(&cinfo, quant_tables1);
         EXPECT_EQ(0,
                   memcmp(quant_tables0, quant_tables1, sizeof(quant_tables0)));
 #if JPEG_LIB_VERSION >= 70
         for (int i = 0; i < NUM_QUANT_TBLS; ++i) {
-          cinfo.q_scale_factor[i] = jpegli_quality_scaling(q);
+          cinfo.q_scale_factor[i] = pdfcore_jpegli_quality_scaling(q);
         }
-        jpegli_default_qtables(&cinfo, baseline);
+        pdfcore_jpegli_default_qtables(&cinfo, baseline);
         CopyQuantTables(&cinfo, quant_tables1);
         EXPECT_EQ(0,
                   memcmp(quant_tables0, quant_tables1, sizeof(quant_tables0)));
@@ -342,16 +342,16 @@ TEST(EncodeAPITest, QualitySettings) {
     return true;
   };
   EXPECT_TRUE(try_catch_block());
-  jpegli_destroy_compress(&cinfo);
-  // Test jpegli_quality_scaling for some specific values .
-  EXPECT_EQ(5000, jpegli_quality_scaling(-1));
-  EXPECT_EQ(5000, jpegli_quality_scaling(0));
-  EXPECT_EQ(5000, jpegli_quality_scaling(1));
-  EXPECT_EQ(100, jpegli_quality_scaling(50));
-  EXPECT_EQ(50, jpegli_quality_scaling(75));
-  EXPECT_EQ(20, jpegli_quality_scaling(90));
-  EXPECT_EQ(0, jpegli_quality_scaling(100));
-  EXPECT_EQ(0, jpegli_quality_scaling(101));
+  pdfcore_jpegli_destroy_compress(&cinfo);
+  // Test pdfcore_jpegli_quality_scaling for some specific values .
+  EXPECT_EQ(5000, pdfcore_jpegli_quality_scaling(-1));
+  EXPECT_EQ(5000, pdfcore_jpegli_quality_scaling(0));
+  EXPECT_EQ(5000, pdfcore_jpegli_quality_scaling(1));
+  EXPECT_EQ(100, pdfcore_jpegli_quality_scaling(50));
+  EXPECT_EQ(50, pdfcore_jpegli_quality_scaling(75));
+  EXPECT_EQ(20, pdfcore_jpegli_quality_scaling(90));
+  EXPECT_EQ(0, pdfcore_jpegli_quality_scaling(100));
+  EXPECT_EQ(0, pdfcore_jpegli_quality_scaling(101));
 }
 
 std::vector<TestConfig> GenerateTests() {
@@ -814,9 +814,9 @@ std::vector<TestConfig> GenerateTests() {
       }
     }
   }
-  for (JpegliDataType data_type : {JPEGLI_TYPE_UINT16, JPEGLI_TYPE_FLOAT}) {
-    for (JpegliEndianness endianness :
-         {JPEGLI_LITTLE_ENDIAN, JPEGLI_BIG_ENDIAN, JPEGLI_NATIVE_ENDIAN}) {
+  for (PdfcoreDataType data_type : {PDFCORE_TYPE_UINT16, PDFCORE_TYPE_FLOAT}) {
+    for (PdfcoreEndianness endianness :
+         {PDFCORE_LITTLE_ENDIAN, PDFCORE_BIG_ENDIAN, PDFCORE_NATIVE_ENDIAN}) {
       J_COLOR_SPACE colorspace[4] = {JCS_GRAYSCALE, JCS_UNKNOWN, JCS_RGB,
                                      JCS_CMYK};
       float max_bpp[4] = {1.32, 2.7, 1.6, 4.0};
@@ -868,8 +868,8 @@ std::string TestDescription(
   return name.str();
 }
 
-JPEGLI_INSTANTIATE_TEST_SUITE_P(EncodeAPITest, EncodeAPITestParam,
+PDFCORE_INSTANTIATE_TEST_SUITE_P(EncodeAPITest, EncodeAPITestParam,
                                 testing::ValuesIn(GenerateTests()),
                                 TestDescription);
 }  // namespace
-}  // namespace jpegli
+}  // namespace pdfcore

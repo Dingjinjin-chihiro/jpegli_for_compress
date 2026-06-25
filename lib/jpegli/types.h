@@ -4,8 +4,8 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
-#ifndef JPEGLI_LIB_JPEGLI_TYPES_H_
-#define JPEGLI_LIB_JPEGLI_TYPES_H_
+#ifndef PDFCORE_LIB_PDFCORE_TYPES_H_
+#define PDFCORE_LIB_PDFCORE_TYPES_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -23,22 +23,22 @@ extern "C" {
 typedef enum {
   /** Use 32-bit single-precision floating point values, with range 0.0-1.0
    * (within gamut, may go outside this range for wide color gamut). Floating
-   * point output, either ::JPEGLI_TYPE_FLOAT or ::JPEGLI_TYPE_FLOAT16, is
+   * point output, either ::PDFCORE_TYPE_FLOAT or ::PDFCORE_TYPE_FLOAT16, is
    * recommended for HDR and wide gamut images when color profile conversion is
    * required. */
-  JPEGLI_TYPE_FLOAT = 0,
+  PDFCORE_TYPE_FLOAT = 0,
 
   /** Use type uint8_t. May clip wide color gamut data.
    */
-  JPEGLI_TYPE_UINT8 = 2,
+  PDFCORE_TYPE_UINT8 = 2,
 
   /** Use type uint16_t. May clip wide color gamut data.
    */
-  JPEGLI_TYPE_UINT16 = 3,
+  PDFCORE_TYPE_UINT16 = 3,
 
   /** Use 16-bit IEEE 754 half-precision floating point values */
-  JPEGLI_TYPE_FLOAT16 = 5,
-} JpegliDataType;
+  PDFCORE_TYPE_FLOAT16 = 5,
+} PdfcoreDataType;
 
 /** Ordering of multi-byte data.
  */
@@ -47,17 +47,17 @@ typedef enum {
    * without forcing either specific endianness. Do not use if pixel data
    * should be exported to a well defined format.
    */
-  JPEGLI_NATIVE_ENDIAN = 0,
+  PDFCORE_NATIVE_ENDIAN = 0,
   /** Force little endian */
-  JPEGLI_LITTLE_ENDIAN = 1,
+  PDFCORE_LITTLE_ENDIAN = 1,
   /** Force big endian */
-  JPEGLI_BIG_ENDIAN = 2,
-} JpegliEndianness;
+  PDFCORE_BIG_ENDIAN = 2,
+} PdfcoreEndianness;
 
-int jpegli_bytes_per_sample(JpegliDataType data_type);
+int pdfcore_jpegli_bytes_per_sample(PdfcoreDataType data_type);
 
 #ifdef __cplusplus
 }  // extern "C"
 #endif
 
-#endif  // JPEGLI_LIB_JPEGLI_TYPES_H_
+#endif  // PDFCORE_LIB_PDFCORE_TYPES_H_

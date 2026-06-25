@@ -4,8 +4,8 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
-#ifndef JPEGLI_TOOLS_GAUSS_BLUR_H_
-#define JPEGLI_TOOLS_GAUSS_BLUR_H_
+#ifndef PDFCORE_TOOLS_GAUSS_BLUR_H_
+#define PDFCORE_TOOLS_GAUSS_BLUR_H_
 
 #include <cstddef>
 #include <functional>
@@ -16,7 +16,7 @@
 #include "lib/base/memory_manager.h"
 #include "lib/base/status.h"
 
-namespace jpegli {
+namespace pdfcore {
 
 // Only for use by CreateRecursiveGaussian and FastGaussian*.
 #pragma pack(push, 1)
@@ -47,18 +47,18 @@ RecursiveGaussian CreateRecursiveGaussian(double sigma);
 
 // 1D Gaussian with zero-pad boundary handling and runtime independent of sigma.
 void FastGaussian1D(const RecursiveGaussian& rg, size_t xsize,
-                    const float* JPEGLI_RESTRICT in,
-                    float* JPEGLI_RESTRICT out);
+                    const float* PDFCORE_RESTRICT in,
+                    float* PDFCORE_RESTRICT out);
 
 using GetConstRow = std::function<const float*(size_t /*y*/)>;
 using GetRow = std::function<float*(size_t /*y*/)>;
 
 // 2D Gaussian with zero-pad boundary handling and runtime independent of sigma.
-Status FastGaussian(JpegliMemoryManager* memory_manager,
+Status FastGaussian(PdfcoreMemoryManager* memory_manager,
                     const RecursiveGaussian& rg, size_t xsize, size_t ysize,
                     const GetConstRow& in, const GetRow& temp,
                     const GetRow& out, ThreadPool* pool = nullptr);
 
-}  // namespace jpegli
+}  // namespace pdfcore
 
-#endif  // JPEGLI_TOOLS_GAUSS_BLUR_H_
+#endif  // PDFCORE_TOOLS_GAUSS_BLUR_H_

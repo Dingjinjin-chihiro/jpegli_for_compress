@@ -4,8 +4,8 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
-#ifndef JPEGLI_LIB_BASE_COMPILER_SPECIFIC_H_
-#define JPEGLI_LIB_BASE_COMPILER_SPECIFIC_H_
+#ifndef PDFCORE_LIB_BASE_COMPILER_SPECIFIC_H_
+#define PDFCORE_LIB_BASE_COMPILER_SPECIFIC_H_
 
 // Macros for compiler version + nonstandard keywords, e.g. __builtin_expect.
 
@@ -16,8 +16,8 @@
 
 #include "lib/base/sanitizer_definitions.h"
 
-#if JPEGLI_ADDRESS_SANITIZER || JPEGLI_MEMORY_SANITIZER || \
-    JPEGLI_THREAD_SANITIZER
+#if PDFCORE_ADDRESS_SANITIZER || PDFCORE_MEMORY_SANITIZER || \
+    PDFCORE_THREAD_SANITIZER
 #include "sanitizer/common_interface_defs.h"  // __sanitizer_print_stack_trace
 #endif                                        // defined(*_SANITIZER)
 
@@ -26,199 +26,199 @@
 // #ifdef COMPILER_MSVC, so we cannot use that same name.
 
 #ifdef _MSC_VER
-#define JPEGLI_COMPILER_MSVC _MSC_VER
+#define PDFCORE_COMPILER_MSVC _MSC_VER
 #else
-#define JPEGLI_COMPILER_MSVC 0
+#define PDFCORE_COMPILER_MSVC 0
 #endif
 
 #ifdef __GNUC__
-#define JPEGLI_COMPILER_GCC (__GNUC__ * 100 + __GNUC_MINOR__)
+#define PDFCORE_COMPILER_GCC (__GNUC__ * 100 + __GNUC_MINOR__)
 #else
-#define JPEGLI_COMPILER_GCC 0
+#define PDFCORE_COMPILER_GCC 0
 #endif
 
 #ifdef __clang__
-#define JPEGLI_COMPILER_CLANG (__clang_major__ * 100 + __clang_minor__)
+#define PDFCORE_COMPILER_CLANG (__clang_major__ * 100 + __clang_minor__)
 // Clang pretends to be GCC for compatibility.
-#undef JPEGLI_COMPILER_GCC
-#define JPEGLI_COMPILER_GCC 0
+#undef PDFCORE_COMPILER_GCC
+#define PDFCORE_COMPILER_GCC 0
 #else
-#define JPEGLI_COMPILER_CLANG 0
+#define PDFCORE_COMPILER_CLANG 0
 #endif
 
-#if JPEGLI_COMPILER_MSVC
-#define JPEGLI_RESTRICT __restrict
-#elif JPEGLI_COMPILER_GCC || JPEGLI_COMPILER_CLANG
-#define JPEGLI_RESTRICT __restrict__
+#if PDFCORE_COMPILER_MSVC
+#define PDFCORE_RESTRICT __restrict
+#elif PDFCORE_COMPILER_GCC || PDFCORE_COMPILER_CLANG
+#define PDFCORE_RESTRICT __restrict__
 #else
-#define JPEGLI_RESTRICT
+#define PDFCORE_RESTRICT
 #endif
 
-#if JPEGLI_COMPILER_MSVC
-#define JPEGLI_INLINE __forceinline
-#define JPEGLI_NOINLINE __declspec(noinline)
+#if PDFCORE_COMPILER_MSVC
+#define PDFCORE_INLINE __forceinline
+#define PDFCORE_NOINLINE __declspec(noinline)
 #else
-#define JPEGLI_INLINE inline __attribute__((always_inline))
-#define JPEGLI_NOINLINE __attribute__((noinline))
+#define PDFCORE_INLINE inline __attribute__((always_inline))
+#define PDFCORE_NOINLINE __attribute__((noinline))
 #endif
 
-#if JPEGLI_COMPILER_MSVC
-#define JPEGLI_NORETURN __declspec(noreturn)
-#elif JPEGLI_COMPILER_GCC || JPEGLI_COMPILER_CLANG
-#define JPEGLI_NORETURN __attribute__((noreturn))
+#if PDFCORE_COMPILER_MSVC
+#define PDFCORE_NORETURN __declspec(noreturn)
+#elif PDFCORE_COMPILER_GCC || PDFCORE_COMPILER_CLANG
+#define PDFCORE_NORETURN __attribute__((noreturn))
 #else
-#define JPEGLI_NORETURN
+#define PDFCORE_NORETURN
 #endif
 
-#if JPEGLI_COMPILER_MSVC
-#define JPEGLI_MAYBE_UNUSED
+#if PDFCORE_COMPILER_MSVC
+#define PDFCORE_MAYBE_UNUSED
 #else
 // Encountered "attribute list cannot appear here" when using the C++17
 // [[maybe_unused]], so only use the old style attribute for now.
-#define JPEGLI_MAYBE_UNUSED __attribute__((unused))
+#define PDFCORE_MAYBE_UNUSED __attribute__((unused))
 #endif
 
 // MSAN execution won't hurt if some code it not inlined, but this can greatly
 // improve compilation time. Unfortunately this macro can not be used just
 // everywhere - inside header files it leads to "multiple definition" error;
-// though it would be better not to have JPEGLI_INLINE in header overall.
-#if JPEGLI_MEMORY_SANITIZER || JPEGLI_ADDRESS_SANITIZER || \
-    JPEGLI_THREAD_SANITIZER
-#define JPEGLI_MAYBE_INLINE JPEGLI_MAYBE_UNUSED
+// though it would be better not to have PDFCORE_INLINE in header overall.
+#if PDFCORE_MEMORY_SANITIZER || PDFCORE_ADDRESS_SANITIZER || \
+    PDFCORE_THREAD_SANITIZER
+#define PDFCORE_MAYBE_INLINE PDFCORE_MAYBE_UNUSED
 #else
-#define JPEGLI_MAYBE_INLINE JPEGLI_INLINE
+#define PDFCORE_MAYBE_INLINE PDFCORE_INLINE
 #endif
 
-#if JPEGLI_COMPILER_MSVC
+#if PDFCORE_COMPILER_MSVC
 // Unsupported, __assume is not the same.
-#define JPEGLI_LIKELY(expr) expr
-#define JPEGLI_UNLIKELY(expr) expr
+#define PDFCORE_LIKELY(expr) expr
+#define PDFCORE_UNLIKELY(expr) expr
 #else
-#define JPEGLI_LIKELY(expr) __builtin_expect(!!(expr), 1)
-#define JPEGLI_UNLIKELY(expr) __builtin_expect(!!(expr), 0)
+#define PDFCORE_LIKELY(expr) __builtin_expect(!!(expr), 1)
+#define PDFCORE_UNLIKELY(expr) __builtin_expect(!!(expr), 0)
 #endif
 
 // Returns a void* pointer which the compiler then assumes is N-byte aligned.
-// Example: float* JPEGLI_RESTRICT aligned = (float*)JPEGLI_ASSUME_ALIGNED(in,
+// Example: float* PDFCORE_RESTRICT aligned = (float*)PDFCORE_ASSUME_ALIGNED(in,
 // 32);
 //
 // The assignment semantics are required by GCC/Clang. ICC provides an in-place
 // __assume_aligned, whereas MSVC's __assume appears unsuitable.
-#if JPEGLI_COMPILER_CLANG
+#if PDFCORE_COMPILER_CLANG
 // Early versions of Clang did not support __builtin_assume_aligned.
-#define JPEGLI_HAS_ASSUME_ALIGNED __has_builtin(__builtin_assume_aligned)
-#elif JPEGLI_COMPILER_GCC
-#define JPEGLI_HAS_ASSUME_ALIGNED 1
+#define PDFCORE_HAS_ASSUME_ALIGNED __has_builtin(__builtin_assume_aligned)
+#elif PDFCORE_COMPILER_GCC
+#define PDFCORE_HAS_ASSUME_ALIGNED 1
 #else
-#define JPEGLI_HAS_ASSUME_ALIGNED 0
+#define PDFCORE_HAS_ASSUME_ALIGNED 0
 #endif
 
-#if JPEGLI_HAS_ASSUME_ALIGNED
-#define JPEGLI_ASSUME_ALIGNED(ptr, align) \
+#if PDFCORE_HAS_ASSUME_ALIGNED
+#define PDFCORE_ASSUME_ALIGNED(ptr, align) \
   __builtin_assume_aligned((ptr), (align))
 #else
-#define JPEGLI_ASSUME_ALIGNED(ptr, align) (ptr) /* not supported */
+#define PDFCORE_ASSUME_ALIGNED(ptr, align) (ptr) /* not supported */
 #endif
 
 #ifdef __has_attribute
-#define JPEGLI_HAVE_ATTRIBUTE(x) __has_attribute(x)
+#define PDFCORE_HAVE_ATTRIBUTE(x) __has_attribute(x)
 #else
-#define JPEGLI_HAVE_ATTRIBUTE(x) 0
+#define PDFCORE_HAVE_ATTRIBUTE(x) 0
 #endif
 
 // Raises warnings if the function return value is unused. Should appear as the
 // first part of a function definition/declaration.
-#if JPEGLI_HAVE_ATTRIBUTE(nodiscard)
-#define JPEGLI_MUST_USE_RESULT [[nodiscard]]
-#elif JPEGLI_COMPILER_CLANG && JPEGLI_HAVE_ATTRIBUTE(warn_unused_result)
-#define JPEGLI_MUST_USE_RESULT __attribute__((warn_unused_result))
+#if PDFCORE_HAVE_ATTRIBUTE(nodiscard)
+#define PDFCORE_MUST_USE_RESULT [[nodiscard]]
+#elif PDFCORE_COMPILER_CLANG && PDFCORE_HAVE_ATTRIBUTE(warn_unused_result)
+#define PDFCORE_MUST_USE_RESULT __attribute__((warn_unused_result))
 #else
-#define JPEGLI_MUST_USE_RESULT
+#define PDFCORE_MUST_USE_RESULT
 #endif
 
 // Disable certain -fsanitize flags for functions that are expected to include
 // things like unsigned integer overflow. For example use in the function
-// declaration JPEGLI_NO_SANITIZE("unsigned-integer-overflow") to silence
+// declaration PDFCORE_NO_SANITIZE("unsigned-integer-overflow") to silence
 // unsigned integer overflow ubsan messages.
-#if JPEGLI_COMPILER_CLANG && JPEGLI_HAVE_ATTRIBUTE(no_sanitize)
-#define JPEGLI_NO_SANITIZE(X) __attribute__((no_sanitize(X)))
+#if PDFCORE_COMPILER_CLANG && PDFCORE_HAVE_ATTRIBUTE(no_sanitize)
+#define PDFCORE_NO_SANITIZE(X) __attribute__((no_sanitize(X)))
 #else
-#define JPEGLI_NO_SANITIZE(X)
+#define PDFCORE_NO_SANITIZE(X)
 #endif
 
-#if JPEGLI_HAVE_ATTRIBUTE(__format__)
-#define JPEGLI_FORMAT(idx_fmt, idx_arg) \
+#if PDFCORE_HAVE_ATTRIBUTE(__format__)
+#define PDFCORE_FORMAT(idx_fmt, idx_arg) \
   __attribute__((__format__(__printf__, idx_fmt, idx_arg)))
 #else
-#define JPEGLI_FORMAT(idx_fmt, idx_arg)
+#define PDFCORE_FORMAT(idx_fmt, idx_arg)
 #endif
 
 // C++ standard.
 #if defined(_MSC_VER) && !defined(__clang__) && defined(_MSVC_LANG) && \
     _MSVC_LANG > __cplusplus
-#define JPEGLI_CXX_LANG _MSVC_LANG
+#define PDFCORE_CXX_LANG _MSVC_LANG
 #else
-#define JPEGLI_CXX_LANG __cplusplus
+#define PDFCORE_CXX_LANG __cplusplus
 #endif
 
 // Known / distinguished C++ standards.
-#define JPEGLI_CXX_17 201703
+#define PDFCORE_CXX_17 201703
 
 // In most cases we consider build as "debug". Use `NDEBUG` for release build.
-#if defined(JPEGLI_IS_DEBUG_BUILD)
-#undef JPEGLI_IS_DEBUG_BUILD
-#define JPEGLI_IS_DEBUG_BUILD 1
+#if defined(PDFCORE_IS_DEBUG_BUILD)
+#undef PDFCORE_IS_DEBUG_BUILD
+#define PDFCORE_IS_DEBUG_BUILD 1
 #elif defined(NDEBUG)
-#define JPEGLI_IS_DEBUG_BUILD 0
+#define PDFCORE_IS_DEBUG_BUILD 0
 #else
-#define JPEGLI_IS_DEBUG_BUILD 1
+#define PDFCORE_IS_DEBUG_BUILD 1
 #endif
 
-#if defined(JPEGLI_CRASH_ON_ERROR)
-#undef JPEGLI_CRASH_ON_ERROR
-#define JPEGLI_CRASH_ON_ERROR 1
+#if defined(PDFCORE_CRASH_ON_ERROR)
+#undef PDFCORE_CRASH_ON_ERROR
+#define PDFCORE_CRASH_ON_ERROR 1
 #else
-#define JPEGLI_CRASH_ON_ERROR 0
+#define PDFCORE_CRASH_ON_ERROR 0
 #endif
 
-#if JPEGLI_CRASH_ON_ERROR && !JPEGLI_IS_DEBUG_BUILD
-#error "JPEGLI_CRASH_ON_ERROR requires JPEGLI_IS_DEBUG_BUILD"
+#if PDFCORE_CRASH_ON_ERROR && !PDFCORE_IS_DEBUG_BUILD
+#error "PDFCORE_CRASH_ON_ERROR requires PDFCORE_IS_DEBUG_BUILD"
 #endif
 
-// Pass -DJPEGLI_DEBUG_ON_ALL_ERROR at compile time to print debug messages on
+// Pass -DPDFCORE_DEBUG_ON_ALL_ERROR at compile time to print debug messages on
 // all error (fatal and non-fatal) status.
-#if defined(JPEGLI_DEBUG_ON_ALL_ERROR)
-#undef JPEGLI_DEBUG_ON_ALL_ERROR
-#define JPEGLI_DEBUG_ON_ALL_ERROR 1
+#if defined(PDFCORE_DEBUG_ON_ALL_ERROR)
+#undef PDFCORE_DEBUG_ON_ALL_ERROR
+#define PDFCORE_DEBUG_ON_ALL_ERROR 1
 #else
-#define JPEGLI_DEBUG_ON_ALL_ERROR 0
+#define PDFCORE_DEBUG_ON_ALL_ERROR 0
 #endif
 
-#if JPEGLI_DEBUG_ON_ALL_ERROR && !JPEGLI_IS_DEBUG_BUILD
-#error "JPEGLI_DEBUG_ON_ALL_ERROR requires JPEGLI_IS_DEBUG_BUILD"
+#if PDFCORE_DEBUG_ON_ALL_ERROR && !PDFCORE_IS_DEBUG_BUILD
+#error "PDFCORE_DEBUG_ON_ALL_ERROR requires PDFCORE_IS_DEBUG_BUILD"
 #endif
 
-// Pass -DJPEGLI_DEBUG_ON_ABORT={0} to disable the debug messages on
-// (debug) JPEGLI_ENSURE and JPEGLI_DASSERT.
-#if !defined(JPEGLI_DEBUG_ON_ABORT)
-#define JPEGLI_DEBUG_ON_ABORT JPEGLI_IS_DEBUG_BUILD
-#endif  // JPEGLI_DEBUG_ON_ABORT
+// Pass -DPDFCORE_DEBUG_ON_ABORT={0} to disable the debug messages on
+// (debug) PDFCORE_ENSURE and PDFCORE_DASSERT.
+#if !defined(PDFCORE_DEBUG_ON_ABORT)
+#define PDFCORE_DEBUG_ON_ABORT PDFCORE_IS_DEBUG_BUILD
+#endif  // PDFCORE_DEBUG_ON_ABORT
 
-#if JPEGLI_DEBUG_ON_ABORT && !JPEGLI_IS_DEBUG_BUILD
-#error "JPEGLI_DEBUG_ON_ABORT requires JPEGLI_IS_DEBUG_BUILD"
+#if PDFCORE_DEBUG_ON_ABORT && !PDFCORE_IS_DEBUG_BUILD
+#error "PDFCORE_DEBUG_ON_ABORT requires PDFCORE_IS_DEBUG_BUILD"
 #endif
 
-#if JPEGLI_ADDRESS_SANITIZER || JPEGLI_MEMORY_SANITIZER || \
-    JPEGLI_THREAD_SANITIZER
-#define JPEGLI_PRINT_STACK_TRACE() __sanitizer_print_stack_trace();
+#if PDFCORE_ADDRESS_SANITIZER || PDFCORE_MEMORY_SANITIZER || \
+    PDFCORE_THREAD_SANITIZER
+#define PDFCORE_PRINT_STACK_TRACE() __sanitizer_print_stack_trace();
 #else
-#define JPEGLI_PRINT_STACK_TRACE()
+#define PDFCORE_PRINT_STACK_TRACE()
 #endif
 
-#if JPEGLI_COMPILER_MSVC
-#define JPEGLI_CRASH() __debugbreak(), (void)abort()
+#if PDFCORE_COMPILER_MSVC
+#define PDFCORE_CRASH() __debugbreak(), (void)abort()
 #else
-#define JPEGLI_CRASH() (void)__builtin_trap()
+#define PDFCORE_CRASH() (void)__builtin_trap()
 #endif
 
-#endif  // JPEGLI_LIB_BASE_COMPILER_SPECIFIC_H_
+#endif  // PDFCORE_LIB_BASE_COMPILER_SPECIFIC_H_

@@ -21,7 +21,7 @@
 #include "lib/jpegli/test_utils.h"
 #include "lib/jpegli/testing.h"
 
-namespace jpegli {
+namespace pdfcore {
 namespace {
 
 void TranscodeWithJpegli(const std::vector<uint8_t>& jpeg_input,
@@ -35,25 +35,25 @@ void TranscodeWithJpegli(const std::vector<uint8_t>& jpeg_input,
     ERROR_HANDLER_SETUP(jpegli);
     dinfo.err = cinfo.err;
     dinfo.client_data = cinfo.client_data;
-    jpegli_create_decompress(&dinfo);
-    jpegli_mem_src(&dinfo, jpeg_input.data(), jpeg_input.size());
+    pdfcore_jpegli_create_decompress(&dinfo);
+    pdfcore_jpegli_mem_src(&dinfo, jpeg_input.data(), jpeg_input.size());
     EXPECT_EQ(JPEG_REACHED_SOS,
-              jpegli_read_header(&dinfo, /*require_image=*/TRUE));
-    jvirt_barray_ptr* coef_arrays = jpegli_read_coefficients(&dinfo);
-    JPEGLI_TEST_ENSURE_TRUE(coef_arrays != nullptr);
-    jpegli_create_compress(&cinfo);
-    jpegli_mem_dest(&cinfo, &transcoded_data, &transcoded_size);
-    jpegli_copy_critical_parameters(&dinfo, &cinfo);
-    jpegli_set_progressive_level(&cinfo, jparams.progressive_mode);
+              pdfcore_jpegli_read_header(&dinfo, /*require_image=*/TRUE));
+    jvirt_barray_ptr* coef_arrays = pdfcore_jpegli_read_coefficients(&dinfo);
+    PDFCORE_TEST_ENSURE_TRUE(coef_arrays != nullptr);
+    pdfcore_jpegli_create_compress(&cinfo);
+    pdfcore_jpegli_mem_dest(&cinfo, &transcoded_data, &transcoded_size);
+    pdfcore_jpegli_copy_critical_parameters(&dinfo, &cinfo);
+    pdfcore_jpegli_set_progressive_level(&cinfo, jparams.progressive_mode);
     cinfo.optimize_coding = jparams.optimize_coding;
-    jpegli_write_coefficients(&cinfo, coef_arrays);
-    jpegli_finish_compress(&cinfo);
-    jpegli_finish_decompress(&dinfo);
+    pdfcore_jpegli_write_coefficients(&cinfo, coef_arrays);
+    pdfcore_jpegli_finish_compress(&cinfo);
+    pdfcore_jpegli_finish_decompress(&dinfo);
     return true;
   };
   ASSERT_TRUE(try_catch_block());
-  jpegli_destroy_decompress(&dinfo);
-  jpegli_destroy_compress(&cinfo);
+  pdfcore_jpegli_destroy_decompress(&dinfo);
+  pdfcore_jpegli_destroy_compress(&cinfo);
   if (transcoded_data) {
     jpeg_output->assign(transcoded_data, transcoded_data + transcoded_size);
     free(transcoded_data);
@@ -135,9 +135,9 @@ std::string TestDescription(
   return name.str();
 }
 
-JPEGLI_INSTANTIATE_TEST_SUITE_P(TranscodeAPITest, TranscodeAPITestParam,
+PDFCORE_INSTANTIATE_TEST_SUITE_P(TranscodeAPITest, TranscodeAPITestParam,
                                 testing::ValuesIn(GenerateTests()),
                                 TestDescription);
 
 }  // namespace
-}  // namespace jpegli
+}  // namespace pdfcore

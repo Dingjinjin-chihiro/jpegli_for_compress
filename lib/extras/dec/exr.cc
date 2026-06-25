@@ -14,9 +14,9 @@
 #include "lib/extras/packed_image.h"
 #include "lib/extras/size_constraints.h"
 
-#if !JPEGLI_ENABLE_EXR
+#if !PDFCORE_ENABLE_EXR
 
-namespace jpegli {
+namespace pdfcore {
 namespace extras {
 bool CanDecodeEXR() { return false; }
 
@@ -27,12 +27,12 @@ Status DecodeImageEXR(Span<const uint8_t> bytes, const ColorHints& color_hints,
   (void)color_hints;
   (void)ppf;
   (void)constraints;
-  return JPEGLI_FAILURE("EXR is not supported");
+  return PDFCORE_FAILURE("EXR is not supported");
 }
 }  // namespace extras
-}  // namespace jpegli
+}  // namespace pdfcore
 
-#else  // JPEGLI_ENABLE_EXR
+#else  // PDFCORE_ENABLE_EXR
 
 #include <ImfChannelList.h>
 #include <ImfFrameBuffer.h>
@@ -56,12 +56,12 @@ Status DecodeImageEXR(Span<const uint8_t> bytes, const ColorHints& color_hints,
 
 #ifdef __EXCEPTIONS
 #include <IexBaseExc.h>
-#define JPEGLI_EXR_THROW_LENGTH_ERROR(M) throw Iex::InputExc(M);
+#define PDFCORE_EXR_THROW_LENGTH_ERROR(M) throw Iex::InputExc(M);
 #else  // __EXCEPTIONS
-#define JPEGLI_EXR_THROW_LENGTH_ERROR(M) JPEGLI_CRASH()
+#define PDFCORE_EXR_THROW_LENGTH_ERROR(M) PDFCORE_CRASH()
 #endif  // __EXCEPTIONS
 
-namespace jpegli {
+namespace pdfcore {
 namespace extras {
 
 namespace {
@@ -83,10 +83,10 @@ class InMemoryIStream : public OpenEXR::IStream {
   bool isMemoryMapped() const override { return true; }
   char* readMemoryMapped(const int n) override {
     if (pos_ + n < pos_) {
-      JPEGLI_EXR_THROW_LENGTH_ERROR("Overflow");
+      PDFCORE_EXR_THROW_LENGTH_ERROR("Overflow");
     }
     if (pos_ + n > bytes_.size()) {
-      JPEGLI_EXR_THROW_LENGTH_ERROR("Read past end of file");
+      PDFCORE_EXR_THROW_LENGTH_ERROR("Read past end of file");
     }
     char* const result =
         const_cast<char*>(reinterpret_cast<const char*>(bytes_.data() + pos_));
@@ -98,12 +98,12 @@ class InMemoryIStream : public OpenEXR::IStream {
     // when requested amount is not accessible and exception is thrown, all
     // the accessible data is read.
     if (pos_ + n < pos_) {
-      JPEGLI_EXR_THROW_LENGTH_ERROR("Overflow");
+      PDFCORE_EXR_THROW_LENGTH_ERROR("Overflow");
     }
     if (pos_ + n > bytes_.size()) {
       int can_read = static_cast<int>(bytes_.size() - pos_);
       std::copy_n(readMemoryMapped(can_read), can_read, c);
-      JPEGLI_EXR_THROW_LENGTH_ERROR("Read past end of file");
+      PDFCORE_EXR_THROW_LENGTH_ERROR("Read past end of file");
     } else {
       std::copy_n(readMemoryMapped(n), n, c);
     }
@@ -113,7 +113,7 @@ class InMemoryIStream : public OpenEXR::IStream {
   ExrInt64 tellg() override { return pos_; }
   void seekg(const ExrInt64 pos) override {
     if (pos >= bytes_.size()) {
-      JPEGLI_EXR_THROW_LENGTH_ERROR("Seeks past end of file");
+      PDFCORE_EXR_THROW_LENGTH_ERROR("Seeks past end of file");
     }
     pos_ = pos;
   }
@@ -163,7 +163,7 @@ Status DecodeImageEXR(Span<const uint8_t> bytes, const ColorHints& color_hints,
 #ifdef __EXCEPTIONS
   std::unique_ptr<OpenEXR::InputFile> input_ptr;
   try {
-    input_ptr = jpegli::make_unique<OpenEXR::InputFile>(is);
+    input_ptr = pdfcore::make_unique<OpenEXR::InputFile>(is);
   } catch (...) {
     // silently return false if it is not an EXR file
     return false;
@@ -182,11 +182,11 @@ Status DecodeImageEXR(Span<const uint8_t> bytes, const ColorHints& color_hints,
        it != channels.end(); ++it) {
     const OpenEXR::Channel& ch = it.channel();
     if (ch.type == OpenEXR::UINT) {
-      return JPEGLI_FAILURE(
+      return PDFCORE_FAILURE(
           "OpenEXR files with UINT channels are not supported");
     }
     if (ch.xSampling != 1 || ch.ySampling != 1) {
-      return JPEGLI_FAILURE(
+      return PDFCORE_FAILURE(
           "OpenEXR files sub-sampled channels are not supported");
     }
   }
@@ -220,25 +220,25 @@ Status DecodeImageEXR(Span<const uint8_t> bytes, const ColorHints& color_hints,
   const int imageHeight = displayWindow.max.y - displayWindow.min.y + 1;
 
   if (!VerifyDimensions<uint32_t>(constraints, imageWidth, imageHeight)) {
-    return JPEGLI_FAILURE("image too big");
+    return PDFCORE_FAILURE("image too big");
   }
 
   ppf->info.xsize = imageWidth;
   ppf->info.ysize = imageHeight;
   ppf->info.num_color_channels = has_rgb ? 3 : 1;
 
-  const JpegliDataType data_type =
-      chBase->type == OpenEXR::HALF ? JPEGLI_TYPE_FLOAT16 : JPEGLI_TYPE_FLOAT;
-  const JpegliPixelFormat format{
+  const PdfcoreDataType data_type =
+      chBase->type == OpenEXR::HALF ? PDFCORE_TYPE_FLOAT16 : PDFCORE_TYPE_FLOAT;
+  const PdfcorePixelFormat format{
       /*num_channels=*/ppf->info.num_color_channels + (has_alpha ? 1u : 0u),
       /*data_type=*/data_type,
-      /*endianness=*/JPEGLI_NATIVE_ENDIAN,
+      /*endianness=*/PDFCORE_NATIVE_ENDIAN,
       /*align=*/0,
   };
   ppf->frames.clear();
   // Allocates the frame buffer.
   {
-    JPEGLI_ASSIGN_OR_RETURN(
+    PDFCORE_ASSIGN_OR_RETURN(
         PackedFrame frame,
         PackedFrame::Create(imageWidth, imageHeight, format));
     ppf->frames.emplace_back(std::move(frame));
@@ -262,10 +262,10 @@ Status DecodeImageEXR(Span<const uint8_t> bytes, const ColorHints& color_hints,
     extraPixelBytes += fp16 ? 2 : 4;
     extraChannels.insert(&it.channel());
 
-    const JpegliPixelFormat ec_format{
-        1, fp16 ? JPEGLI_TYPE_FLOAT16 : JPEGLI_TYPE_FLOAT, JPEGLI_NATIVE_ENDIAN,
+    const PdfcorePixelFormat ec_format{
+        1, fp16 ? PDFCORE_TYPE_FLOAT16 : PDFCORE_TYPE_FLOAT, PDFCORE_NATIVE_ENDIAN,
         0};
-    JPEGLI_ASSIGN_OR_RETURN(
+    PDFCORE_ASSIGN_OR_RETURN(
         PackedImage ec,
         PackedImage::Create(imageWidth, imageHeight, ec_format));
     frame.extra_channels.emplace_back(std::move(ec));
@@ -274,7 +274,7 @@ Status DecodeImageEXR(Span<const uint8_t> bytes, const ColorHints& color_hints,
     pec.ec_info.bits_per_sample = fp16 ? 16 : 32;
     pec.ec_info.exponent_bits_per_sample = fp16 ? 5 : 8;
     // TODO: detect channel types (depth etc.) based on naming convention
-    pec.ec_info.type = JPEGLI_CHANNEL_OPTIONAL;
+    pec.ec_info.type = PDFCORE_CHANNEL_OPTIONAL;
     pec.name = name;
     ppf->extra_channels_info.emplace_back(std::move(pec));
   }
@@ -360,7 +360,7 @@ Status DecodeImageEXR(Span<const uint8_t> bytes, const ColorHints& color_hints,
     if (exr_x_span > 0) {
       for (int exr_y = start_y; exr_y <= end_y; ++exr_y) {
         const int image_y = exr_y - displayWindow.min.y;
-        const char* const JPEGLI_RESTRICT input_row =
+        const char* const PDFCORE_RESTRICT input_row =
             &input_rows[(exr_y - start_y) * colorPixelBytes * row_size];
         uint8_t* row = static_cast<uint8_t*>(frame.color.pixels()) +
                        frame.color.stride * image_y;
@@ -371,9 +371,9 @@ Status DecodeImageEXR(Span<const uint8_t> bytes, const ColorHints& color_hints,
             row + (exr_x1 - displayWindow.min.x) * colorPixelBytes;
         memcpy(image_ptr, exr_ptr, exr_x_span * colorPixelBytes);
 
-        const char* JPEGLI_RESTRICT input_ec_slice = input_extra_rows.data();
+        const char* PDFCORE_RESTRICT input_ec_slice = input_extra_rows.data();
         for (PackedImage& ec : frame.extra_channels) {
-          const char* const JPEGLI_RESTRICT input_ec_row =
+          const char* const PDFCORE_RESTRICT input_ec_row =
               input_ec_slice + (exr_y - start_y) * ec.stride;
           uint8_t* ec_row =
               static_cast<uint8_t*>(ec.pixels()) + ec.stride * image_y;
@@ -389,14 +389,14 @@ Status DecodeImageEXR(Span<const uint8_t> bytes, const ColorHints& color_hints,
     }
   }
 
-  ppf->color_encoding.transfer_function = JPEGLI_TRANSFER_FUNCTION_LINEAR;
+  ppf->color_encoding.transfer_function = PDFCORE_TRANSFER_FUNCTION_LINEAR;
   ppf->color_encoding.color_space =
-      has_rgb ? JPEGLI_COLOR_SPACE_RGB : JPEGLI_COLOR_SPACE_GRAY;
-  ppf->color_encoding.primaries = JPEGLI_PRIMARIES_SRGB;
-  ppf->color_encoding.white_point = JPEGLI_WHITE_POINT_D65;
+      has_rgb ? PDFCORE_COLOR_SPACE_RGB : PDFCORE_COLOR_SPACE_GRAY;
+  ppf->color_encoding.primaries = PDFCORE_PRIMARIES_SRGB;
+  ppf->color_encoding.white_point = PDFCORE_WHITE_POINT_D65;
   if (OpenEXR::hasChromaticities(header)) {
-    ppf->color_encoding.primaries = JPEGLI_PRIMARIES_CUSTOM;
-    ppf->color_encoding.white_point = JPEGLI_WHITE_POINT_CUSTOM;
+    ppf->color_encoding.primaries = PDFCORE_PRIMARIES_CUSTOM;
+    ppf->color_encoding.white_point = PDFCORE_WHITE_POINT_CUSTOM;
     const auto& chromaticities = OpenEXR::chromaticities(header);
     ppf->color_encoding.primaries_red_xy[0] = chromaticities.red.x;
     ppf->color_encoding.primaries_red_xy[1] = chromaticities.red.y;
@@ -414,13 +414,13 @@ Status DecodeImageEXR(Span<const uint8_t> bytes, const ColorHints& color_hints,
   if (has_alpha) {
     ppf->info.alpha_bits = chA->type == OpenEXR::HALF ? 16 : 32;
     ppf->info.alpha_exponent_bits = chA->type == OpenEXR::HALF ? 5 : 8;
-    ppf->info.alpha_premultiplied = JPEGLI_TRUE;
+    ppf->info.alpha_premultiplied = PDFCORE_TRUE;
   }
   ppf->info.intensity_target = intensity_target;
   return true;
 }
 
 }  // namespace extras
-}  // namespace jpegli
+}  // namespace pdfcore
 
-#endif  // JPEGLI_ENABLE_EXR
+#endif  // PDFCORE_ENABLE_EXR

@@ -4,15 +4,15 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
-#ifndef JPEGLI_LIB_JPEGLI_DECODE_SCAN_H_
-#define JPEGLI_LIB_JPEGLI_DECODE_SCAN_H_
+#ifndef PDFCORE_LIB_PDFCORE_DECODE_SCAN_H_
+#define PDFCORE_LIB_PDFCORE_DECODE_SCAN_H_
 
 #include <cstddef>
 #include <cstdint>
 
 #include "lib/jpegli/common.h"
 
-namespace jpegli {
+namespace pdfcore {
 
 // Reads the available input in the source manager's input buffer until the end
 // of the next iMCU row.
@@ -28,6 +28,6 @@ int ProcessScan(j_decompress_ptr cinfo, const uint8_t* data, size_t len,
 
 void PrepareForiMCURow(j_decompress_ptr cinfo);
 
-}  // namespace jpegli
+}  // namespace pdfcore
 
-#endif  // JPEGLI_LIB_JPEGLI_DECODE_SCAN_H_
+#endif  // PDFCORE_LIB_PDFCORE_DECODE_SCAN_H_

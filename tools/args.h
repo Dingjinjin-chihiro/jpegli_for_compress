@@ -4,8 +4,8 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
-#ifndef JPEGLI_TOOLS_ARGS_H_
-#define JPEGLI_TOOLS_ARGS_H_
+#ifndef PDFCORE_TOOLS_ARGS_H_
+#define PDFCORE_TOOLS_ARGS_H_
 
 // Helpers for parsing command line arguments. No include guard needed.
 
@@ -20,20 +20,20 @@
 #include "lib/extras/dec/color_hints.h"
 #include "tools/file_io.h"
 
-namespace jpegli_tools {
+namespace pdfcore_jpegli_tools {
 
-static inline bool ParseOverride(const char* arg, jpegli::Override* out) {
+static inline bool ParseOverride(const char* arg, pdfcore::Override* out) {
   const std::string s_arg(arg);
   if (s_arg == "1") {
-    *out = jpegli::Override::kOn;
+    *out = pdfcore::Override::kOn;
     return true;
   }
   if (s_arg == "0") {
-    *out = jpegli::Override::kOff;
+    *out = pdfcore::Override::kOff;
     return true;
   }
   fprintf(stderr, "Invalid flag, %s must be 0 or 1\n", arg);
-  return JPEGLI_FAILURE("Args");
+  return PDFCORE_FAILURE("Args");
 }
 
 template <typename Callback>
@@ -59,16 +59,16 @@ static inline bool IncrementUnsigned(size_t* out) {
 }
 
 struct ColorHintsProxy {
-  jpegli::extras::ColorHints target;
+  pdfcore::extras::ColorHints target;
   bool operator()(const std::string& key, const std::string& value) {
     if (key == "icc_pathname") {
       std::vector<uint8_t> icc;
-      JPEGLI_RETURN_IF_ERROR(ReadFile(value, &icc));
+      PDFCORE_RETURN_IF_ERROR(ReadFile(value, &icc));
       const char* data = reinterpret_cast<const char*>(icc.data());
       target.Add("icc", std::string(data, data + icc.size()));
     } else if (key == "exif" || key == "xmp" || key == "jumbf") {
       std::vector<uint8_t> metadata;
-      JPEGLI_RETURN_IF_ERROR(ReadFile(value, &metadata));
+      PDFCORE_RETURN_IF_ERROR(ReadFile(value, &metadata));
       const char* data = reinterpret_cast<const char*>(metadata.data());
       target.Add(key, std::string(data, data + metadata.size()));
     } else if (key == "strip") {
@@ -80,6 +80,6 @@ struct ColorHintsProxy {
   }
 };
 
-}  // namespace jpegli_tools
+}  // namespace pdfcore_jpegli_tools
 
-#endif  // JPEGLI_TOOLS_ARGS_H_
+#endif  // PDFCORE_TOOLS_ARGS_H_

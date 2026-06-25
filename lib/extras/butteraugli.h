@@ -6,8 +6,8 @@
 //
 // Author: Jyrki Alakuijala (jyrki.alakuijala@gmail.com)
 
-#ifndef JPEGLI_LIB_EXTRAS_BUTTERAUGLI_H_
-#define JPEGLI_LIB_EXTRAS_BUTTERAUGLI_H_
+#ifndef PDFCORE_LIB_EXTRAS_BUTTERAUGLI_H_
+#define PDFCORE_LIB_EXTRAS_BUTTERAUGLI_H_
 
 #include <atomic>
 #include <cstddef>
@@ -24,12 +24,12 @@
 #define BUTTERAUGLI_ENABLE_CHECKS 0
 #endif
 
-#define BUTTERAUGLI_RESTRICT JPEGLI_RESTRICT
+#define BUTTERAUGLI_RESTRICT PDFCORE_RESTRICT
 
 // This is the main interface to butteraugli image similarity
 // analysis function.
 
-namespace jpegli {
+namespace pdfcore {
 
 struct ButteraugliParams {
   // Multiplier for penalizing new HF artifacts more than blurring away
@@ -128,7 +128,7 @@ double ButteraugliFuzzyInverse(double seek);
 #endif
 
 // Returns a void* pointer which the compiler then assumes is N-byte aligned.
-// Example: float* JPEGLI_RESTRICT aligned = (float*)JPEGLI_ASSUME_ALIGNED(in,
+// Example: float* PDFCORE_RESTRICT aligned = (float*)PDFCORE_ASSUME_ALIGNED(in,
 // 32);
 //
 // The assignment semantics are required by GCC/Clang. ICC provides an in-place
@@ -151,9 +151,9 @@ struct PsychoImage {
 // Hold it here and only allocate on demand to reduce memory usage.
 struct BlurTemp {
   Status GetTransposed(const ImageF &in, ImageF **out) {
-    JpegliMemoryManager* memory_manager = in.memory_manager();
+    PdfcoreMemoryManager* memory_manager = in.memory_manager();
     if (transposed_temp.xsize() == 0) {
-      JPEGLI_ASSIGN_OR_RETURN(
+      PDFCORE_ASSIGN_OR_RETURN(
           transposed_temp,
           ImageF::Create(memory_manager, in.ysize(), in.xsize()));
     }
@@ -221,6 +221,6 @@ StatusOr<Image3F> CreateHeatMapImage(const ImageF &distmap,
                                      double good_threshold,
                                      double bad_threshold);
 
-}  // namespace jpegli
+}  // namespace pdfcore
 
-#endif  // JPEGLI_LIB_EXTRAS_BUTTERAUGLI_H_
+#endif  // PDFCORE_LIB_EXTRAS_BUTTERAUGLI_H_

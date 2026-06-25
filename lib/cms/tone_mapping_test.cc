@@ -24,7 +24,7 @@
 #include <hwy/highway.h>
 #include <hwy/tests/hwy_gtest.h>
 HWY_BEFORE_NAMESPACE();
-namespace jpegli {
+namespace pdfcore {
 namespace HWY_NAMESPACE {
 namespace {
 
@@ -138,11 +138,11 @@ HWY_NOINLINE void TestGamutMap() {
 }  // namespace
 // NOLINTNEXTLINE(google-readability-namespace-comments)
 }  // namespace HWY_NAMESPACE
-}  // namespace jpegli
+}  // namespace pdfcore
 HWY_AFTER_NAMESPACE();
 
 #if HWY_ONCE
-namespace jpegli {
+namespace pdfcore {
 
 class ToneMappingTargetTest : public hwy::TestWithParamTarget {};
 HWY_TARGET_INSTANTIATE_TEST_SUITE_P(ToneMappingTargetTest);
@@ -151,5 +151,5 @@ HWY_EXPORT_AND_TEST_P(ToneMappingTargetTest, TestRec2408ToneMap);
 HWY_EXPORT_AND_TEST_P(ToneMappingTargetTest, TestHlgOotfApply);
 HWY_EXPORT_AND_TEST_P(ToneMappingTargetTest, TestGamutMap);
 
-}  // namespace jpegli
+}  // namespace pdfcore
 #endif  // HWY_ONCE

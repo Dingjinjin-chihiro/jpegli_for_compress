@@ -4,8 +4,8 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
-#ifndef JPEGLI_LIB_EXTRAS_DEC_PNM_H_
-#define JPEGLI_LIB_EXTRAS_DEC_PNM_H_
+#ifndef PDFCORE_LIB_EXTRAS_DEC_PNM_H_
+#define PDFCORE_LIB_EXTRAS_DEC_PNM_H_
 
 // Decodes PBM/PGM/PPM/PFM pixels in memory.
 
@@ -19,7 +19,7 @@
 #include "lib/base/span.h"
 #include "lib/base/status.h"
 
-namespace jpegli {
+namespace pdfcore {
 
 struct SizeConstraints;
 
@@ -42,10 +42,10 @@ struct HeaderPNM {
   size_t bits_per_sample;
   bool floating_point;
   bool big_endian;
-  std::vector<JpegliExtraChannelType> ec_types;  // PAM
+  std::vector<PdfcoreExtraChannelType> ec_types;  // PAM
 };
 
 }  // namespace extras
-}  // namespace jpegli
+}  // namespace pdfcore
 
-#endif  // JPEGLI_LIB_EXTRAS_DEC_PNM_H_
+#endif  // PDFCORE_LIB_EXTRAS_DEC_PNM_H_

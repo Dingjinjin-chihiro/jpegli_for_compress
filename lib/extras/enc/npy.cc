@@ -25,7 +25,7 @@
 #include "lib/extras/enc/encode.h"
 #include "lib/extras/packed_image.h"
 
-namespace jpegli {
+namespace pdfcore {
 namespace extras {
 namespace {
 
@@ -182,31 +182,31 @@ void GenerateMetadata(const PackedPixelFile& ppf, std::vector<uint8_t>* out) {
     ebps->Add(ppf.info.exponent_bits_per_sample);
     for (const auto& eci : ppf.extra_channels_info) {
       switch (eci.ec_info.type) {
-        case JPEGLI_CHANNEL_ALPHA: {
+        case PDFCORE_CHANNEL_ALPHA: {
           ectype->Add(std::string("Alpha"));
           break;
         }
-        case JPEGLI_CHANNEL_DEPTH: {
+        case PDFCORE_CHANNEL_DEPTH: {
           ectype->Add(std::string("Depth"));
           break;
         }
-        case JPEGLI_CHANNEL_SPOT_COLOR: {
+        case PDFCORE_CHANNEL_SPOT_COLOR: {
           ectype->Add(std::string("SpotColor"));
           break;
         }
-        case JPEGLI_CHANNEL_SELECTION_MASK: {
+        case PDFCORE_CHANNEL_SELECTION_MASK: {
           ectype->Add(std::string("SelectionMask"));
           break;
         }
-        case JPEGLI_CHANNEL_BLACK: {
+        case PDFCORE_CHANNEL_BLACK: {
           ectype->Add(std::string("Black"));
           break;
         }
-        case JPEGLI_CHANNEL_CFA: {
+        case PDFCORE_CHANNEL_CFA: {
           ectype->Add(std::string("CFA"));
           break;
         }
-        case JPEGLI_CHANNEL_THERMAL: {
+        case PDFCORE_CHANNEL_THERMAL: {
           ectype->Add(std::string("Thermal"));
           break;
         }
@@ -264,14 +264,14 @@ bool WriteFrameToNPYArray(size_t xsize, size_t ysize, const PackedFrame& frame,
         size_t sample_size = color.pixel_stride();
         size_t offset = y * color.stride + x * sample_size;
         uint8_t* pixels = reinterpret_cast<uint8_t*>(color.pixels());
-        JPEGLI_ENSURE(offset + sample_size <= color.pixels_size);
+        PDFCORE_ENSURE(offset + sample_size <= color.pixels_size);
         Append(out, pixels + offset, sample_size);
       }
       for (const auto& ec : frame.extra_channels) {
         size_t sample_size = ec.pixel_stride();
         size_t offset = y * ec.stride + x * sample_size;
         uint8_t* pixels = reinterpret_cast<uint8_t*>(ec.pixels());
-        JPEGLI_ENSURE(offset + sample_size <= ec.pixels_size);
+        PDFCORE_ENSURE(offset + sample_size <= ec.pixels_size);
         Append(out, pixels + offset, sample_size);
       }
     }
@@ -298,7 +298,7 @@ class NumPyEncoder : public Encoder {
  public:
   Status Encode(const PackedPixelFile& ppf, EncodedImage* encoded_image,
                 ThreadPool* pool) const override {
-    JPEGLI_RETURN_IF_ERROR(VerifyBasicInfo(ppf.info));
+    PDFCORE_RETURN_IF_ERROR(VerifyBasicInfo(ppf.info));
     GenerateMetadata(ppf, &encoded_image->metadata);
     encoded_image->bitstreams.emplace_back();
     if (!WriteNPYArray(ppf, &encoded_image->bitstreams.back())) {
@@ -316,11 +316,11 @@ class NumPyEncoder : public Encoder {
     }
     return true;
   }
-  std::vector<JpegliPixelFormat> AcceptedFormats() const override {
-    std::vector<JpegliPixelFormat> formats;
+  std::vector<PdfcorePixelFormat> AcceptedFormats() const override {
+    std::vector<PdfcorePixelFormat> formats;
     for (const uint32_t num_channels : {1, 3}) {
-      formats.push_back(JpegliPixelFormat{num_channels, JPEGLI_TYPE_FLOAT,
-                                          JPEGLI_LITTLE_ENDIAN, /*align=*/0});
+      formats.push_back(PdfcorePixelFormat{num_channels, PDFCORE_TYPE_FLOAT,
+                                          PDFCORE_LITTLE_ENDIAN, /*align=*/0});
     }
     return formats;
   }
@@ -330,8 +330,8 @@ class NumPyEncoder : public Encoder {
 }  // namespace
 
 std::unique_ptr<Encoder> GetNumPyEncoder() {
-  return jpegli::make_unique<NumPyEncoder>();
+  return pdfcore::make_unique<NumPyEncoder>();
 }
 
 }  // namespace extras
-}  // namespace jpegli
+}  // namespace pdfcore

@@ -19,7 +19,7 @@ message(STATUS "Linker IDs\
  C++:${CMAKE_CXX_COMPILER_LINKER_ID} ${CMAKE_CXX_COMPILER_LINKER_VERSION}")
 
 # TODO(sboukortt): remove once oss-fuzz passes -DBUILD_SHARED_LIBS=OFF
-if(JPEGLI_ENABLE_FUZZERS)
+if(PDFCORE_ENABLE_FUZZERS)
   message(STATUS "Fuzzer build detected, building static libs")
   set(BUILD_SHARED_LIBS OFF)
 endif()
@@ -107,7 +107,7 @@ check_cxx_source_compiles(
       #endif
       return 0;
     }"
-  JPEGLI_HWY_DISABLED_TARGETS_FORCED
+  PDFCORE_HWY_DISABLED_TARGETS_FORCED
 )
 
 if((SANITIZER STREQUAL "msan") OR EMSCRIPTEN)
@@ -116,81 +116,81 @@ else()
   set(BUNDLE_LIBPNG_DEFAULT NO)
 endif()
 
-set(JPEGLI_HWY_TARGETS AVX2 AVX3 AVX3_DL AVX3_SPR AVX3_ZEN4 EMU128 NEON NEON_BF16 NEON_WITHOUT_AES PPC10 PPC8 PPC9 RVV SCALAR SSE2 SSE4 SSSE3 SVE SVE_256 SVE2 SVE2_128 WASM WASM_EMU256 Z14 Z15)
-set(JPEGLI_HWY_TARGETS_OFF_BY_DEFAULT AVX3 AVX3_SPR AVX3_ZEN4 RVV SSSE3 SVE_256)
+set(PDFCORE_HWY_TARGETS AVX2 AVX3 AVX3_DL AVX3_SPR AVX3_ZEN4 EMU128 NEON NEON_BF16 NEON_WITHOUT_AES PPC10 PPC8 PPC9 RVV SCALAR SSE2 SSE4 SSSE3 SVE SVE_256 SVE2 SVE2_128 WASM WASM_EMU256 Z14 Z15)
+set(PDFCORE_HWY_TARGETS_OFF_BY_DEFAULT AVX3 AVX3_SPR AVX3_ZEN4 RVV SSSE3 SVE_256)
 if (NOT CXX_SVE_SUPPORTED)
-  list(APPEND JPEGLI_HWY_TARGETS_OFF_BY_DEFAULT SVE SVE2 SVE_256 SVE2_128)
+  list(APPEND PDFCORE_HWY_TARGETS_OFF_BY_DEFAULT SVE SVE2 SVE_256 SVE2_128)
 endif()
 
 # Standard cmake naming for building shared libraries.
 get_property(SHARED_LIBS_SUPPORTED GLOBAL PROPERTY TARGET_SUPPORTS_SHARED_LIBS)
 option(BUILD_SHARED_LIBS "Build shared libraries instead of static ones" ${SHARED_LIBS_SUPPORTED})
 
-set(JPEGLI_ENABLE_FUZZERS ${ENABLE_FUZZERS_DEFAULT} CACHE BOOL
+set(PDFCORE_ENABLE_FUZZERS ${ENABLE_FUZZERS_DEFAULT} CACHE BOOL
     "Build JPEGLI fuzzer targets.")
-set(JPEGLI_ENABLE_DEVTOOLS false CACHE BOOL
+set(PDFCORE_ENABLE_DEVTOOLS false CACHE BOOL
     "Build JPEGLI developer tools.")
-set(JPEGLI_ENABLE_TOOLS true CACHE BOOL
+set(PDFCORE_ENABLE_TOOLS true CACHE BOOL
     "Build JPEGLI user tools: cjpegli and djpegli.")
-set(JPEGLI_ENABLE_JPEGLI_LIBJPEG true CACHE BOOL
+set(PDFCORE_ENABLE_PDFCORE_LIBJPEG true CACHE BOOL
     "Build libjpeg.so shared library based on jpegli.")
-set(JPEGLI_INSTALL_JPEGLI_LIBJPEG false CACHE BOOL
+set(PDFCORE_INSTALL_PDFCORE_LIBJPEG false CACHE BOOL
     "Install jpegli version of libjpeg.so system-wide.")
-set(JPEGLI_LIBJPEG_LIBRARY_VERSION "62.3.0" CACHE STRING
+set(PDFCORE_LIBJPEG_LIBRARY_VERSION "62.3.0" CACHE STRING
     "Library version of the libjpeg.so shared library that we build.")
-set(JPEGLI_LIBJPEG_LIBRARY_SOVERSION "62" CACHE STRING
+set(PDFCORE_LIBJPEG_LIBRARY_SOVERSION "62" CACHE STRING
     "Library so-version of the libjpeg.so shared library that we build.")
-set(JPEGLI_ENABLE_DOXYGEN true CACHE BOOL
+set(PDFCORE_ENABLE_DOXYGEN true CACHE BOOL
     "Generate C API documentation using Doxygen.")
-set(JPEGLI_ENABLE_MANPAGES true CACHE BOOL
+set(PDFCORE_ENABLE_MANPAGES true CACHE BOOL
     "Build and install man pages for the command-line tools.")
-set(JPEGLI_ENABLE_BENCHMARK true CACHE BOOL
+set(PDFCORE_ENABLE_BENCHMARK true CACHE BOOL
     "Build JPEGLI benchmark tools.")
-set(JPEGLI_BUNDLE_LIBPNG ${BUNDLE_LIBPNG_DEFAULT} CACHE BOOL
+set(PDFCORE_BUNDLE_LIBPNG ${BUNDLE_LIBPNG_DEFAULT} CACHE BOOL
     "Build libpng from source and link it statically.")
-set(JPEGLI_ENABLE_JNI true CACHE BOOL
+set(PDFCORE_ENABLE_JNI true CACHE BOOL
     "Build JPEGLI JNI Java wrapper, if Java dependencies are installed.")
-set(JPEGLI_ENABLE_SJPEG true CACHE BOOL
+set(PDFCORE_ENABLE_SJPEG true CACHE BOOL
     "Build JPEGLI with support for encoding with sjpeg.")
-set(JPEGLI_ENABLE_OPENEXR true CACHE BOOL
+set(PDFCORE_ENABLE_OPENEXR true CACHE BOOL
     "Build JPEGLI with support for OpenEXR if available.")
-set(JPEGLI_ENABLE_SKCMS ${ENABLE_SKCMS_DEFAULT} CACHE BOOL
+set(PDFCORE_ENABLE_SKCMS ${ENABLE_SKCMS_DEFAULT} CACHE BOOL
     "Build with skcms instead of lcms2.")
-set(JPEGLI_ENABLE_TCMALLOC ${ENABLE_TCMALLOC_DEFAULT} CACHE BOOL
+set(PDFCORE_ENABLE_TCMALLOC ${ENABLE_TCMALLOC_DEFAULT} CACHE BOOL
     "Build JPEGLI using gperftools (tcmalloc) allocator.")
-set(JPEGLI_ENABLE_COVERAGE false CACHE BOOL
+set(PDFCORE_ENABLE_COVERAGE false CACHE BOOL
     "Enable code coverage tracking for libjpegli. This also enables debug and disables optimizations.")
-set(JPEGLI_STATIC false CACHE BOOL
+set(PDFCORE_STATIC false CACHE BOOL
     "Build tools as static binaries.")
-set(JPEGLI_WARNINGS_AS_ERRORS false CACHE BOOL
+set(PDFCORE_WARNINGS_AS_ERRORS false CACHE BOOL
     "Treat warnings as errors during compilation.")
-set(JPEGLI_DEP_LICENSE_DIR "" CACHE STRING
+set(PDFCORE_DEP_LICENSE_DIR "" CACHE STRING
     "Directory where to search for system dependencies \"copyright\" files.")
-set(JPEGLI_FORCE_NEON false CACHE BOOL
+set(PDFCORE_FORCE_NEON false CACHE BOOL
     "Set flags to enable NEON in arm if not enabled by your toolchain.")
-set(JPEGLI_TEST_TOOLS false CACHE BOOL
+set(PDFCORE_TEST_TOOLS false CACHE BOOL
     "Run scripts that test the encoding / decoding tools.")
-set(JPEGLI_ENABLE_WASM_THREADS true CACHE BOOL
+set(PDFCORE_ENABLE_WASM_THREADS true CACHE BOOL
     "Builds WASM modules with threads support.")
-set(JPEGLI_ENABLE_LTO false CACHE BOOL
+set(PDFCORE_ENABLE_LTO false CACHE BOOL
     "Set flags to enable LTO.")
 
 # HWY codegen levers
-foreach(tgt IN LISTS JPEGLI_HWY_TARGETS)
-  set(JPEGLI_ENABLE_HWY_${tgt}_DEFAULT true)
-  if (${tgt} IN_LIST JPEGLI_HWY_TARGETS_OFF_BY_DEFAULT)
-    set(JPEGLI_ENABLE_HWY_${tgt}_DEFAULT false)
+foreach(tgt IN LISTS PDFCORE_HWY_TARGETS)
+  set(PDFCORE_ENABLE_HWY_${tgt}_DEFAULT true)
+  if (${tgt} IN_LIST PDFCORE_HWY_TARGETS_OFF_BY_DEFAULT)
+    set(PDFCORE_ENABLE_HWY_${tgt}_DEFAULT false)
   endif()
-  set(JPEGLI_ENABLE_HWY_${tgt} ${JPEGLI_ENABLE_HWY_${tgt}_DEFAULT} CACHE BOOL
+  set(PDFCORE_ENABLE_HWY_${tgt} ${PDFCORE_ENABLE_HWY_${tgt}_DEFAULT} CACHE BOOL
     "Build with ${tgt} support (faster on CPUs that support it, but larger binary size).")
 endforeach()
 
 # Force system dependencies.
-set(JPEGLI_FORCE_SYSTEM_GTEST false CACHE BOOL
+set(PDFCORE_FORCE_SYSTEM_GTEST false CACHE BOOL
     "Force using system installed googletest (gtest) instead of third_party/googletest source.")
-set(JPEGLI_FORCE_SYSTEM_LCMS2 false CACHE BOOL
+set(PDFCORE_FORCE_SYSTEM_LCMS2 false CACHE BOOL
     "Force using system installed lcms2 instead of third_party/lcms source.")
-set(JPEGLI_FORCE_SYSTEM_HWY false CACHE BOOL
+set(PDFCORE_FORCE_SYSTEM_HWY false CACHE BOOL
     "Force using system installed highway (libhwy-dev) instead of third_party/highway source.")
 
 # Check minimum compiler versions. Older compilers are not supported and fail
@@ -200,15 +200,15 @@ if (NOT CMAKE_C_COMPILER_ID STREQUAL CMAKE_CXX_COMPILER_ID)
           "${CMAKE_C_COMPILER_ID} vs ${CMAKE_CXX_COMPILER_ID}")
 endif()
 
-set(JPEGLI_HWY_INCLUDE_DIRS "$<BUILD_INTERFACE:$<TARGET_PROPERTY:$<IF:$<TARGET_EXISTS:hwy::hwy>,hwy::hwy,hwy>,INTERFACE_INCLUDE_DIRECTORIES>>")
+set(PDFCORE_HWY_INCLUDE_DIRS "$<BUILD_INTERFACE:$<TARGET_PROPERTY:$<IF:$<TARGET_EXISTS:hwy::hwy>,hwy::hwy,hwy>,INTERFACE_INCLUDE_DIRECTORIES>>")
 
-if (JPEGLI_HWY_DISABLED_TARGETS_FORCED)
-  message(WARNING "HWY_DISABLED_TARGETS is overridden; JPEGLI_ENABLE_hwy_target will be ignored")
+if (PDFCORE_HWY_DISABLED_TARGETS_FORCED)
+  message(WARNING "HWY_DISABLED_TARGETS is overridden; PDFCORE_ENABLE_hwy_target will be ignored")
 else()
   set(HWY_DISABLED_TARGETS_LIST "")
-  foreach(tgt IN LISTS JPEGLI_HWY_TARGETS)
-    message(STATUS "HWY ${tgt} enabled: ${JPEGLI_ENABLE_HWY_${tgt}}")
-    if (NOT JPEGLI_ENABLE_HWY_${tgt})
+  foreach(tgt IN LISTS PDFCORE_HWY_TARGETS)
+    message(STATUS "HWY ${tgt} enabled: ${PDFCORE_ENABLE_HWY_${tgt}}")
+    if (NOT PDFCORE_ENABLE_HWY_${tgt})
       list(APPEND HWY_DISABLED_TARGETS_LIST HWY_${tgt})
     endif()
   endforeach()
@@ -222,7 +222,7 @@ endif()
 # used by clang-tidy.
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-if(JPEGLI_STATIC)
+if(PDFCORE_STATIC)
   set(BUILD_SHARED_LIBS 0)
 
   # https://learn.microsoft.com/en-us/cpp/build/reference/md-mt-ld-use-run-time-library?view=msvc-170
@@ -241,7 +241,7 @@ if(JPEGLI_STATIC)
     set(CMAKE_FIND_LIBRARY_SUFFIXES .a)
     string(APPEND CMAKE_EXE_LINKER_FLAGS " -static-libgcc -static-libstdc++")
   endif()
-endif()  # JPEGLI_STATIC
+endif()  # PDFCORE_STATIC
 
 # Threads
 set(THREADS_PREFER_PTHREAD_FLAG YES)
@@ -266,7 +266,7 @@ message(STATUS "CXX_STANDARD is ${CMAKE_CXX_STANDARD}")
 # Atomics
 find_package(Atomics REQUIRED)
 
-if(JPEGLI_STATIC)
+if(PDFCORE_STATIC)
   if (MINGW)
     # In MINGW libstdc++ uses pthreads directly. When building statically a
     # program (regardless of whether the source code uses pthread or not) the
@@ -299,15 +299,15 @@ if(JPEGLI_STATIC)
             "-Wl,--whole-archive;-lpthread;-Wl,--no-whole-archive")
     endif()
   endif()
-endif()  # JPEGLI_STATIC
+endif()  # PDFCORE_STATIC
 
-if (EMSCRIPTEN AND JPEGLI_ENABLE_WASM_THREADS)
+if (EMSCRIPTEN AND PDFCORE_ENABLE_WASM_THREADS)
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pthread")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread")
 endif()
 
-if (JPEGLI_ENABLE_LTO)
+if (PDFCORE_ENABLE_LTO)
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -flto")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -flto")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -flto")
@@ -322,8 +322,8 @@ if (CXX_NO_RTTI_SUPPORTED)
 endif()
 
 # Internal flags for coverage builds:
-set(JPEGLI_COVERAGE_FLAGS)
-set(JPEGLI_COVERAGE_LINK_FLAGS)
+set(PDFCORE_COVERAGE_FLAGS)
+set(PDFCORE_COVERAGE_LINK_FLAGS)
 
 if (MSVC)
   # TODO(janwas): add flags
@@ -356,7 +356,7 @@ else ()
 
   # TODO(janwas): this also matches M1, but only ARMv7 is intended/needed.
   if(CMAKE_SYSTEM_PROCESSOR MATCHES "arm")
-    if(JPEGLI_FORCE_NEON)
+    if(PDFCORE_FORCE_NEON)
       # GCC requires these flags, otherwise __ARM_NEON is undefined.
       add_compile_options(-mfpu=neon-vfpv4 -mfloat-abi=hard)
     endif()
@@ -370,18 +370,18 @@ else ()
     -Wall
   )
 
-  if (JPEGLI_WARNINGS_AS_ERRORS)
+  if (PDFCORE_WARNINGS_AS_ERRORS)
     add_compile_options(-Werror)
   endif ()
 
-  if(JPEGLI_ENABLE_COVERAGE)
-    set(JPEGLI_COVERAGE_FLAGS
+  if(PDFCORE_ENABLE_COVERAGE)
+    set(PDFCORE_COVERAGE_FLAGS
         -g -O0 -fprofile-arcs -ftest-coverage -fprofile-update=atomic
     )
-    set(JPEGLI_COVERAGE_LINK_FLAGS
+    set(PDFCORE_COVERAGE_LINK_FLAGS
         --coverage
     )
-  endif()  # JPEGLI_ENABLE_COVERAGE
+  endif()  # PDFCORE_ENABLE_COVERAGE
 endif ()  # !MSVC
 
 include(GNUInstallDirs)
@@ -398,16 +398,16 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/LICENSE"
 enable_testing()
 include(CTest)
 # Specify default location of `testdata`:
-if(NOT DEFINED JPEGLI_TEST_DATA_PATH)
-  set(JPEGLI_TEST_DATA_PATH "${PROJECT_SOURCE_DIR}/testdata")
+if(NOT DEFINED PDFCORE_TEST_DATA_PATH)
+  set(PDFCORE_TEST_DATA_PATH "${PROJECT_SOURCE_DIR}/testdata")
 endif()
 
 # Libraries.
 add_subdirectory(lib)
 
 if(BUILD_TESTING)
-  if (NOT EXISTS "${JPEGLI_TEST_DATA_PATH}/README.md")
-    message(FATAL_ERROR "testdata directory '${JPEGLI_TEST_DATA_PATH}' is not populated")
+  if (NOT EXISTS "${PDFCORE_TEST_DATA_PATH}/README.md")
+    message(FATAL_ERROR "testdata directory '${PDFCORE_TEST_DATA_PATH}' is not populated")
   endif()
   # Script to run tests over the source code in bash.
   find_program (BASH_PROGRAM bash)
@@ -419,11 +419,11 @@ if(BUILD_TESTING)
 endif() # BUILD_TESTING
 
 # Documentation generated by Doxygen
-if(JPEGLI_ENABLE_DOXYGEN)
+if(PDFCORE_ENABLE_DOXYGEN)
   add_subdirectory(doc)
-endif() # JPEGLI_ENABLE_DOXYGEN
+endif() # PDFCORE_ENABLE_DOXYGEN
 
-if(JPEGLI_ENABLE_MANPAGES)
+if(PDFCORE_ENABLE_MANPAGES)
   find_program(ASCIIDOC a2x)
   if(ASCIIDOC)
     file(STRINGS "${ASCIIDOC}" ASCIIDOC_SHEBANG LIMIT_COUNT 1)
@@ -476,7 +476,7 @@ if(JPEGLI_ENABLE_MANPAGES)
   else()
     message(WARNING "asciidoc was not found, the man pages will not be installed.")
   endif()  # ASCIIDOC
-endif()  # JPEGLI_ENABLE_MANPAGES
+endif()  # PDFCORE_ENABLE_MANPAGES
 
 # Binary tools
 add_subdirectory(tools)

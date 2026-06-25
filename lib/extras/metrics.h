@@ -4,8 +4,8 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
-#ifndef JPEGLI_LIB_EXTRAS_METRICS_H_
-#define JPEGLI_LIB_EXTRAS_METRICS_H_
+#ifndef PDFCORE_LIB_EXTRAS_METRICS_H_
+#define PDFCORE_LIB_EXTRAS_METRICS_H_
 
 #include "lib/base/data_parallel.h"
 #include "lib/base/memory_manager.h"
@@ -15,11 +15,11 @@
 #include "lib/extras/image.h"
 #include "lib/extras/packed_image.h"
 
-namespace jpegli {
+namespace pdfcore {
 
 // Computes the butteraugli distance and optionally the distmap of images in any
 // RGB color model, optionally with alpha channel.
-float ButteraugliDistance(JpegliMemoryManager* memory_manager,
+float ButteraugliDistance(PdfcoreMemoryManager* memory_manager,
                           const extras::PackedPixelFile& a,
                           const extras::PackedPixelFile& b,
                           ButteraugliParams params = ButteraugliParams(),
@@ -30,16 +30,16 @@ float ButteraugliDistance(JpegliMemoryManager* memory_manager,
 StatusOr<double> ComputeDistanceP(const ImageF& distmap,
                                   const ButteraugliParams& params, double p);
 
-StatusOr<double> Butteraugli3Norm(JpegliMemoryManager* memory_manager,
+StatusOr<double> Butteraugli3Norm(PdfcoreMemoryManager* memory_manager,
                                   const extras::PackedPixelFile& a,
                                   const extras::PackedPixelFile& b,
                                   ThreadPool* pool = nullptr);
 
-double ComputePSNR(JpegliMemoryManager* memory_manager,
+double ComputePSNR(PdfcoreMemoryManager* memory_manager,
                    const extras::PackedPixelFile& a,
                    const extras::PackedPixelFile& b,
-                   const JpegliCmsInterface& cms);
+                   const PdfcoreCmsInterface& cms);
 
-}  // namespace jpegli
+}  // namespace pdfcore
 
-#endif  // JPEGLI_LIB_EXTRAS_METRICS_H_
+#endif  // PDFCORE_LIB_EXTRAS_METRICS_H_

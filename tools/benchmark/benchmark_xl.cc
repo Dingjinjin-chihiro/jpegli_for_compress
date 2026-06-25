@@ -51,37 +51,37 @@
 #include "tools/thread_pool_internal.h"
 #include "tools/tracking_memory_manager.h"
 
-namespace jpegli_tools {
+namespace pdfcore_jpegli_tools {
 namespace {
 
-#define QUIT(M) JPEGLI_TOOLS_ABORT(M)
+#define QUIT(M) PDFCORE_TOOLS_ABORT(M)
 
-using ::jpegli::ButteraugliParams;
-using ::jpegli::Bytes;
-using ::jpegli::ColorEncoding;
-using ::jpegli::Image3F;
-using ::jpegli::ImageF;
-using ::jpegli::Status;
-using ::jpegli::StatusOr;
-using ::jpegli::ThreadPool;
-using ::jpegli::extras::PackedPixelFile;
+using ::pdfcore::ButteraugliParams;
+using ::pdfcore::Bytes;
+using ::pdfcore::ColorEncoding;
+using ::pdfcore::Image3F;
+using ::pdfcore::ImageF;
+using ::pdfcore::Status;
+using ::pdfcore::StatusOr;
+using ::pdfcore::ThreadPool;
+using ::pdfcore::extras::PackedPixelFile;
 
 Status WriteImage(const Image3F& image, ThreadPool* pool,
                   const std::string& base_filename) {
-  JpegliPixelFormat format = {3, JPEGLI_TYPE_UINT8, JPEGLI_BIG_ENDIAN, 0};
-  JPEGLI_ASSIGN_OR_RETURN(PackedPixelFile ppf,
-                          jpegli::extras::ConvertImage3FToPackedPixelFile(
+  PdfcorePixelFormat format = {3, PDFCORE_TYPE_UINT8, PDFCORE_BIG_ENDIAN, 0};
+  PDFCORE_ASSIGN_OR_RETURN(PackedPixelFile ppf,
+                          pdfcore::extras::ConvertImage3FToPackedPixelFile(
                               image, ColorEncoding::SRGB(), format, pool));
-  jpegli::extras::EncodedImage encoded;
+  pdfcore::extras::EncodedImage encoded;
   std::string heatmap_fn;
-  auto png_enc = jpegli::extras::GetAPNGEncoder();
+  auto png_enc = pdfcore::extras::GetAPNGEncoder();
   if (png_enc) {
     heatmap_fn = base_filename + ".heatmap.png";
-    JPEGLI_RETURN_IF_ERROR(png_enc->Encode(ppf, &encoded, pool));
+    PDFCORE_RETURN_IF_ERROR(png_enc->Encode(ppf, &encoded, pool));
   } else {
     heatmap_fn = base_filename + ".heatmap.ppm";
-    JPEGLI_RETURN_IF_ERROR(
-        jpegli::extras::GetPPMEncoder()->Encode(ppf, &encoded, pool));
+    PDFCORE_RETURN_IF_ERROR(
+        pdfcore::extras::GetPPMEncoder()->Encode(ppf, &encoded, pool));
   }
   return WriteFile(heatmap_fn, encoded.bitstreams[0]);
 }
@@ -96,9 +96,9 @@ void PrintStats(const TrackingMemoryManager& memory_manager) {
 
 Status CreateNonSRGBICCProfile(PackedPixelFile* ppf) {
   ColorEncoding color_encoding;
-  JPEGLI_RETURN_IF_ERROR(color_encoding.FromExternal(ppf->color_encoding));
+  PDFCORE_RETURN_IF_ERROR(color_encoding.FromExternal(ppf->color_encoding));
   if (color_encoding.ICC().empty()) {
-    return JPEGLI_FAILURE("Invalid color encoding.");
+    return PDFCORE_FAILURE("Invalid color encoding.");
   }
   if (!color_encoding.IsSRGB()) {
     ppf->icc.assign(color_encoding.ICC().begin(), color_encoding.ICC().end());
@@ -124,13 +124,13 @@ Status DoCompress(const std::string& filename, const PackedPixelFile& ppf,
                   const std::vector<std::string>& extra_metrics_commands,
                   ImageCodec* codec, ThreadPool* inner_pool,
                   std::vector<uint8_t>* compressed, BenchmarkStats* s) {
-  JpegliMemoryManager* memory_manager = jpegli_tools::NoMemoryManager();
+  PdfcoreMemoryManager* memory_manager = pdfcore_jpegli_tools::NoMemoryManager();
   ++s->total_input_files;
 
   if (ppf.frames.size() != 1) {
     // Multiple frames not supported.
     if (!Args()->silent_errors) {
-      JPEGLI_WARNING("multiframe input image not supported %s",
+      PDFCORE_WARNING("multiframe input image not supported %s",
                      filename.c_str());
     }
     return false;
@@ -139,8 +139,8 @@ Status DoCompress(const std::string& filename, const PackedPixelFile& ppf,
   const size_t ysize = ppf.info.ysize;
   const size_t input_pixels = xsize * ysize;
 
-  jpegli_tools::SpeedStats speed_stats;
-  jpegli_tools::SpeedStats::Summary summary;
+  pdfcore_jpegli_tools::SpeedStats speed_stats;
+  pdfcore_jpegli_tools::SpeedStats::Summary summary;
 
   bool valid = true;  // false if roundtrip, encoding or decoding errors occur.
 
@@ -159,8 +159,8 @@ Status DoCompress(const std::string& filename, const PackedPixelFile& ppf,
       for (size_t i = 0; i < Args()->encode_reps; ++i) {
         if (codec->CanRecompressJpeg() && (ext == ".jpg" || ext == ".jpeg")) {
           std::vector<uint8_t> data_in;
-          JPEGLI_RETURN_IF_ERROR(ReadFile(filename, &data_in));
-          JPEGLI_RETURN_IF_ERROR(codec->RecompressJpeg(
+          PDFCORE_RETURN_IF_ERROR(ReadFile(filename, &data_in));
+          PDFCORE_RETURN_IF_ERROR(codec->RecompressJpeg(
               filename, data_in, compressed, &speed_stats));
         } else {
           Status status = codec->Compress(filename, *ppf1, inner_pool,
@@ -180,19 +180,19 @@ Status DoCompress(const std::string& filename, const PackedPixelFile& ppf,
           }
         }
       }
-      JPEGLI_RETURN_IF_ERROR(speed_stats.GetSummary(&summary));
+      PDFCORE_RETURN_IF_ERROR(speed_stats.GetSummary(&summary));
       s->total_time_encode += summary.central_tendency;
     }
 
     if (valid && Args()->decode_only) {
       std::vector<uint8_t> data_in;
-      JPEGLI_RETURN_IF_ERROR(ReadFile(filename, &data_in));
+      PDFCORE_RETURN_IF_ERROR(ReadFile(filename, &data_in));
       compressed->insert(compressed->end(), data_in.begin(), data_in.end());
     }
 
     // Decompress
     if (valid) {
-      speed_stats = jpegli_tools::SpeedStats();
+      speed_stats = pdfcore_jpegli_tools::SpeedStats();
       for (size_t i = 0; i < Args()->decode_reps; ++i) {
         if (!codec->Decompress(filename, Bytes(*compressed), inner_pool, &ppf2,
                                &speed_stats)) {
@@ -205,7 +205,7 @@ Status DoCompress(const std::string& filename, const PackedPixelFile& ppf,
           valid = false;
         }
       }
-      JPEGLI_RETURN_IF_ERROR(speed_stats.GetSummary(&summary));
+      PDFCORE_RETURN_IF_ERROR(speed_stats.GetSummary(&summary));
       s->total_time_decode += summary.central_tendency;
     }
     ppf1 = &ppf2;
@@ -241,7 +241,7 @@ Status DoCompress(const std::string& filename, const PackedPixelFile& ppf,
   float distance = 1.0f;
 
   if (valid && !skip_butteraugli) {
-    if (jpegli::SameSize(ppf, ppf2)) {
+    if (pdfcore::SameSize(ppf, ppf2)) {
       ButteraugliParams params;
       // Hack the default intensity target value for SDR images to be 80.0, the
       // intensity target of sRGB images and a more reasonable viewing default
@@ -249,8 +249,8 @@ Status DoCompress(const std::string& filename, const PackedPixelFile& ppf,
       // TODO(szabadka) Support different intensity targets as well.
       const auto& transfer_function = ppf.color_encoding.transfer_function;
       params.intensity_target =
-          (transfer_function == JPEGLI_TRANSFER_FUNCTION_PQ)    ? 10000.f
-          : (transfer_function == JPEGLI_TRANSFER_FUNCTION_HLG) ? 1000.f
+          (transfer_function == PDFCORE_TRANSFER_FUNCTION_PQ)    ? 10000.f
+          : (transfer_function == PDFCORE_TRANSFER_FUNCTION_HLG) ? 1000.f
                                                                 : 80.f;
 
       distance =
@@ -259,20 +259,20 @@ Status DoCompress(const std::string& filename, const PackedPixelFile& ppf,
     } else {
       // TODO(veluca): re-upsample and compute proper distance.
       distance = 1e+4f;
-      JPEGLI_ASSIGN_OR_RETURN(distmap, ImageF::Create(memory_manager, 1, 1));
+      PDFCORE_ASSIGN_OR_RETURN(distmap, ImageF::Create(memory_manager, 1, 1));
       distmap.Row(0)[0] = distance;
     }
     // Update stats
     s->psnr += compressed->empty()
                    ? 0
-                   : jpegli::ComputePSNR(memory_manager, ppf, ppf2,
-                                         *JpegliGetDefaultCms()) *
+                   : pdfcore::ComputePSNR(memory_manager, ppf, ppf2,
+                                         *PdfcoreGetDefaultCms()) *
                          input_pixels;
-    JPEGLI_ASSIGN_OR_RETURN(
+    PDFCORE_ASSIGN_OR_RETURN(
         double pnorm,
         ComputeDistanceP(distmap, ButteraugliParams(), Args()->error_pnorm));
     s->distance_p_norm += pnorm * input_pixels;
-    JPEGLI_ASSIGN_OR_RETURN(Msssim msssim, ComputeSSIMULACRA2(ppf, ppf2));
+    PDFCORE_ASSIGN_OR_RETURN(Msssim msssim, ComputeSSIMULACRA2(ppf, ppf2));
     double ssimulacra2 = msssim.Score();
     s->ssimulacra2 += ssimulacra2 * input_pixels;
     s->max_distance = std::max(s->max_distance, distance);
@@ -292,28 +292,28 @@ Status DoCompress(const std::string& filename, const PackedPixelFile& ppf,
     std::string compressed_fn =
         outdir + "/" + name + CodecToExtension(codec_name, ':');
     std::string decompressed_fn = compressed_fn + Args()->output_extension;
-    JPEGLI_RETURN_IF_ERROR(MakeDir(outdir));
+    PDFCORE_RETURN_IF_ERROR(MakeDir(outdir));
     if (Args()->save_compressed) {
-      JPEGLI_RETURN_IF_ERROR(WriteFile(compressed_fn, *compressed));
+      PDFCORE_RETURN_IF_ERROR(WriteFile(compressed_fn, *compressed));
     }
     if (Args()->save_decompressed && valid) {
       // TODO(szabadka): Handle Args()->mul_output
-      jpegli::extras::EncodedImage encoded;
-      JPEGLI_RETURN_IF_ERROR(
-          jpegli::extras::Encoder::FromExtension(Args()->output_extension)
+      pdfcore::extras::EncodedImage encoded;
+      PDFCORE_RETURN_IF_ERROR(
+          pdfcore::extras::Encoder::FromExtension(Args()->output_extension)
               ->Encode(ppf2, &encoded, inner_pool));
-      JPEGLI_RETURN_IF_ERROR(WriteFile(decompressed_fn, encoded.bitstreams[0]));
+      PDFCORE_RETURN_IF_ERROR(WriteFile(decompressed_fn, encoded.bitstreams[0]));
       if (!skip_butteraugli) {
         float good = Args()->heatmap_good > 0.0f
                          ? Args()->heatmap_good
-                         : jpegli::ButteraugliFuzzyInverse(1.5);
+                         : pdfcore::ButteraugliFuzzyInverse(1.5);
         float bad = Args()->heatmap_bad > 0.0f
                         ? Args()->heatmap_bad
-                        : jpegli::ButteraugliFuzzyInverse(0.5);
+                        : pdfcore::ButteraugliFuzzyInverse(0.5);
         if (Args()->save_heatmap) {
-          JPEGLI_ASSIGN_OR_RETURN(Image3F heatmap,
+          PDFCORE_ASSIGN_OR_RETURN(Image3F heatmap,
                                   CreateHeatMapImage(distmap, good, bad));
-          JPEGLI_RETURN_IF_ERROR(
+          PDFCORE_RETURN_IF_ERROR(
               WriteImage(heatmap, inner_pool, compressed_fn));
         }
       }
@@ -326,18 +326,18 @@ Status DoCompress(const std::string& filename, const PackedPixelFile& ppf,
     std::string tmp_in_fn;
     std::string tmp_out_fn;
     std::string tmp_res_fn;
-    JPEGLI_RETURN_IF_ERROR(tmp_in.GetFileName(&tmp_in_fn));
-    JPEGLI_RETURN_IF_ERROR(tmp_out.GetFileName(&tmp_out_fn));
-    JPEGLI_RETURN_IF_ERROR(tmp_res.GetFileName(&tmp_res_fn));
+    PDFCORE_RETURN_IF_ERROR(tmp_in.GetFileName(&tmp_in_fn));
+    PDFCORE_RETURN_IF_ERROR(tmp_out.GetFileName(&tmp_out_fn));
+    PDFCORE_RETURN_IF_ERROR(tmp_res.GetFileName(&tmp_res_fn));
 
-    jpegli::extras::EncodedImage encoded;
-    JPEGLI_RETURN_IF_ERROR(
-        jpegli::extras::GetPFMEncoder()->Encode(ppf, &encoded, inner_pool));
-    JPEGLI_RETURN_IF_ERROR(WriteFile(tmp_in_fn, encoded.bitstreams[0]));
+    pdfcore::extras::EncodedImage encoded;
+    PDFCORE_RETURN_IF_ERROR(
+        pdfcore::extras::GetPFMEncoder()->Encode(ppf, &encoded, inner_pool));
+    PDFCORE_RETURN_IF_ERROR(WriteFile(tmp_in_fn, encoded.bitstreams[0]));
     encoded.bitstreams.clear();
-    JPEGLI_RETURN_IF_ERROR(
-        jpegli::extras::GetPFMEncoder()->Encode(ppf2, &encoded, inner_pool));
-    JPEGLI_RETURN_IF_ERROR(WriteFile(tmp_out_fn, encoded.bitstreams[0]));
+    PDFCORE_RETURN_IF_ERROR(
+        pdfcore::extras::GetPFMEncoder()->Encode(ppf2, &encoded, inner_pool));
+    PDFCORE_RETURN_IF_ERROR(WriteFile(tmp_out_fn, encoded.bitstreams[0]));
     // TODO(szabadka) Handle custom intensity target.
     std::string intensity_target = "255";
     for (const auto& extra_metrics_command : extra_metrics_commands) {
@@ -581,7 +581,7 @@ Status WriteHtmlReport(const std::string& codec_desc,
   out_html.append("</body>\n").append(toggle_js);
   std::string fname_index =
       std::string(outdir).append("/index.").append(codec_name).append(".html");
-  JPEGLI_RETURN_IF_ERROR(WriteFile(fname_index, out_html));
+  PDFCORE_RETURN_IF_ERROR(WriteFile(fname_index, out_html));
   return true;
 }
 
@@ -632,15 +632,15 @@ struct StatPrinter {
       // rendered at the very end, else the details or progress would be
       // rendered in-between the table rows.
       if (tasks_done_ == tasks_->size()) {
-        JPEGLI_RETURN_IF_ERROR(PrintStatsHeader());
+        PDFCORE_RETURN_IF_ERROR(PrintStatsHeader());
         for (size_t i = 0; i < methods_->size(); i++) {
-          JPEGLI_RETURN_IF_ERROR(PrintStats((*methods_)[i], i));
+          PDFCORE_RETURN_IF_ERROR(PrintStats((*methods_)[i], i));
         }
-        JPEGLI_RETURN_IF_ERROR(PrintStatsFooter());
+        PDFCORE_RETURN_IF_ERROR(PrintStatsFooter());
       }
     } else {
       if (tasks_done_ == 1) {
-        JPEGLI_RETURN_IF_ERROR(PrintStatsHeader());
+        PDFCORE_RETURN_IF_ERROR(PrintStatsHeader());
       }
       // Render lines of the table as soon as it is ready and all previous
       // lines have been printed.
@@ -649,13 +649,13 @@ struct StatPrinter {
           t.idx_method == stats_printed_) {
         while (stats_printed_ < stats_done_.size() &&
                stats_done_[stats_printed_] == fnames_->size()) {
-          JPEGLI_RETURN_IF_ERROR(
+          PDFCORE_RETURN_IF_ERROR(
               PrintStats((*methods_)[stats_printed_], stats_printed_));
           stats_printed_++;
         }
       }
       if (tasks_done_ == tasks_->size()) {
-        JPEGLI_RETURN_IF_ERROR(PrintStatsFooter());
+        PDFCORE_RETURN_IF_ERROR(PrintStatsFooter());
       }
     }
     return true;
@@ -730,15 +730,15 @@ struct StatPrinter {
         tasks.push_back(&t);
       }
     }
-    JPEGLI_ENSURE(method_stats.total_input_files == fnames_->size());
+    PDFCORE_ENSURE(method_stats.total_input_files == fnames_->size());
 
     std::string out;
 
-    JPEGLI_RETURN_IF_ERROR(method_stats.PrintMoreStats());  // not concurrent
+    PDFCORE_RETURN_IF_ERROR(method_stats.PrintMoreStats());  // not concurrent
     out += method_stats.PrintLine(method);
 
     if (Args()->write_html_report) {
-      JPEGLI_RETURN_IF_ERROR(WriteHtmlReport(
+      PDFCORE_RETURN_IF_ERROR(WriteHtmlReport(
           method, *fnames_, tasks, images,
           Args()->save_heatmap && Args()->html_report_add_heatmap,
           Args()->html_report_self_contained));
@@ -764,7 +764,7 @@ struct StatPrinter {
     } else {
       printf("%" PRIuS " images\n", fnames_->size());
     }
-    JPEGLI_ASSIGN_OR_RETURN(std::string header,
+    PDFCORE_ASSIGN_OR_RETURN(std::string header,
                             PrintHeader(*extra_metrics_names_));
     printf("%s", header.c_str());
     fflush(stdout);
@@ -772,7 +772,7 @@ struct StatPrinter {
   }
 
   Status PrintStatsFooter() const {
-    JPEGLI_ASSIGN_OR_RETURN(
+    PDFCORE_ASSIGN_OR_RETURN(
         std::string aggregate,
         PrintAggregate(extra_metrics_names_->size(), stats_aggregate_));
     printf("%s", aggregate.c_str());
@@ -817,7 +817,7 @@ class Benchmark {
       const StringVec extra_metrics_commands = GetExtraMetricsCommands();
       const StringVec fnames = GetFilenames();
       // (non-const because Task.stats are updated)
-      JPEGLI_ASSIGN_OR_RETURN(
+      PDFCORE_ASSIGN_OR_RETURN(
           std::vector<Task> tasks,
           CreateTasks(methods, fnames, memory_manager.get()));
 
@@ -843,7 +843,7 @@ class Benchmark {
     }
 
     PrintStats(memory_manager);
-    if (!ok) return JPEGLI_FAILURE("RunTasks error");
+    if (!ok) return PDFCORE_FAILURE("RunTasks error");
     return true;
   }
 
@@ -905,7 +905,7 @@ class Benchmark {
             " threads, %" PRIuS " inner threads\n",
             num_hw_threads, num_tasks, num_threads, num_inner);
 
-    *pool = jpegli::make_unique<ThreadPoolInternal>(num_threads);
+    *pool = pdfcore::make_unique<ThreadPoolInternal>(num_threads);
     // Main thread OR worker threads in pool each get a possibly empty nested
     // pool (helps use all available cores when #tasks < #threads)
     for (size_t i = 0; i < std::max<size_t>(num_threads, 1); ++i) {
@@ -945,7 +945,7 @@ class Benchmark {
         it = metrics.erase(it);
       } else {
         auto s = SplitString(*it, ':');
-        JPEGLI_TOOLS_CHECK(s.size() == 2);
+        PDFCORE_TOOLS_CHECK(s.size() == 2);
         *it = s[1];
         ++it;
       }
@@ -955,9 +955,9 @@ class Benchmark {
 
   static StringVec GetFilenames() {
     StringVec fnames;
-    JPEGLI_TOOLS_CHECK(MatchFiles(Args()->input, &fnames));
+    PDFCORE_TOOLS_CHECK(MatchFiles(Args()->input, &fnames));
     if (fnames.empty()) {
-      JPEGLI_TOOLS_ABORT("No input file matches pattern");
+      PDFCORE_TOOLS_ABORT("No input file matches pattern");
     }
     if (Args()->print_details) {
       std::sort(fnames.begin(), fnames.end());
@@ -980,7 +980,7 @@ class Benchmark {
         std::vector<uint8_t> encoded;
         ret = ReadFile(fnames[i], &encoded);
         if (ret) {
-          ret = jpegli::extras::DecodeBytes(Bytes(encoded), Args()->color_hints,
+          ret = pdfcore::extras::DecodeBytes(Bytes(encoded), Args()->color_hints,
                                             &loaded_images[i]);
         }
         if (ret && loaded_images[i].icc.empty()) {
@@ -996,7 +996,7 @@ class Benchmark {
         if (!Args()->silent_errors) {
           fprintf(stderr, "Failed to load image %s\n", fnames[i].c_str());
         }
-        return JPEGLI_FAILURE("Failed to load image");
+        return PDFCORE_FAILURE("Failed to load image");
       }
 
       if (!Args()->decode_only && Args()->override_bitdepth != 0) {
@@ -1004,15 +1004,15 @@ class Benchmark {
       }
       return true;
     };
-    JPEGLI_TOOLS_CHECK(
-        jpegli::RunOnPool(pool, 0, static_cast<uint32_t>(fnames.size()),
+    PDFCORE_TOOLS_CHECK(
+        pdfcore::RunOnPool(pool, 0, static_cast<uint32_t>(fnames.size()),
                           ThreadPool::NoInit, process_image, "Load images"));
     return loaded_images;
   }
 
   static StatusOr<std::vector<Task>> CreateTasks(
       const StringVec& methods, const StringVec& fnames,
-      JpegliMemoryManager* memory_manager) {
+      PdfcoreMemoryManager* memory_manager) {
     std::vector<Task> tasks;
     tasks.reserve(methods.size() * fnames.size());
     for (size_t idx_image = 0; idx_image < fnames.size(); ++idx_image) {
@@ -1025,7 +1025,7 @@ class Benchmark {
         // t.stats is default-initialized.
       }
     }
-    JPEGLI_ENSURE(tasks.size() == tasks.capacity());
+    PDFCORE_ENSURE(tasks.size() == tasks.capacity());
     return tasks;
   }
 
@@ -1070,7 +1070,7 @@ class Benchmark {
       errors_thread[8 * thread] += t.stats.total_errors;
       return true;
     };
-    JPEGLI_TOOLS_CHECK(jpegli::RunOnPool(pool, 0, tasks->size(), init, do_task,
+    PDFCORE_TOOLS_CHECK(pdfcore::RunOnPool(pool, 0, tasks->size(), init, do_task,
                                          "Benchmark tasks"));
     if (Args()->show_progress) fprintf(stderr, "\n");
     return std::accumulate(errors_thread.begin(), errors_thread.end(),
@@ -1079,7 +1079,7 @@ class Benchmark {
 };
 
 int BenchmarkMain(int argc, const char** argv) {
-  JPEGLI_TOOLS_CHECK(Args()->AddCommandLineOptions());
+  PDFCORE_TOOLS_CHECK(Args()->AddCommandLineOptions());
 
   if (!Args()->Parse(argc, argv)) {
     fprintf(stderr, "Use '%s -h' for more information\n", argv[0]);
@@ -1098,8 +1098,8 @@ int BenchmarkMain(int argc, const char** argv) {
 }
 
 }  // namespace
-}  // namespace jpegli_tools
+}  // namespace pdfcore_jpegli_tools
 
 int main(int argc, const char** argv) {
-  return jpegli_tools::BenchmarkMain(argc, argv);
+  return pdfcore_jpegli_tools::BenchmarkMain(argc, argv);
 }

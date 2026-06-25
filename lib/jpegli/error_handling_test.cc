@@ -19,7 +19,7 @@
 #include "lib/jpegli/test_utils.h"
 #include "lib/jpegli/testing.h"
 
-namespace jpegli {
+namespace pdfcore {
 namespace {
 
 TEST(EncoderErrorHandlingTest, MinimalSuccess) {
@@ -29,21 +29,21 @@ TEST(EncoderErrorHandlingTest, MinimalSuccess) {
     jpeg_compress_struct cinfo;
     const auto try_catch_block = [&]() -> bool {
       ERROR_HANDLER_SETUP(jpegli);
-      jpegli_create_compress(&cinfo);
-      jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
+      pdfcore_jpegli_create_compress(&cinfo);
+      pdfcore_jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
       cinfo.image_width = 1;
       cinfo.image_height = 1;
       cinfo.input_components = 1;
-      jpegli_set_defaults(&cinfo);
-      jpegli_start_compress(&cinfo, TRUE);
+      pdfcore_jpegli_set_defaults(&cinfo);
+      pdfcore_jpegli_start_compress(&cinfo, TRUE);
       JSAMPLE image[1] = {0};
       JSAMPROW row[] = {image};
-      jpegli_write_scanlines(&cinfo, row, 1);
-      jpegli_finish_compress(&cinfo);
+      pdfcore_jpegli_write_scanlines(&cinfo, row, 1);
+      pdfcore_jpegli_finish_compress(&cinfo);
       return true;
     };
     EXPECT_TRUE(try_catch_block());
-    jpegli_destroy_compress(&cinfo);
+    pdfcore_jpegli_destroy_compress(&cinfo);
   }
   TestImage output;
   DecodeWithLibjpeg(CompressParams(), DecompressParams(), nullptr, 0, buffer,
@@ -59,16 +59,16 @@ TEST(EncoderErrorHandlingTest, NoDestination) {
   jpeg_compress_struct cinfo;
   const auto try_catch_block = [&]() -> bool {
     ERROR_HANDLER_SETUP(jpegli);
-    jpegli_create_compress(&cinfo);
+    pdfcore_jpegli_create_compress(&cinfo);
     cinfo.image_width = 1;
     cinfo.image_height = 1;
     cinfo.input_components = 1;
-    jpegli_set_defaults(&cinfo);
-    jpegli_start_compress(&cinfo, TRUE);
+    pdfcore_jpegli_set_defaults(&cinfo);
+    pdfcore_jpegli_start_compress(&cinfo, TRUE);
     return true;
   };
   EXPECT_FALSE(try_catch_block());
-  jpegli_destroy_compress(&cinfo);
+  pdfcore_jpegli_destroy_compress(&cinfo);
 }
 
 TEST(EncoderErrorHandlingTest, NoImageDimensions) {
@@ -77,15 +77,15 @@ TEST(EncoderErrorHandlingTest, NoImageDimensions) {
   jpeg_compress_struct cinfo;
   const auto try_catch_block = [&]() -> bool {
     ERROR_HANDLER_SETUP(jpegli);
-    jpegli_create_compress(&cinfo);
-    jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
+    pdfcore_jpegli_create_compress(&cinfo);
+    pdfcore_jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
     cinfo.input_components = 1;
-    jpegli_set_defaults(&cinfo);
-    jpegli_start_compress(&cinfo, TRUE);
+    pdfcore_jpegli_set_defaults(&cinfo);
+    pdfcore_jpegli_start_compress(&cinfo, TRUE);
     return true;
   };
   EXPECT_FALSE(try_catch_block());
-  jpegli_destroy_compress(&cinfo);
+  pdfcore_jpegli_destroy_compress(&cinfo);
   if (buffer) free(buffer);
 }
 
@@ -95,17 +95,17 @@ TEST(EncoderErrorHandlingTest, ImageTooBig) {
   jpeg_compress_struct cinfo;
   const auto try_catch_block = [&]() -> bool {
     ERROR_HANDLER_SETUP(jpegli);
-    jpegli_create_compress(&cinfo);
-    jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
+    pdfcore_jpegli_create_compress(&cinfo);
+    pdfcore_jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
     cinfo.image_width = 100000;
     cinfo.image_height = 1;
     cinfo.input_components = 1;
-    jpegli_set_defaults(&cinfo);
-    jpegli_start_compress(&cinfo, TRUE);
+    pdfcore_jpegli_set_defaults(&cinfo);
+    pdfcore_jpegli_start_compress(&cinfo, TRUE);
     return true;
   };
   EXPECT_FALSE(try_catch_block());
-  jpegli_destroy_compress(&cinfo);
+  pdfcore_jpegli_destroy_compress(&cinfo);
   if (buffer) free(buffer);
 }
 
@@ -115,16 +115,16 @@ TEST(EncoderErrorHandlingTest, NoInputComponents) {
   jpeg_compress_struct cinfo;
   const auto try_catch_block = [&]() -> bool {
     ERROR_HANDLER_SETUP(jpegli);
-    jpegli_create_compress(&cinfo);
-    jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
+    pdfcore_jpegli_create_compress(&cinfo);
+    pdfcore_jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
     cinfo.image_width = 1;
     cinfo.image_height = 1;
-    jpegli_set_defaults(&cinfo);
-    jpegli_start_compress(&cinfo, TRUE);
+    pdfcore_jpegli_set_defaults(&cinfo);
+    pdfcore_jpegli_start_compress(&cinfo, TRUE);
     return true;
   };
   EXPECT_FALSE(try_catch_block());
-  jpegli_destroy_compress(&cinfo);
+  pdfcore_jpegli_destroy_compress(&cinfo);
   if (buffer) free(buffer);
 }
 
@@ -134,17 +134,17 @@ TEST(EncoderErrorHandlingTest, TooManyInputComponents) {
   jpeg_compress_struct cinfo;
   const auto try_catch_block = [&]() -> bool {
     ERROR_HANDLER_SETUP(jpegli);
-    jpegli_create_compress(&cinfo);
-    jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
+    pdfcore_jpegli_create_compress(&cinfo);
+    pdfcore_jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
     cinfo.image_width = 1;
     cinfo.image_height = 1;
     cinfo.input_components = 1000;
-    jpegli_set_defaults(&cinfo);
-    jpegli_start_compress(&cinfo, TRUE);
+    pdfcore_jpegli_set_defaults(&cinfo);
+    pdfcore_jpegli_start_compress(&cinfo, TRUE);
     return true;
   };
   EXPECT_FALSE(try_catch_block());
-  jpegli_destroy_compress(&cinfo);
+  pdfcore_jpegli_destroy_compress(&cinfo);
   if (buffer) free(buffer);
 }
 
@@ -154,20 +154,20 @@ TEST(EncoderErrorHandlingTest, NoSetDefaults) {
   jpeg_compress_struct cinfo;
   const auto try_catch_block = [&]() -> bool {
     ERROR_HANDLER_SETUP(jpegli);
-    jpegli_create_compress(&cinfo);
-    jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
+    pdfcore_jpegli_create_compress(&cinfo);
+    pdfcore_jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
     cinfo.image_width = 1;
     cinfo.image_height = 1;
     cinfo.input_components = 1;
-    jpegli_start_compress(&cinfo, TRUE);
+    pdfcore_jpegli_start_compress(&cinfo, TRUE);
     JSAMPLE image[1] = {0};
     JSAMPROW row[] = {image};
-    jpegli_write_scanlines(&cinfo, row, 1);
-    jpegli_finish_compress(&cinfo);
+    pdfcore_jpegli_write_scanlines(&cinfo, row, 1);
+    pdfcore_jpegli_finish_compress(&cinfo);
     return true;
   };
   EXPECT_FALSE(try_catch_block());
-  jpegli_destroy_compress(&cinfo);
+  pdfcore_jpegli_destroy_compress(&cinfo);
   if (buffer) free(buffer);
 }
 
@@ -177,19 +177,19 @@ TEST(EncoderErrorHandlingTest, NoStartCompress) {
   jpeg_compress_struct cinfo;
   const auto try_catch_block = [&]() -> bool {
     ERROR_HANDLER_SETUP(jpegli);
-    jpegli_create_compress(&cinfo);
-    jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
+    pdfcore_jpegli_create_compress(&cinfo);
+    pdfcore_jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
     cinfo.image_width = 1;
     cinfo.image_height = 1;
     cinfo.input_components = 1;
-    jpegli_set_defaults(&cinfo);
+    pdfcore_jpegli_set_defaults(&cinfo);
     JSAMPLE image[1] = {0};
     JSAMPROW row[] = {image};
-    jpegli_write_scanlines(&cinfo, row, 1);
+    pdfcore_jpegli_write_scanlines(&cinfo, row, 1);
     return true;
   };
   EXPECT_FALSE(try_catch_block());
-  jpegli_destroy_compress(&cinfo);
+  pdfcore_jpegli_destroy_compress(&cinfo);
   if (buffer) free(buffer);
 }
 
@@ -199,18 +199,18 @@ TEST(EncoderErrorHandlingTest, NoWriteScanlines) {
   jpeg_compress_struct cinfo;
   const auto try_catch_block = [&]() -> bool {
     ERROR_HANDLER_SETUP(jpegli);
-    jpegli_create_compress(&cinfo);
-    jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
+    pdfcore_jpegli_create_compress(&cinfo);
+    pdfcore_jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
     cinfo.image_width = 1;
     cinfo.image_height = 1;
     cinfo.input_components = 1;
-    jpegli_set_defaults(&cinfo);
-    jpegli_start_compress(&cinfo, TRUE);
-    jpegli_finish_compress(&cinfo);
+    pdfcore_jpegli_set_defaults(&cinfo);
+    pdfcore_jpegli_start_compress(&cinfo, TRUE);
+    pdfcore_jpegli_finish_compress(&cinfo);
     return true;
   };
   EXPECT_FALSE(try_catch_block());
-  jpegli_destroy_compress(&cinfo);
+  pdfcore_jpegli_destroy_compress(&cinfo);
   if (buffer) free(buffer);
 }
 
@@ -220,21 +220,21 @@ TEST(EncoderErrorHandlingTest, NoWriteAllScanlines) {
   jpeg_compress_struct cinfo;
   const auto try_catch_block = [&]() -> bool {
     ERROR_HANDLER_SETUP(jpegli);
-    jpegli_create_compress(&cinfo);
-    jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
+    pdfcore_jpegli_create_compress(&cinfo);
+    pdfcore_jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
     cinfo.image_width = 1;
     cinfo.image_height = 2;
     cinfo.input_components = 1;
-    jpegli_set_defaults(&cinfo);
-    jpegli_start_compress(&cinfo, TRUE);
+    pdfcore_jpegli_set_defaults(&cinfo);
+    pdfcore_jpegli_start_compress(&cinfo, TRUE);
     JSAMPLE image[1] = {0};
     JSAMPROW row[] = {image};
-    jpegli_write_scanlines(&cinfo, row, 1);
-    jpegli_finish_compress(&cinfo);
+    pdfcore_jpegli_write_scanlines(&cinfo, row, 1);
+    pdfcore_jpegli_finish_compress(&cinfo);
     return true;
   };
   EXPECT_FALSE(try_catch_block());
-  jpegli_destroy_compress(&cinfo);
+  pdfcore_jpegli_destroy_compress(&cinfo);
   if (buffer) free(buffer);
 }
 
@@ -244,26 +244,26 @@ TEST(EncoderErrorHandlingTest, InvalidQuantValue) {
   jpeg_compress_struct cinfo;
   const auto try_catch_block = [&]() -> bool {
     ERROR_HANDLER_SETUP(jpegli);
-    jpegli_create_compress(&cinfo);
-    jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
+    pdfcore_jpegli_create_compress(&cinfo);
+    pdfcore_jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
     cinfo.image_width = 1;
     cinfo.image_height = 1;
     cinfo.input_components = 1;
-    jpegli_set_defaults(&cinfo);
+    pdfcore_jpegli_set_defaults(&cinfo);
     cinfo.quant_tbl_ptrs[0] =
-        jpegli_alloc_quant_table(reinterpret_cast<j_common_ptr>(&cinfo));
+        pdfcore_jpegli_alloc_quant_table(reinterpret_cast<j_common_ptr>(&cinfo));
     for (UINT16& q : cinfo.quant_tbl_ptrs[0]->quantval) {
       q = 0;
     }
-    jpegli_start_compress(&cinfo, TRUE);
+    pdfcore_jpegli_start_compress(&cinfo, TRUE);
     JSAMPLE image[1] = {0};
     JSAMPROW row[] = {image};
-    jpegli_write_scanlines(&cinfo, row, 1);
-    jpegli_finish_compress(&cinfo);
+    pdfcore_jpegli_write_scanlines(&cinfo, row, 1);
+    pdfcore_jpegli_finish_compress(&cinfo);
     return true;
   };
   EXPECT_FALSE(try_catch_block());
-  jpegli_destroy_compress(&cinfo);
+  pdfcore_jpegli_destroy_compress(&cinfo);
   if (buffer) free(buffer);
 }
 
@@ -273,22 +273,22 @@ TEST(EncoderErrorHandlingTest, InvalidQuantTableIndex) {
   jpeg_compress_struct cinfo;
   const auto try_catch_block = [&]() -> bool {
     ERROR_HANDLER_SETUP(jpegli);
-    jpegli_create_compress(&cinfo);
-    jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
+    pdfcore_jpegli_create_compress(&cinfo);
+    pdfcore_jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
     cinfo.image_width = 1;
     cinfo.image_height = 1;
     cinfo.input_components = 1;
-    jpegli_set_defaults(&cinfo);
+    pdfcore_jpegli_set_defaults(&cinfo);
     cinfo.comp_info[0].quant_tbl_no = 3;
-    jpegli_start_compress(&cinfo, TRUE);
+    pdfcore_jpegli_start_compress(&cinfo, TRUE);
     JSAMPLE image[1] = {0};
     JSAMPROW row[] = {image};
-    jpegli_write_scanlines(&cinfo, row, 1);
-    jpegli_finish_compress(&cinfo);
+    pdfcore_jpegli_write_scanlines(&cinfo, row, 1);
+    pdfcore_jpegli_finish_compress(&cinfo);
     return true;
   };
   EXPECT_FALSE(try_catch_block());
-  jpegli_destroy_compress(&cinfo);
+  pdfcore_jpegli_destroy_compress(&cinfo);
   if (buffer) free(buffer);
 }
 
@@ -298,18 +298,18 @@ TEST(EncoderErrorHandlingTest, NumberOfComponentsMismatch1) {
   jpeg_compress_struct cinfo;
   const auto try_catch_block = [&]() -> bool {
     ERROR_HANDLER_SETUP(jpegli);
-    jpegli_create_compress(&cinfo);
-    jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
+    pdfcore_jpegli_create_compress(&cinfo);
+    pdfcore_jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
     cinfo.image_width = 1;
     cinfo.image_height = 1;
     cinfo.input_components = 1;
-    jpegli_set_defaults(&cinfo);
+    pdfcore_jpegli_set_defaults(&cinfo);
     cinfo.num_components = 100;
-    jpegli_start_compress(&cinfo, TRUE);
+    pdfcore_jpegli_start_compress(&cinfo, TRUE);
     return true;
   };
   EXPECT_FALSE(try_catch_block());
-  jpegli_destroy_compress(&cinfo);
+  pdfcore_jpegli_destroy_compress(&cinfo);
   if (buffer) free(buffer);
 }
 
@@ -319,18 +319,18 @@ TEST(EncoderErrorHandlingTest, NumberOfComponentsMismatch2) {
   jpeg_compress_struct cinfo;
   const auto try_catch_block = [&]() -> bool {
     ERROR_HANDLER_SETUP(jpegli);
-    jpegli_create_compress(&cinfo);
-    jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
+    pdfcore_jpegli_create_compress(&cinfo);
+    pdfcore_jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
     cinfo.image_width = 1;
     cinfo.image_height = 1;
     cinfo.input_components = 1;
-    jpegli_set_defaults(&cinfo);
+    pdfcore_jpegli_set_defaults(&cinfo);
     cinfo.num_components = 2;
-    jpegli_start_compress(&cinfo, TRUE);
+    pdfcore_jpegli_start_compress(&cinfo, TRUE);
     return true;
   };
   EXPECT_FALSE(try_catch_block());
-  jpegli_destroy_compress(&cinfo);
+  pdfcore_jpegli_destroy_compress(&cinfo);
   if (buffer) free(buffer);
 }
 
@@ -340,23 +340,23 @@ TEST(EncoderErrorHandlingTest, NumberOfComponentsMismatch3) {
   jpeg_compress_struct cinfo;
   const auto try_catch_block = [&]() -> bool {
     ERROR_HANDLER_SETUP(jpegli);
-    jpegli_create_compress(&cinfo);
-    jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
+    pdfcore_jpegli_create_compress(&cinfo);
+    pdfcore_jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
     cinfo.image_width = 1;
     cinfo.image_height = 1;
     cinfo.input_components = 1;
-    jpegli_set_defaults(&cinfo);
+    pdfcore_jpegli_set_defaults(&cinfo);
     cinfo.num_components = 2;
     cinfo.comp_info[1].h_samp_factor = cinfo.comp_info[1].v_samp_factor = 1;
-    jpegli_start_compress(&cinfo, TRUE);
+    pdfcore_jpegli_start_compress(&cinfo, TRUE);
     JSAMPLE image[1] = {0};
     JSAMPROW row[] = {image};
-    jpegli_write_scanlines(&cinfo, row, 1);
-    jpegli_finish_compress(&cinfo);
+    pdfcore_jpegli_write_scanlines(&cinfo, row, 1);
+    pdfcore_jpegli_finish_compress(&cinfo);
     return true;
   };
   EXPECT_FALSE(try_catch_block());
-  jpegli_destroy_compress(&cinfo);
+  pdfcore_jpegli_destroy_compress(&cinfo);
   if (buffer) free(buffer);
 }
 
@@ -366,22 +366,22 @@ TEST(EncoderErrorHandlingTest, NumberOfComponentsMismatch4) {
   jpeg_compress_struct cinfo;
   const auto try_catch_block = [&]() -> bool {
     ERROR_HANDLER_SETUP(jpegli);
-    jpegli_create_compress(&cinfo);
-    jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
+    pdfcore_jpegli_create_compress(&cinfo);
+    pdfcore_jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
     cinfo.image_width = 1;
     cinfo.image_height = 1;
     cinfo.input_components = 1;
     cinfo.in_color_space = JCS_RGB;
-    jpegli_set_defaults(&cinfo);
-    jpegli_start_compress(&cinfo, TRUE);
+    pdfcore_jpegli_set_defaults(&cinfo);
+    pdfcore_jpegli_start_compress(&cinfo, TRUE);
     JSAMPLE image[1] = {0};
     JSAMPROW row[] = {image};
-    jpegli_write_scanlines(&cinfo, row, 1);
-    jpegli_finish_compress(&cinfo);
+    pdfcore_jpegli_write_scanlines(&cinfo, row, 1);
+    pdfcore_jpegli_finish_compress(&cinfo);
     return true;
   };
   EXPECT_FALSE(try_catch_block());
-  jpegli_destroy_compress(&cinfo);
+  pdfcore_jpegli_destroy_compress(&cinfo);
   if (buffer) free(buffer);
 }
 
@@ -391,22 +391,22 @@ TEST(EncoderErrorHandlingTest, NumberOfComponentsMismatch5) {
   jpeg_compress_struct cinfo;
   const auto try_catch_block = [&]() -> bool {
     ERROR_HANDLER_SETUP(jpegli);
-    jpegli_create_compress(&cinfo);
-    jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
+    pdfcore_jpegli_create_compress(&cinfo);
+    pdfcore_jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
     cinfo.image_width = 1;
     cinfo.image_height = 1;
     cinfo.input_components = 3;
     cinfo.in_color_space = JCS_GRAYSCALE;
-    jpegli_set_defaults(&cinfo);
-    jpegli_start_compress(&cinfo, TRUE);
+    pdfcore_jpegli_set_defaults(&cinfo);
+    pdfcore_jpegli_start_compress(&cinfo, TRUE);
     JSAMPLE image[3] = {0};
     JSAMPROW row[] = {image};
-    jpegli_write_scanlines(&cinfo, row, 1);
-    jpegli_finish_compress(&cinfo);
+    pdfcore_jpegli_write_scanlines(&cinfo, row, 1);
+    pdfcore_jpegli_finish_compress(&cinfo);
     return true;
   };
   EXPECT_FALSE(try_catch_block());
-  jpegli_destroy_compress(&cinfo);
+  pdfcore_jpegli_destroy_compress(&cinfo);
   if (buffer) free(buffer);
 }
 
@@ -416,23 +416,23 @@ TEST(EncoderErrorHandlingTest, NumberOfComponentsMismatch6) {
   jpeg_compress_struct cinfo;
   const auto try_catch_block = [&]() -> bool {
     ERROR_HANDLER_SETUP(jpegli);
-    jpegli_create_compress(&cinfo);
-    jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
+    pdfcore_jpegli_create_compress(&cinfo);
+    pdfcore_jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
     cinfo.image_width = 1;
     cinfo.image_height = 1;
     cinfo.input_components = 3;
     cinfo.in_color_space = JCS_RGB;
-    jpegli_set_defaults(&cinfo);
+    pdfcore_jpegli_set_defaults(&cinfo);
     cinfo.num_components = 2;
-    jpegli_start_compress(&cinfo, TRUE);
+    pdfcore_jpegli_start_compress(&cinfo, TRUE);
     JSAMPLE image[3] = {0};
     JSAMPROW row[] = {image};
-    jpegli_write_scanlines(&cinfo, row, 1);
-    jpegli_finish_compress(&cinfo);
+    pdfcore_jpegli_write_scanlines(&cinfo, row, 1);
+    pdfcore_jpegli_finish_compress(&cinfo);
     return true;
   };
   EXPECT_FALSE(try_catch_block());
-  jpegli_destroy_compress(&cinfo);
+  pdfcore_jpegli_destroy_compress(&cinfo);
   if (buffer) free(buffer);
 }
 
@@ -442,23 +442,23 @@ TEST(EncoderErrorHandlingTest, InvalidColorTransform) {
   jpeg_compress_struct cinfo;
   const auto try_catch_block = [&]() -> bool {
     ERROR_HANDLER_SETUP(jpegli);
-    jpegli_create_compress(&cinfo);
-    jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
+    pdfcore_jpegli_create_compress(&cinfo);
+    pdfcore_jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
     cinfo.image_width = 1;
     cinfo.image_height = 1;
     cinfo.input_components = 3;
     cinfo.in_color_space = JCS_YCbCr;
-    jpegli_set_defaults(&cinfo);
+    pdfcore_jpegli_set_defaults(&cinfo);
     cinfo.jpeg_color_space = JCS_RGB;
-    jpegli_start_compress(&cinfo, TRUE);
+    pdfcore_jpegli_start_compress(&cinfo, TRUE);
     JSAMPLE image[3] = {0};
     JSAMPROW row[] = {image};
-    jpegli_write_scanlines(&cinfo, row, 1);
-    jpegli_finish_compress(&cinfo);
+    pdfcore_jpegli_write_scanlines(&cinfo, row, 1);
+    pdfcore_jpegli_finish_compress(&cinfo);
     return true;
   };
   EXPECT_FALSE(try_catch_block());
-  jpegli_destroy_compress(&cinfo);
+  pdfcore_jpegli_destroy_compress(&cinfo);
   if (buffer) free(buffer);
 }
 
@@ -468,19 +468,19 @@ TEST(EncoderErrorHandlingTest, DuplicateComponentIds) {
   jpeg_compress_struct cinfo;
   const auto try_catch_block = [&]() -> bool {
     ERROR_HANDLER_SETUP(jpegli);
-    jpegli_create_compress(&cinfo);
-    jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
+    pdfcore_jpegli_create_compress(&cinfo);
+    pdfcore_jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
     cinfo.image_width = 1;
     cinfo.image_height = 1;
     cinfo.input_components = 3;
-    jpegli_set_defaults(&cinfo);
+    pdfcore_jpegli_set_defaults(&cinfo);
     cinfo.comp_info[0].component_id = 0;
     cinfo.comp_info[1].component_id = 0;
-    jpegli_start_compress(&cinfo, TRUE);
+    pdfcore_jpegli_start_compress(&cinfo, TRUE);
     return true;
   };
   EXPECT_FALSE(try_catch_block());
-  jpegli_destroy_compress(&cinfo);
+  pdfcore_jpegli_destroy_compress(&cinfo);
   if (buffer) free(buffer);
 }
 
@@ -490,18 +490,18 @@ TEST(EncoderErrorHandlingTest, InvalidComponentIndex) {
   jpeg_compress_struct cinfo;
   const auto try_catch_block = [&]() -> bool {
     ERROR_HANDLER_SETUP(jpegli);
-    jpegli_create_compress(&cinfo);
-    jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
+    pdfcore_jpegli_create_compress(&cinfo);
+    pdfcore_jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
     cinfo.image_width = 1;
     cinfo.image_height = 1;
     cinfo.input_components = 3;
-    jpegli_set_defaults(&cinfo);
+    pdfcore_jpegli_set_defaults(&cinfo);
     cinfo.comp_info[0].component_index = 17;
-    jpegli_start_compress(&cinfo, TRUE);
+    pdfcore_jpegli_start_compress(&cinfo, TRUE);
     return true;
   };
   EXPECT_FALSE(try_catch_block());
-  jpegli_destroy_compress(&cinfo);
+  pdfcore_jpegli_destroy_compress(&cinfo);
   if (buffer) free(buffer);
 }
 
@@ -511,18 +511,18 @@ TEST(EncoderErrorHandlingTest, ArithmeticCoding) {
   jpeg_compress_struct cinfo;
   const auto try_catch_block = [&]() -> bool {
     ERROR_HANDLER_SETUP(jpegli);
-    jpegli_create_compress(&cinfo);
-    jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
+    pdfcore_jpegli_create_compress(&cinfo);
+    pdfcore_jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
     cinfo.image_width = 1;
     cinfo.image_height = 1;
     cinfo.input_components = 3;
-    jpegli_set_defaults(&cinfo);
+    pdfcore_jpegli_set_defaults(&cinfo);
     cinfo.arith_code = TRUE;
-    jpegli_start_compress(&cinfo, TRUE);
+    pdfcore_jpegli_start_compress(&cinfo, TRUE);
     return true;
   };
   EXPECT_FALSE(try_catch_block());
-  jpegli_destroy_compress(&cinfo);
+  pdfcore_jpegli_destroy_compress(&cinfo);
   if (buffer) free(buffer);
 }
 
@@ -532,18 +532,18 @@ TEST(EncoderErrorHandlingTest, CCIR601Sampling) {
   jpeg_compress_struct cinfo;
   const auto try_catch_block = [&]() -> bool {
     ERROR_HANDLER_SETUP(jpegli);
-    jpegli_create_compress(&cinfo);
-    jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
+    pdfcore_jpegli_create_compress(&cinfo);
+    pdfcore_jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
     cinfo.image_width = 1;
     cinfo.image_height = 1;
     cinfo.input_components = 3;
-    jpegli_set_defaults(&cinfo);
+    pdfcore_jpegli_set_defaults(&cinfo);
     cinfo.CCIR601_sampling = TRUE;
-    jpegli_start_compress(&cinfo, TRUE);
+    pdfcore_jpegli_start_compress(&cinfo, TRUE);
     return true;
   };
   EXPECT_FALSE(try_catch_block());
-  jpegli_destroy_compress(&cinfo);
+  pdfcore_jpegli_destroy_compress(&cinfo);
   if (buffer) free(buffer);
 }
 
@@ -553,20 +553,20 @@ TEST(EncoderErrorHandlingTest, InvalidScanScript1) {
   jpeg_compress_struct cinfo;
   const auto try_catch_block = [&]() -> bool {
     ERROR_HANDLER_SETUP(jpegli);
-    jpegli_create_compress(&cinfo);
-    jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
+    pdfcore_jpegli_create_compress(&cinfo);
+    pdfcore_jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
     cinfo.image_width = 1;
     cinfo.image_height = 1;
     cinfo.input_components = 1;
-    jpegli_set_defaults(&cinfo);
+    pdfcore_jpegli_set_defaults(&cinfo);
     static constexpr jpeg_scan_info kScript[] = {{1, {0}, 0, 63, 0, 0}};  //
     cinfo.scan_info = kScript;
     cinfo.num_scans = 0;
-    jpegli_start_compress(&cinfo, TRUE);
+    pdfcore_jpegli_start_compress(&cinfo, TRUE);
     return true;
   };
   EXPECT_FALSE(try_catch_block());
-  jpegli_destroy_compress(&cinfo);
+  pdfcore_jpegli_destroy_compress(&cinfo);
   if (buffer) free(buffer);
 }
 
@@ -576,20 +576,20 @@ TEST(EncoderErrorHandlingTest, InvalidScanScript2) {
   jpeg_compress_struct cinfo;
   const auto try_catch_block = [&]() -> bool {
     ERROR_HANDLER_SETUP(jpegli);
-    jpegli_create_compress(&cinfo);
-    jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
+    pdfcore_jpegli_create_compress(&cinfo);
+    pdfcore_jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
     cinfo.image_width = 1;
     cinfo.image_height = 1;
     cinfo.input_components = 1;
-    jpegli_set_defaults(&cinfo);
+    pdfcore_jpegli_set_defaults(&cinfo);
     static constexpr jpeg_scan_info kScript[] = {{2, {0, 1}, 0, 63, 0, 0}};  //
     cinfo.scan_info = kScript;
     cinfo.num_scans = ARRAY_SIZE(kScript);
-    jpegli_start_compress(&cinfo, TRUE);
+    pdfcore_jpegli_start_compress(&cinfo, TRUE);
     return true;
   };
   EXPECT_FALSE(try_catch_block());
-  jpegli_destroy_compress(&cinfo);
+  pdfcore_jpegli_destroy_compress(&cinfo);
   if (buffer) free(buffer);
 }
 
@@ -599,20 +599,20 @@ TEST(EncoderErrorHandlingTest, InvalidScanScript3) {
   jpeg_compress_struct cinfo;
   const auto try_catch_block = [&]() -> bool {
     ERROR_HANDLER_SETUP(jpegli);
-    jpegli_create_compress(&cinfo);
-    jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
+    pdfcore_jpegli_create_compress(&cinfo);
+    pdfcore_jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
     cinfo.image_width = 1;
     cinfo.image_height = 1;
     cinfo.input_components = 1;
-    jpegli_set_defaults(&cinfo);
+    pdfcore_jpegli_set_defaults(&cinfo);
     static constexpr jpeg_scan_info kScript[] = {{5, {0}, 0, 63, 0, 0}};  //
     cinfo.scan_info = kScript;
     cinfo.num_scans = ARRAY_SIZE(kScript);
-    jpegli_start_compress(&cinfo, TRUE);
+    pdfcore_jpegli_start_compress(&cinfo, TRUE);
     return true;
   };
   EXPECT_FALSE(try_catch_block());
-  jpegli_destroy_compress(&cinfo);
+  pdfcore_jpegli_destroy_compress(&cinfo);
   if (buffer) free(buffer);
 }
 
@@ -622,20 +622,20 @@ TEST(EncoderErrorHandlingTest, InvalidScanScript4) {
   jpeg_compress_struct cinfo;
   const auto try_catch_block = [&]() -> bool {
     ERROR_HANDLER_SETUP(jpegli);
-    jpegli_create_compress(&cinfo);
-    jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
+    pdfcore_jpegli_create_compress(&cinfo);
+    pdfcore_jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
     cinfo.image_width = 1;
     cinfo.image_height = 1;
     cinfo.input_components = 2;
-    jpegli_set_defaults(&cinfo);
+    pdfcore_jpegli_set_defaults(&cinfo);
     static constexpr jpeg_scan_info kScript[] = {{2, {0, 0}, 0, 63, 0, 0}};  //
     cinfo.scan_info = kScript;
     cinfo.num_scans = ARRAY_SIZE(kScript);
-    jpegli_start_compress(&cinfo, TRUE);
+    pdfcore_jpegli_start_compress(&cinfo, TRUE);
     return true;
   };
   EXPECT_FALSE(try_catch_block());
-  jpegli_destroy_compress(&cinfo);
+  pdfcore_jpegli_destroy_compress(&cinfo);
   if (buffer) free(buffer);
 }
 
@@ -645,20 +645,20 @@ TEST(EncoderErrorHandlingTest, InvalidScanScript5) {
   jpeg_compress_struct cinfo;
   const auto try_catch_block = [&]() -> bool {
     ERROR_HANDLER_SETUP(jpegli);
-    jpegli_create_compress(&cinfo);
-    jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
+    pdfcore_jpegli_create_compress(&cinfo);
+    pdfcore_jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
     cinfo.image_width = 1;
     cinfo.image_height = 1;
     cinfo.input_components = 2;
-    jpegli_set_defaults(&cinfo);
+    pdfcore_jpegli_set_defaults(&cinfo);
     static constexpr jpeg_scan_info kScript[] = {{2, {1, 0}, 0, 63, 0, 0}};  //
     cinfo.scan_info = kScript;
     cinfo.num_scans = ARRAY_SIZE(kScript);
-    jpegli_start_compress(&cinfo, TRUE);
+    pdfcore_jpegli_start_compress(&cinfo, TRUE);
     return true;
   };
   EXPECT_FALSE(try_catch_block());
-  jpegli_destroy_compress(&cinfo);
+  pdfcore_jpegli_destroy_compress(&cinfo);
   if (buffer) free(buffer);
 }
 
@@ -668,20 +668,20 @@ TEST(EncoderErrorHandlingTest, InvalidScanScript6) {
   jpeg_compress_struct cinfo;
   const auto try_catch_block = [&]() -> bool {
     ERROR_HANDLER_SETUP(jpegli);
-    jpegli_create_compress(&cinfo);
-    jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
+    pdfcore_jpegli_create_compress(&cinfo);
+    pdfcore_jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
     cinfo.image_width = 1;
     cinfo.image_height = 1;
     cinfo.input_components = 1;
-    jpegli_set_defaults(&cinfo);
+    pdfcore_jpegli_set_defaults(&cinfo);
     static constexpr jpeg_scan_info kScript[] = {{1, {0}, 0, 64, 0, 0}};  //
     cinfo.scan_info = kScript;
     cinfo.num_scans = ARRAY_SIZE(kScript);
-    jpegli_start_compress(&cinfo, TRUE);
+    pdfcore_jpegli_start_compress(&cinfo, TRUE);
     return true;
   };
   EXPECT_FALSE(try_catch_block());
-  jpegli_destroy_compress(&cinfo);
+  pdfcore_jpegli_destroy_compress(&cinfo);
   if (buffer) free(buffer);
 }
 
@@ -691,20 +691,20 @@ TEST(EncoderErrorHandlingTest, InvalidScanScript7) {
   jpeg_compress_struct cinfo;
   const auto try_catch_block = [&]() -> bool {
     ERROR_HANDLER_SETUP(jpegli);
-    jpegli_create_compress(&cinfo);
-    jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
+    pdfcore_jpegli_create_compress(&cinfo);
+    pdfcore_jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
     cinfo.image_width = 1;
     cinfo.image_height = 1;
     cinfo.input_components = 1;
-    jpegli_set_defaults(&cinfo);
+    pdfcore_jpegli_set_defaults(&cinfo);
     static constexpr jpeg_scan_info kScript[] = {{1, {0}, 2, 1, 0, 0}};  //
     cinfo.scan_info = kScript;
     cinfo.num_scans = ARRAY_SIZE(kScript);
-    jpegli_start_compress(&cinfo, TRUE);
+    pdfcore_jpegli_start_compress(&cinfo, TRUE);
     return true;
   };
   EXPECT_FALSE(try_catch_block());
-  jpegli_destroy_compress(&cinfo);
+  pdfcore_jpegli_destroy_compress(&cinfo);
   if (buffer) free(buffer);
 }
 
@@ -714,22 +714,22 @@ TEST(EncoderErrorHandlingTest, InvalidScanScript8) {
   jpeg_compress_struct cinfo;
   const auto try_catch_block = [&]() -> bool {
     ERROR_HANDLER_SETUP(jpegli);
-    jpegli_create_compress(&cinfo);
-    jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
+    pdfcore_jpegli_create_compress(&cinfo);
+    pdfcore_jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
     cinfo.image_width = 1;
     cinfo.image_height = 1;
     cinfo.input_components = 2;
-    jpegli_set_defaults(&cinfo);
+    pdfcore_jpegli_set_defaults(&cinfo);
     static constexpr jpeg_scan_info kScript[] = {
         {1, {0}, 0, 63, 0, 0}, {1, {1}, 0, 0, 0, 0}, {1, {1}, 1, 63, 0, 0}  //
     };
     cinfo.scan_info = kScript;
     cinfo.num_scans = ARRAY_SIZE(kScript);
-    jpegli_start_compress(&cinfo, TRUE);
+    pdfcore_jpegli_start_compress(&cinfo, TRUE);
     return true;
   };
   EXPECT_FALSE(try_catch_block());
-  jpegli_destroy_compress(&cinfo);
+  pdfcore_jpegli_destroy_compress(&cinfo);
   if (buffer) free(buffer);
 }
 
@@ -739,22 +739,22 @@ TEST(EncoderErrorHandlingTest, InvalidScanScript9) {
   jpeg_compress_struct cinfo;
   const auto try_catch_block = [&]() -> bool {
     ERROR_HANDLER_SETUP(jpegli);
-    jpegli_create_compress(&cinfo);
-    jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
+    pdfcore_jpegli_create_compress(&cinfo);
+    pdfcore_jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
     cinfo.image_width = 1;
     cinfo.image_height = 1;
     cinfo.input_components = 1;
-    jpegli_set_defaults(&cinfo);
+    pdfcore_jpegli_set_defaults(&cinfo);
     static constexpr jpeg_scan_info kScript[] = {
         {1, {0}, 0, 1, 0, 0}, {1, {0}, 2, 63, 0, 0},  //
     };
     cinfo.scan_info = kScript;
     cinfo.num_scans = ARRAY_SIZE(kScript);
-    jpegli_start_compress(&cinfo, TRUE);
+    pdfcore_jpegli_start_compress(&cinfo, TRUE);
     return true;
   };
   EXPECT_FALSE(try_catch_block());
-  jpegli_destroy_compress(&cinfo);
+  pdfcore_jpegli_destroy_compress(&cinfo);
   if (buffer) free(buffer);
 }
 
@@ -764,22 +764,22 @@ TEST(EncoderErrorHandlingTest, InvalidScanScript10) {
   jpeg_compress_struct cinfo;
   const auto try_catch_block = [&]() -> bool {
     ERROR_HANDLER_SETUP(jpegli);
-    jpegli_create_compress(&cinfo);
-    jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
+    pdfcore_jpegli_create_compress(&cinfo);
+    pdfcore_jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
     cinfo.image_width = 1;
     cinfo.image_height = 1;
     cinfo.input_components = 2;
-    jpegli_set_defaults(&cinfo);
+    pdfcore_jpegli_set_defaults(&cinfo);
     static constexpr jpeg_scan_info kScript[] = {
         {2, {0, 1}, 0, 0, 0, 0}, {2, {0, 1}, 1, 63, 0, 0}  //
     };
     cinfo.scan_info = kScript;
     cinfo.num_scans = ARRAY_SIZE(kScript);
-    jpegli_start_compress(&cinfo, TRUE);
+    pdfcore_jpegli_start_compress(&cinfo, TRUE);
     return true;
   };
   EXPECT_FALSE(try_catch_block());
-  jpegli_destroy_compress(&cinfo);
+  pdfcore_jpegli_destroy_compress(&cinfo);
   if (buffer) free(buffer);
 }
 
@@ -789,22 +789,22 @@ TEST(EncoderErrorHandlingTest, InvalidScanScript11) {
   jpeg_compress_struct cinfo;
   const auto try_catch_block = [&]() -> bool {
     ERROR_HANDLER_SETUP(jpegli);
-    jpegli_create_compress(&cinfo);
-    jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
+    pdfcore_jpegli_create_compress(&cinfo);
+    pdfcore_jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
     cinfo.image_width = 1;
     cinfo.image_height = 1;
     cinfo.input_components = 1;
-    jpegli_set_defaults(&cinfo);
+    pdfcore_jpegli_set_defaults(&cinfo);
     static constexpr jpeg_scan_info kScript[] = {
         {1, {0}, 1, 63, 0, 0}, {1, {0}, 0, 0, 0, 0}  //
     };
     cinfo.scan_info = kScript;
     cinfo.num_scans = ARRAY_SIZE(kScript);
-    jpegli_start_compress(&cinfo, TRUE);
+    pdfcore_jpegli_start_compress(&cinfo, TRUE);
     return true;
   };
   EXPECT_FALSE(try_catch_block());
-  jpegli_destroy_compress(&cinfo);
+  pdfcore_jpegli_destroy_compress(&cinfo);
   if (buffer) free(buffer);
 }
 
@@ -814,22 +814,22 @@ TEST(EncoderErrorHandlingTest, InvalidScanScript12) {
   jpeg_compress_struct cinfo;
   const auto try_catch_block = [&]() -> bool {
     ERROR_HANDLER_SETUP(jpegli);
-    jpegli_create_compress(&cinfo);
-    jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
+    pdfcore_jpegli_create_compress(&cinfo);
+    pdfcore_jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
     cinfo.image_width = 1;
     cinfo.image_height = 1;
     cinfo.input_components = 1;
-    jpegli_set_defaults(&cinfo);
+    pdfcore_jpegli_set_defaults(&cinfo);
     static constexpr jpeg_scan_info kScript[] = {
         {1, {0}, 0, 0, 10, 1}, {1, {0}, 0, 0, 1, 0}, {1, {0}, 1, 63, 0, 0}  //
     };
     cinfo.scan_info = kScript;
     cinfo.num_scans = ARRAY_SIZE(kScript);
-    jpegli_start_compress(&cinfo, TRUE);
+    pdfcore_jpegli_start_compress(&cinfo, TRUE);
     return true;
   };
   EXPECT_FALSE(try_catch_block());
-  jpegli_destroy_compress(&cinfo);
+  pdfcore_jpegli_destroy_compress(&cinfo);
   if (buffer) free(buffer);
 }
 
@@ -839,12 +839,12 @@ TEST(EncoderErrorHandlingTest, InvalidScanScript13) {
   jpeg_compress_struct cinfo;
   const auto try_catch_block = [&]() -> bool {
     ERROR_HANDLER_SETUP(jpegli);
-    jpegli_create_compress(&cinfo);
-    jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
+    pdfcore_jpegli_create_compress(&cinfo);
+    pdfcore_jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
     cinfo.image_width = 1;
     cinfo.image_height = 1;
     cinfo.input_components = 1;
-    jpegli_set_defaults(&cinfo);
+    pdfcore_jpegli_set_defaults(&cinfo);
     static constexpr jpeg_scan_info kScript[] = {
         {1, {0}, 0, 0, 0, 2},
         {1, {0}, 0, 0, 1, 0},
@@ -853,11 +853,11 @@ TEST(EncoderErrorHandlingTest, InvalidScanScript13) {
     };
     cinfo.scan_info = kScript;
     cinfo.num_scans = ARRAY_SIZE(kScript);
-    jpegli_start_compress(&cinfo, TRUE);
+    pdfcore_jpegli_start_compress(&cinfo, TRUE);
     return true;
   };
   EXPECT_FALSE(try_catch_block());
-  jpegli_destroy_compress(&cinfo);
+  pdfcore_jpegli_destroy_compress(&cinfo);
   if (buffer) free(buffer);
 }
 
@@ -867,20 +867,20 @@ TEST(EncoderErrorHandlingTest, MCUSizeTooBig) {
   jpeg_compress_struct cinfo;
   const auto try_catch_block = [&]() -> bool {
     ERROR_HANDLER_SETUP(jpegli);
-    jpegli_create_compress(&cinfo);
-    jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
+    pdfcore_jpegli_create_compress(&cinfo);
+    pdfcore_jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
     cinfo.image_width = 1;
     cinfo.image_height = 1;
     cinfo.input_components = 3;
-    jpegli_set_defaults(&cinfo);
-    jpegli_set_progressive_level(&cinfo, 0);
+    pdfcore_jpegli_set_defaults(&cinfo);
+    pdfcore_jpegli_set_progressive_level(&cinfo, 0);
     cinfo.comp_info[0].h_samp_factor = 3;
     cinfo.comp_info[0].v_samp_factor = 3;
-    jpegli_start_compress(&cinfo, TRUE);
+    pdfcore_jpegli_start_compress(&cinfo, TRUE);
     return true;
   };
   EXPECT_FALSE(try_catch_block());
-  jpegli_destroy_compress(&cinfo);
+  pdfcore_jpegli_destroy_compress(&cinfo);
   if (buffer) free(buffer);
 }
 
@@ -890,18 +890,18 @@ TEST(EncoderErrorHandlingTest, RestartIntervalTooBig) {
   jpeg_compress_struct cinfo;
   const auto try_catch_block = [&]() -> bool {
     ERROR_HANDLER_SETUP(jpegli);
-    jpegli_create_compress(&cinfo);
-    jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
+    pdfcore_jpegli_create_compress(&cinfo);
+    pdfcore_jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
     cinfo.image_width = 1;
     cinfo.image_height = 1;
     cinfo.input_components = 1;
-    jpegli_set_defaults(&cinfo);
+    pdfcore_jpegli_set_defaults(&cinfo);
     cinfo.restart_interval = 1000000;
-    jpegli_start_compress(&cinfo, TRUE);
+    pdfcore_jpegli_start_compress(&cinfo, TRUE);
     return true;
   };
   EXPECT_FALSE(try_catch_block());
-  jpegli_destroy_compress(&cinfo);
+  pdfcore_jpegli_destroy_compress(&cinfo);
   if (buffer) free(buffer);
 }
 
@@ -911,18 +911,18 @@ TEST(EncoderErrorHandlingTest, SamplingFactorTooBig) {
   jpeg_compress_struct cinfo;
   const auto try_catch_block = [&]() -> bool {
     ERROR_HANDLER_SETUP(jpegli);
-    jpegli_create_compress(&cinfo);
-    jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
+    pdfcore_jpegli_create_compress(&cinfo);
+    pdfcore_jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
     cinfo.image_width = 1;
     cinfo.image_height = 1;
     cinfo.input_components = 3;
-    jpegli_set_defaults(&cinfo);
+    pdfcore_jpegli_set_defaults(&cinfo);
     cinfo.comp_info[0].h_samp_factor = 5;
-    jpegli_start_compress(&cinfo, TRUE);
+    pdfcore_jpegli_start_compress(&cinfo, TRUE);
     return true;
   };
   EXPECT_FALSE(try_catch_block());
-  jpegli_destroy_compress(&cinfo);
+  pdfcore_jpegli_destroy_compress(&cinfo);
   if (buffer) free(buffer);
 }
 
@@ -932,19 +932,19 @@ TEST(EncoderErrorHandlingTest, NonIntegralSamplingRatio) {
   jpeg_compress_struct cinfo;
   const auto try_catch_block = [&]() -> bool {
     ERROR_HANDLER_SETUP(jpegli);
-    jpegli_create_compress(&cinfo);
-    jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
+    pdfcore_jpegli_create_compress(&cinfo);
+    pdfcore_jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
     cinfo.image_width = 1;
     cinfo.image_height = 1;
     cinfo.input_components = 3;
-    jpegli_set_defaults(&cinfo);
+    pdfcore_jpegli_set_defaults(&cinfo);
     cinfo.comp_info[0].h_samp_factor = 3;
     cinfo.comp_info[1].h_samp_factor = 2;
-    jpegli_start_compress(&cinfo, TRUE);
+    pdfcore_jpegli_start_compress(&cinfo, TRUE);
     return true;
   };
   EXPECT_FALSE(try_catch_block());
-  jpegli_destroy_compress(&cinfo);
+  pdfcore_jpegli_destroy_compress(&cinfo);
   if (buffer) free(buffer);
 }
 
@@ -956,7 +956,7 @@ TEST(EncoderErrorHandlingTest, AddOnTableNoParam) {
   jpeg_compress_struct cinfo;
   const auto try_catch_block = [&]() -> bool {
     ERROR_HANDLER_SETUP(jpegli);
-    jpegli_create_compress(&cinfo);
+    pdfcore_jpegli_create_compress(&cinfo);
     cinfo.err->addon_message_table = kAddOnTable;
     cinfo.err->first_addon_message = 10000;
     cinfo.err->last_addon_message = 10002;
@@ -965,14 +965,14 @@ TEST(EncoderErrorHandlingTest, AddOnTableNoParam) {
     return true;
   };
   EXPECT_FALSE(try_catch_block());
-  jpegli_destroy_compress(&cinfo);
+  pdfcore_jpegli_destroy_compress(&cinfo);
 }
 
 TEST(EncoderErrorHandlingTest, AddOnTableIntParam) {
   jpeg_compress_struct cinfo;
   const auto try_catch_block = [&]() -> bool {
     ERROR_HANDLER_SETUP(jpegli);
-    jpegli_create_compress(&cinfo);
+    pdfcore_jpegli_create_compress(&cinfo);
     cinfo.err->addon_message_table = kAddOnTable;
     cinfo.err->first_addon_message = 10000;
     cinfo.err->last_addon_message = 10002;
@@ -982,14 +982,14 @@ TEST(EncoderErrorHandlingTest, AddOnTableIntParam) {
     return true;
   };
   EXPECT_FALSE(try_catch_block());
-  jpegli_destroy_compress(&cinfo);
+  pdfcore_jpegli_destroy_compress(&cinfo);
 }
 
 TEST(EncoderErrorHandlingTest, AddOnTableNoStringParam) {
   jpeg_compress_struct cinfo;
   const auto try_catch_block = [&]() -> bool {
     ERROR_HANDLER_SETUP(jpegli);
-    jpegli_create_compress(&cinfo);
+    pdfcore_jpegli_create_compress(&cinfo);
     cinfo.err->addon_message_table = kAddOnTable;
     cinfo.err->first_addon_message = 10000;
     cinfo.err->last_addon_message = 10002;
@@ -999,7 +999,7 @@ TEST(EncoderErrorHandlingTest, AddOnTableNoStringParam) {
     return true;
   };
   EXPECT_FALSE(try_catch_block());
-  jpegli_destroy_compress(&cinfo);
+  pdfcore_jpegli_destroy_compress(&cinfo);
 }
 
 const uint8_t kCompressed0[] = {
@@ -1061,83 +1061,83 @@ TEST(DecoderErrorHandlingTest, MinimalSuccess) {
   jpeg_decompress_struct cinfo = {};
   const auto try_catch_block = [&]() -> bool {
     ERROR_HANDLER_SETUP(jpegli);
-    jpegli_create_decompress(&cinfo);
-    jpegli_mem_src(&cinfo, kCompressed0, kLen0);
-    jpegli_read_header(&cinfo, TRUE);
+    pdfcore_jpegli_create_decompress(&cinfo);
+    pdfcore_jpegli_mem_src(&cinfo, kCompressed0, kLen0);
+    pdfcore_jpegli_read_header(&cinfo, TRUE);
     EXPECT_EQ(1u, cinfo.image_width);
     EXPECT_EQ(1u, cinfo.image_height);
-    jpegli_start_decompress(&cinfo);
+    pdfcore_jpegli_start_decompress(&cinfo);
     JSAMPLE image[1];
     JSAMPROW row[] = {image};
-    jpegli_read_scanlines(&cinfo, row, 1);
+    pdfcore_jpegli_read_scanlines(&cinfo, row, 1);
     EXPECT_EQ(0u, image[0]);
-    jpegli_finish_decompress(&cinfo);
+    pdfcore_jpegli_finish_decompress(&cinfo);
     return true;
   };
   EXPECT_TRUE(try_catch_block());
-  jpegli_destroy_decompress(&cinfo);
+  pdfcore_jpegli_destroy_decompress(&cinfo);
 }
 
 TEST(DecoderErrorHandlingTest, NoSource) {
   jpeg_decompress_struct cinfo = {};
   const auto try_catch_block = [&]() -> bool {
     ERROR_HANDLER_SETUP(jpegli);
-    jpegli_create_decompress(&cinfo);
-    jpegli_read_header(&cinfo, TRUE);
+    pdfcore_jpegli_create_decompress(&cinfo);
+    pdfcore_jpegli_read_header(&cinfo, TRUE);
     return true;
   };
   EXPECT_FALSE(try_catch_block());
-  jpegli_destroy_decompress(&cinfo);
+  pdfcore_jpegli_destroy_decompress(&cinfo);
 }
 
 TEST(DecoderErrorHandlingTest, NoReadHeader) {
   jpeg_decompress_struct cinfo = {};
   const auto try_catch_block = [&]() -> bool {
     ERROR_HANDLER_SETUP(jpegli);
-    jpegli_create_decompress(&cinfo);
-    jpegli_mem_src(&cinfo, kCompressed0, kLen0);
-    jpegli_start_decompress(&cinfo);
+    pdfcore_jpegli_create_decompress(&cinfo);
+    pdfcore_jpegli_mem_src(&cinfo, kCompressed0, kLen0);
+    pdfcore_jpegli_start_decompress(&cinfo);
     return true;
   };
   EXPECT_FALSE(try_catch_block());
-  jpegli_destroy_decompress(&cinfo);
+  pdfcore_jpegli_destroy_decompress(&cinfo);
 }
 
 TEST(DecoderErrorHandlingTest, NoStartDecompress) {
   jpeg_decompress_struct cinfo = {};
   const auto try_catch_block = [&]() -> bool {
     ERROR_HANDLER_SETUP(jpegli);
-    jpegli_create_decompress(&cinfo);
-    jpegli_mem_src(&cinfo, kCompressed0, kLen0);
-    jpegli_read_header(&cinfo, TRUE);
+    pdfcore_jpegli_create_decompress(&cinfo);
+    pdfcore_jpegli_mem_src(&cinfo, kCompressed0, kLen0);
+    pdfcore_jpegli_read_header(&cinfo, TRUE);
     EXPECT_EQ(1u, cinfo.image_width);
     EXPECT_EQ(1u, cinfo.image_height);
     JSAMPLE image[1];
     JSAMPROW row[] = {image};
-    jpegli_read_scanlines(&cinfo, row, 1);
+    pdfcore_jpegli_read_scanlines(&cinfo, row, 1);
     EXPECT_EQ(0u, image[0]);
-    jpegli_finish_decompress(&cinfo);
+    pdfcore_jpegli_finish_decompress(&cinfo);
     return true;
   };
   EXPECT_FALSE(try_catch_block());
-  jpegli_destroy_decompress(&cinfo);
+  pdfcore_jpegli_destroy_decompress(&cinfo);
 }
 
 TEST(DecoderErrorHandlingTest, NoReadScanlines) {
   jpeg_decompress_struct cinfo = {};
   const auto try_catch_block = [&]() -> bool {
     ERROR_HANDLER_SETUP(jpegli);
-    jpegli_create_decompress(&cinfo);
-    jpegli_mem_src(&cinfo, kCompressed0, kLen0);
-    jpegli_read_header(&cinfo, TRUE);
+    pdfcore_jpegli_create_decompress(&cinfo);
+    pdfcore_jpegli_mem_src(&cinfo, kCompressed0, kLen0);
+    pdfcore_jpegli_read_header(&cinfo, TRUE);
     EXPECT_EQ(1u, cinfo.image_width);
     EXPECT_EQ(1u, cinfo.image_height);
-    jpegli_start_decompress(&cinfo);
-    jpegli_finish_decompress(&cinfo);
+    pdfcore_jpegli_start_decompress(&cinfo);
+    pdfcore_jpegli_finish_decompress(&cinfo);
     return true;
   };
   EXPECT_FALSE(try_catch_block());
-  jpegli_destroy_decompress(&cinfo);
+  pdfcore_jpegli_destroy_decompress(&cinfo);
 }
 
 const size_t kMaxImageWidth = 0xffff;
@@ -1147,19 +1147,19 @@ bool ParseCompressed(const std::vector<uint8_t>& compressed) {
   jpeg_decompress_struct cinfo = {};
   const auto try_catch_block = [&]() -> bool {
     ERROR_HANDLER_SETUP(jpegli);
-    jpegli_create_decompress(&cinfo);
-    jpegli_mem_src(&cinfo, compressed.data(), compressed.size());
-    jpegli_read_header(&cinfo, TRUE);
-    jpegli_start_decompress(&cinfo);
+    pdfcore_jpegli_create_decompress(&cinfo);
+    pdfcore_jpegli_mem_src(&cinfo, compressed.data(), compressed.size());
+    pdfcore_jpegli_read_header(&cinfo, TRUE);
+    pdfcore_jpegli_start_decompress(&cinfo);
     for (JDIMENSION i = 0; i < cinfo.output_height; ++i) {
       JSAMPROW row[] = {kOutputBuffer};
-      jpegli_read_scanlines(&cinfo, row, 1);
+      pdfcore_jpegli_read_scanlines(&cinfo, row, 1);
     }
-    jpegli_finish_decompress(&cinfo);
+    pdfcore_jpegli_finish_decompress(&cinfo);
     return true;
   };
   bool retval = try_catch_block();
-  jpegli_destroy_decompress(&cinfo);
+  pdfcore_jpegli_destroy_decompress(&cinfo);
   return retval;
 }
 
@@ -1283,4 +1283,4 @@ TEST(DecoderErrorHandlingTest, MutateSingleBytes) {
 }
 
 }  // namespace
-}  // namespace jpegli
+}  // namespace pdfcore

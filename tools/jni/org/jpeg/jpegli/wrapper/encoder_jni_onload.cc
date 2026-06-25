@@ -12,7 +12,7 @@ extern "C" {
 #endif
 
 JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void* reserved) {
-  return org_jpeg_jpegli_wrapper::JniRegister(vm);
+  return org_jpeg_pdfcore_jpegli_wrapper::JniRegister(vm);
 }
 
 JNIEXPORT void JNI_OnUnload(JavaVM* vm, void* reserved) {

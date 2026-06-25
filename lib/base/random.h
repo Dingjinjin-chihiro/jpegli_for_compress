@@ -4,8 +4,8 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
-#ifndef JPEGLI_LIB_BASE_RANDOM_
-#define JPEGLI_LIB_BASE_RANDOM_
+#ifndef PDFCORE_LIB_BASE_RANDOM_
+#define PDFCORE_LIB_BASE_RANDOM_
 
 // Random number generator + distributions.
 // We don't use <random> because the implementation (and thus results) differs
@@ -19,7 +19,7 @@
 
 #include "lib/base/status.h"
 
-namespace jpegli {
+namespace pdfcore {
 struct Rng {
   explicit Rng(uint64_t seed)
       : s{static_cast<uint64_t>(0x94D049BB133111EBull),
@@ -41,7 +41,7 @@ struct Rng {
   // `end-begin` is significantly smaller than 1<<64, otherwise there is some
   // bias.
   int64_t UniformI(int64_t begin, int64_t end) {
-    JPEGLI_DASSERT(end > begin);
+    PDFCORE_DASSERT(end > begin);
     return static_cast<int64_t>((*this)() %
                                 static_cast<uint64_t>(end - begin)) +
            begin;
@@ -49,7 +49,7 @@ struct Rng {
 
   // Same as UniformI, but for uint64_t.
   uint64_t UniformU(uint64_t begin, uint64_t end) {
-    JPEGLI_DASSERT(end > begin);
+    PDFCORE_DASSERT(end > begin);
     return (*this)() % (end - begin) + begin;
   }
 
@@ -96,5 +96,5 @@ struct Rng {
   uint64_t s[2];
 };
 
-}  // namespace jpegli
-#endif  // JPEGLI_LIB_BASE_RANDOM_
+}  // namespace pdfcore
+#endif  // PDFCORE_LIB_BASE_RANDOM_

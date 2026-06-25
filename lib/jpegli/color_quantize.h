@@ -4,12 +4,12 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
-#ifndef JPEGLI_LIB_JPEGLI_COLOR_QUANTIZE_H_
-#define JPEGLI_LIB_JPEGLI_COLOR_QUANTIZE_H_
+#ifndef PDFCORE_LIB_PDFCORE_COLOR_QUANTIZE_H_
+#define PDFCORE_LIB_PDFCORE_COLOR_QUANTIZE_H_
 
 #include "lib/jpegli/common.h"
 
-namespace jpegli {
+namespace pdfcore {
 
 void ChooseColorMap1Pass(j_decompress_ptr cinfo);
 
@@ -23,6 +23,6 @@ void InitFSDitherState(j_decompress_ptr cinfo);
 
 int LookupColorIndex(j_decompress_ptr cinfo, const JSAMPLE* pixel);
 
-}  // namespace jpegli
+}  // namespace pdfcore
 
-#endif  // JPEGLI_LIB_JPEGLI_COLOR_QUANTIZE_H_
+#endif  // PDFCORE_LIB_PDFCORE_COLOR_QUANTIZE_H_

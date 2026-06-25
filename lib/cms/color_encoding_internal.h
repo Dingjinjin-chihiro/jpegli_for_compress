@@ -4,8 +4,8 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
-#ifndef JPEGLI_LIB_CMS_COLOR_ENCODING_INTERNAL_H_
-#define JPEGLI_LIB_CMS_COLOR_ENCODING_INTERNAL_H_
+#ifndef PDFCORE_LIB_CMS_COLOR_ENCODING_INTERNAL_H_
+#define PDFCORE_LIB_CMS_COLOR_ENCODING_INTERNAL_H_
 
 // Metadata for color space conversions.
 
@@ -27,16 +27,16 @@
 #include "lib/cms/color_encoding_cms.h"
 #include "lib/cms/jpegli_cms_internal.h"
 
-namespace jpegli {
+namespace pdfcore {
 
-using IccBytes = ::jpegli::cms::IccBytes;
-using ColorSpace = ::jpegli::cms::ColorSpace;
-using WhitePoint = ::jpegli::cms::WhitePoint;
-using Primaries = ::jpegli::cms::Primaries;
-using TransferFunction = ::jpegli::cms::TransferFunction;
-using RenderingIntent = ::jpegli::cms::RenderingIntent;
-using CIExy = ::jpegli::cms::CIExy;
-using PrimariesCIExy = ::jpegli::cms::PrimariesCIExy;
+using IccBytes = ::pdfcore::cms::IccBytes;
+using ColorSpace = ::pdfcore::cms::ColorSpace;
+using WhitePoint = ::pdfcore::cms::WhitePoint;
+using Primaries = ::pdfcore::cms::Primaries;
+using TransferFunction = ::pdfcore::cms::TransferFunction;
+using RenderingIntent = ::pdfcore::cms::RenderingIntent;
+using CIExy = ::pdfcore::cms::CIExy;
+using PrimariesCIExy = ::pdfcore::cms::PrimariesCIExy;
 
 // Returns bit with the given `index` (0 = least significant).
 template <typename T>
@@ -122,7 +122,7 @@ struct Customxy {
 
  private:
   friend struct ColorEncoding;
-  ::jpegli::cms::Customxy storage_;
+  ::pdfcore::cms::Customxy storage_;
 };
 
 struct CustomTransferFunction {
@@ -136,7 +136,7 @@ struct CustomTransferFunction {
 
  private:
   friend struct ColorEncoding;
-  ::jpegli::cms::CustomTransferFunction storage_;
+  ::pdfcore::cms::CustomTransferFunction storage_;
 };
 
 // Compact encoding of data required to interpret and translate pixels to a
@@ -160,10 +160,10 @@ struct ColorEncoding {
   // Must be called after modifying fields. Defined in color_management.cc.
   Status CreateICC() {
     storage_.icc.clear();
-    const JpegliColorEncoding external = ToExternal();
+    const PdfcoreColorEncoding external = ToExternal();
     if (!MaybeCreateProfile(external, &storage_.icc)) {
       storage_.icc.clear();
-      return JPEGLI_FAILURE("Failed to create ICC profile");
+      return PDFCORE_FAILURE("Failed to create ICC profile");
     }
     return true;
   }
@@ -174,9 +174,9 @@ struct ColorEncoding {
   const IccBytes& ICC() const { return storage_.icc; }
 
   // Returns true if `icc` is assigned and decoded successfully.
-  Status SetICC(IccBytes&& icc, const JpegliCmsInterface* cms) {
-    JPEGLI_ENSURE(cms != nullptr);
-    JPEGLI_ENSURE(!icc.empty());
+  Status SetICC(IccBytes&& icc, const PdfcoreCmsInterface* cms) {
+    PDFCORE_ENSURE(cms != nullptr);
+    PDFCORE_ENSURE(!icc.empty());
     storage_.have_fields = true;
     return storage_.SetFieldsFromICC(std::move(icc), *cms);
   }
@@ -187,7 +187,7 @@ struct ColorEncoding {
   // used anymore after this and functions such as IsSRGB return false no matter
   // what the contents of the icc profile.
   void SetICCRaw(IccBytes&& icc) {
-    JPEGLI_DASSERT(!icc.empty());
+    PDFCORE_DASSERT(!icc.empty());
     storage_.icc = std::move(icc);
     storage_.have_fields = false;
   }
@@ -241,7 +241,7 @@ struct ColorEncoding {
   Status SetSRGB(const ColorSpace cs,
                  const RenderingIntent ri = RenderingIntent::kRelative) {
     storage_.icc.clear();
-    JPEGLI_ENSURE(cs == ColorSpace::kGray || cs == ColorSpace::kRGB);
+    PDFCORE_ENSURE(cs == ColorSpace::kGray || cs == ColorSpace::kRGB);
     storage_.color_space = cs;
     storage_.white_point = WhitePoint::kD65;
     storage_.primaries = Primaries::kSRGB;
@@ -257,7 +257,7 @@ struct ColorEncoding {
 
   WhitePoint GetWhitePointType() const { return storage_.white_point; }
   Status SetWhitePointType(const WhitePoint& wp) {
-    JPEGLI_ENSURE(storage_.have_fields);
+    PDFCORE_ENSURE(storage_.have_fields);
     storage_.white_point = wp;
     return true;
   }
@@ -267,14 +267,14 @@ struct ColorEncoding {
 
   Primaries GetPrimariesType() const { return storage_.primaries; }
   Status SetPrimariesType(const Primaries& p) {
-    JPEGLI_ENSURE(storage_.have_fields);
-    JPEGLI_ENSURE(HasPrimaries());
+    PDFCORE_ENSURE(storage_.have_fields);
+    PDFCORE_ENSURE(HasPrimaries());
     storage_.primaries = p;
     return true;
   }
 
-  jpegli::cms::CustomTransferFunction& Tf() { return storage_.tf; }
-  const jpegli::cms::CustomTransferFunction& Tf() const { return storage_.tf; }
+  pdfcore::cms::CustomTransferFunction& Tf() { return storage_.tf; }
+  const pdfcore::cms::CustomTransferFunction& Tf() const { return storage_.tf; }
 
   RenderingIntent GetRenderingIntent() const {
     return storage_.rendering_intent;
@@ -289,13 +289,13 @@ struct ColorEncoding {
 
   mutable bool all_default;
 
-  JpegliColorEncoding ToExternal() const { return storage_.ToExternal(); }
-  Status FromExternal(const JpegliColorEncoding& external) {
-    JPEGLI_RETURN_IF_ERROR(storage_.FromExternal(external));
+  PdfcoreColorEncoding ToExternal() const { return storage_.ToExternal(); }
+  Status FromExternal(const PdfcoreColorEncoding& external) {
+    PDFCORE_RETURN_IF_ERROR(storage_.FromExternal(external));
     (void)CreateICC();
     return true;
   }
-  const jpegli::cms::ColorEncoding& View() const { return storage_; }
+  const pdfcore::cms::ColorEncoding& View() const { return storage_; }
   std::string Description() const;
 
  private:
@@ -310,7 +310,7 @@ struct ColorEncoding {
     c_rgb->storage_.tf.SetTransferFunction(tf);
     Status status = c_rgb->CreateICC();
     (void)status;
-    JPEGLI_DASSERT(status);
+    PDFCORE_DASSERT(status);
 
     ColorEncoding* c_gray = c2.data() + 1;
     c_gray->SetColorSpace(ColorSpace::kGray);
@@ -319,12 +319,12 @@ struct ColorEncoding {
     c_gray->storage_.tf.SetTransferFunction(tf);
     status = c_gray->CreateICC();
     (void)status;
-    JPEGLI_DASSERT(status);
+    PDFCORE_DASSERT(status);
 
     return c2;
   }
 
-  ::jpegli::cms::ColorEncoding storage_;
+  ::pdfcore::cms::ColorEncoding storage_;
   // Only used if white_point == kCustom.
   Customxy white_;
 
@@ -338,7 +338,7 @@ struct ColorEncoding {
 };
 
 static inline std::string Description(const ColorEncoding& c) {
-  const JpegliColorEncoding external = c.View().ToExternal();
+  const PdfcoreColorEncoding external = c.View().ToExternal();
   return ColorEncodingDescription(external);
 }
 
@@ -349,7 +349,7 @@ static inline std::ostream& operator<<(std::ostream& os,
 
 class ColorSpaceTransform {
  public:
-  explicit ColorSpaceTransform(const JpegliCmsInterface& cms) : cms_(cms) {}
+  explicit ColorSpaceTransform(const PdfcoreCmsInterface& cms) : cms_(cms) {}
   ~ColorSpaceTransform() {
     if (cms_data_ != nullptr) {
       cms_.destroy(cms_data_);
@@ -362,23 +362,23 @@ class ColorSpaceTransform {
 
   Status Init(const ColorEncoding& c_src, const ColorEncoding& c_dst,
               float intensity_target, size_t xsize, size_t num_threads) {
-    JpegliColorProfile input_profile;
+    PdfcoreColorProfile input_profile;
     icc_src_ = c_src.ICC();
     input_profile.icc.data = icc_src_.data();
     input_profile.icc.size = icc_src_.size();
     input_profile.color_encoding = c_src.ToExternal();
     input_profile.num_channels = c_src.IsCMYK() ? 4 : c_src.Channels();
-    JpegliColorProfile output_profile;
+    PdfcoreColorProfile output_profile;
     icc_dst_ = c_dst.ICC();
     output_profile.icc.data = icc_dst_.data();
     output_profile.icc.size = icc_dst_.size();
     output_profile.color_encoding = c_dst.ToExternal();
     if (c_dst.IsCMYK())
-      return JPEGLI_FAILURE("Conversion to CMYK is not supported");
+      return PDFCORE_FAILURE("Conversion to CMYK is not supported");
     output_profile.num_channels = c_dst.Channels();
     cms_data_ = cms_.init(cms_.init_data, num_threads, xsize, &input_profile,
                           &output_profile, intensity_target);
-    JPEGLI_RETURN_IF_ERROR(cms_data_ != nullptr);
+    PDFCORE_RETURN_IF_ERROR(cms_data_ != nullptr);
     return true;
   }
 
@@ -393,18 +393,18 @@ class ColorSpaceTransform {
   Status Run(const size_t thread, const float* buf_src, float* buf_dst,
              size_t xsize) {
     // TODO(eustas): convert false to Status?
-    return FROM_JPEGLI_BOOL(
+    return FROM_PDFCORE_BOOL(
         cms_.run(cms_data_, thread, buf_src, buf_dst, xsize));
   }
 
  private:
-  JpegliCmsInterface cms_;
+  PdfcoreCmsInterface cms_;
   void* cms_data_ = nullptr;
   // The interface may retain pointers into these.
   IccBytes icc_src_;
   IccBytes icc_dst_;
 };
 
-}  // namespace jpegli
+}  // namespace pdfcore
 
-#endif  // JPEGLI_LIB_CMS_COLOR_ENCODING_INTERNAL_H_
+#endif  // PDFCORE_LIB_CMS_COLOR_ENCODING_INTERNAL_H_

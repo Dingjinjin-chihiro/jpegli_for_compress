@@ -9,14 +9,14 @@
 
 #include "lib/base/memory_manager.h"
 
-namespace jpegli_tools {
+namespace pdfcore_jpegli_tools {
 
 namespace {
 void* ToolsAlloc(void* /* opaque*/, size_t size) { return malloc(size); }
 void ToolsFree(void* /* opaque*/, void* address) { free(address); }
-JpegliMemoryManager kNoMemoryManager{nullptr, &ToolsAlloc, &ToolsFree};
+PdfcoreMemoryManager kNoMemoryManager{nullptr, &ToolsAlloc, &ToolsFree};
 }  // namespace
 
-JpegliMemoryManager* NoMemoryManager() { return &kNoMemoryManager; };
+PdfcoreMemoryManager* NoMemoryManager() { return &kNoMemoryManager; };
 
-}  // namespace jpegli_tools
+}  // namespace pdfcore_jpegli_tools

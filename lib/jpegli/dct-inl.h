@@ -10,11 +10,11 @@
 
 #include "lib/jpegli/common.h"
 
-#if defined(JPEGLI_LIB_JPEGLI_DCT_INL_H_) == defined(HWY_TARGET_TOGGLE)
-#ifdef JPEGLI_LIB_JPEGLI_DCT_INL_H_
-#undef JPEGLI_LIB_JPEGLI_DCT_INL_H_
+#if defined(PDFCORE_LIB_PDFCORE_DCT_INL_H_) == defined(HWY_TARGET_TOGGLE)
+#ifdef PDFCORE_LIB_PDFCORE_DCT_INL_H_
+#undef PDFCORE_LIB_PDFCORE_DCT_INL_H_
 #else
-#define JPEGLI_LIB_JPEGLI_DCT_INL_H_
+#define PDFCORE_LIB_PDFCORE_DCT_INL_H_
 #endif
 
 #include <hwy/highway.h>
@@ -23,7 +23,7 @@
 #include "lib/jpegli/transpose-inl.h"
 
 HWY_BEFORE_NAMESPACE();
-namespace jpegli {
+namespace pdfcore {
 namespace HWY_NAMESPACE {
 namespace {
 
@@ -42,9 +42,9 @@ using hwy::HWY_NAMESPACE::Sub;
 using hwy::HWY_NAMESPACE::Vec;
 
 template <size_t N>
-void AddReverse(const float* JPEGLI_RESTRICT a_in1,
-                const float* JPEGLI_RESTRICT a_in2,
-                float* JPEGLI_RESTRICT a_out) {
+void AddReverse(const float* PDFCORE_RESTRICT a_in1,
+                const float* PDFCORE_RESTRICT a_in2,
+                float* PDFCORE_RESTRICT a_out) {
   HWY_CAPPED(float, 8) d8;
   for (size_t i = 0; i < N; i++) {
     auto in1 = Load(d8, a_in1 + i * 8);
@@ -54,9 +54,9 @@ void AddReverse(const float* JPEGLI_RESTRICT a_in1,
 }
 
 template <size_t N>
-void SubReverse(const float* JPEGLI_RESTRICT a_in1,
-                const float* JPEGLI_RESTRICT a_in2,
-                float* JPEGLI_RESTRICT a_out) {
+void SubReverse(const float* PDFCORE_RESTRICT a_in1,
+                const float* PDFCORE_RESTRICT a_in2,
+                float* PDFCORE_RESTRICT a_out) {
   HWY_CAPPED(float, 8) d8;
   for (size_t i = 0; i < N; i++) {
     auto in1 = Load(d8, a_in1 + i * 8);
@@ -66,7 +66,7 @@ void SubReverse(const float* JPEGLI_RESTRICT a_in1,
 }
 
 template <size_t N>
-void B(float* JPEGLI_RESTRICT coeff) {
+void B(float* PDFCORE_RESTRICT coeff) {
   HWY_CAPPED(float, 8) d8;
   constexpr float kSqrt2 = 1.41421356237f;
   auto sqrt2 = Set(d8, kSqrt2);
@@ -82,8 +82,8 @@ void B(float* JPEGLI_RESTRICT coeff) {
 
 // Ideally optimized away by compiler (except the multiply).
 template <size_t N>
-void InverseEvenOdd(const float* JPEGLI_RESTRICT a_in,
-                    float* JPEGLI_RESTRICT a_out) {
+void InverseEvenOdd(const float* PDFCORE_RESTRICT a_in,
+                    float* PDFCORE_RESTRICT a_out) {
   HWY_CAPPED(float, 8) d8;
   for (size_t i = 0; i < N / 2; i++) {
     auto in1 = Load(d8, a_in + i * 8);
@@ -119,14 +119,14 @@ struct WcMultipliers<8> {
   };
 };
 
-#if JPEGLI_CXX_LANG < JPEGLI_CXX_17
+#if PDFCORE_CXX_LANG < PDFCORE_CXX_17
 constexpr float WcMultipliers<4>::kMultipliers[];
 constexpr float WcMultipliers<8>::kMultipliers[];
 #endif
 
 // Invoked on full vector.
 template <size_t N>
-void Multiply(float* JPEGLI_RESTRICT coeff) {
+void Multiply(float* PDFCORE_RESTRICT coeff) {
   HWY_CAPPED(float, 8) d8;
   for (size_t i = 0; i < N / 2; i++) {
     auto in1 = Load(d8, coeff + (N / 2 + i) * 8);
@@ -135,15 +135,15 @@ void Multiply(float* JPEGLI_RESTRICT coeff) {
   }
 }
 
-void LoadFromBlock(const float* JPEGLI_RESTRICT pixels, size_t pixels_stride,
-                   size_t off, float* JPEGLI_RESTRICT coeff) {
+void LoadFromBlock(const float* PDFCORE_RESTRICT pixels, size_t pixels_stride,
+                   size_t off, float* PDFCORE_RESTRICT coeff) {
   HWY_CAPPED(float, 8) d8;
   for (size_t i = 0; i < 8; i++) {
     Store(LoadU(d8, pixels + i * pixels_stride + off), d8, coeff + i * 8);
   }
 }
 
-void StoreToBlockAndScale(const float* JPEGLI_RESTRICT coeff, float* output,
+void StoreToBlockAndScale(const float* PDFCORE_RESTRICT coeff, float* output,
                           size_t off) {
   HWY_CAPPED(float, 8) d8;
   auto mul = Set(d8, 1.0f / 8);
@@ -157,12 +157,12 @@ struct DCT1DImpl;
 
 template <>
 struct DCT1DImpl<1> {
-  JPEGLI_INLINE void operator()(float* JPEGLI_RESTRICT mem) {}
+  PDFCORE_INLINE void operator()(float* PDFCORE_RESTRICT mem) {}
 };
 
 template <>
 struct DCT1DImpl<2> {
-  JPEGLI_INLINE void operator()(float* JPEGLI_RESTRICT mem) {
+  PDFCORE_INLINE void operator()(float* PDFCORE_RESTRICT mem) {
     HWY_CAPPED(float, 8) d8;
     auto in1 = Load(d8, mem);
     auto in2 = Load(d8, mem + 8);
@@ -173,7 +173,7 @@ struct DCT1DImpl<2> {
 
 template <size_t N>
 struct DCT1DImpl {
-  void operator()(float* JPEGLI_RESTRICT mem) {
+  void operator()(float* PDFCORE_RESTRICT mem) {
     HWY_ALIGN float tmp[N * 8];
     AddReverse<N / 2>(mem, mem + N * 4, tmp);
     DCT1DImpl<N / 2>()(tmp);
@@ -185,8 +185,8 @@ struct DCT1DImpl {
   }
 };
 
-void DCT1D(const float* JPEGLI_RESTRICT pixels, size_t pixels_stride,
-           float* JPEGLI_RESTRICT output) {
+void DCT1D(const float* PDFCORE_RESTRICT pixels, size_t pixels_stride,
+           float* PDFCORE_RESTRICT output) {
   HWY_CAPPED(float, 8) d8;
   HWY_ALIGN float tmp[64];
   for (size_t i = 0; i < 8; i += Lanes(d8)) {
@@ -199,22 +199,22 @@ void DCT1D(const float* JPEGLI_RESTRICT pixels, size_t pixels_stride,
   }
 }
 
-JPEGLI_INLINE JPEGLI_MAYBE_UNUSED void TransformFromPixels(
-    const float* JPEGLI_RESTRICT pixels, size_t pixels_stride,
-    float* JPEGLI_RESTRICT coefficients, float* JPEGLI_RESTRICT scratch_space) {
+PDFCORE_INLINE PDFCORE_MAYBE_UNUSED void TransformFromPixels(
+    const float* PDFCORE_RESTRICT pixels, size_t pixels_stride,
+    float* PDFCORE_RESTRICT coefficients, float* PDFCORE_RESTRICT scratch_space) {
   DCT1D(pixels, pixels_stride, scratch_space);
   Transpose8x8Block(scratch_space, coefficients);
   DCT1D(coefficients, 8, scratch_space);
   Transpose8x8Block(scratch_space, coefficients);
 }
 
-JPEGLI_INLINE JPEGLI_MAYBE_UNUSED void StoreQuantizedValue(
+PDFCORE_INLINE PDFCORE_MAYBE_UNUSED void StoreQuantizedValue(
     const Vec<HWY_FULL(int32_t)>& ival, int16_t* out) {
   Half<HWY_FULL(int16_t)> di16;
   Store(DemoteTo(di16, ival), di16, out);
 }
 
-JPEGLI_INLINE JPEGLI_MAYBE_UNUSED void StoreQuantizedValue(
+PDFCORE_INLINE PDFCORE_MAYBE_UNUSED void StoreQuantizedValue(
     const Vec<HWY_FULL(int32_t)>& ival, int32_t* out) {
   const HWY_FULL(int32_t) di;
   Store(ival, di, out);
@@ -242,14 +242,14 @@ void QuantizeBlock(const float* dct, const float* qmc, float aq_strength,
 }
 
 template <typename T>
-void ComputeCoefficientBlock(const float* JPEGLI_RESTRICT pixels, size_t stride,
-                             const float* JPEGLI_RESTRICT qmc,
+void ComputeCoefficientBlock(const float* PDFCORE_RESTRICT pixels, size_t stride,
+                             const float* PDFCORE_RESTRICT qmc,
                              int16_t last_dc_coeff, float aq_strength,
                              const float* zero_bias_offset,
                              const float* zero_bias_mul,
-                             float* JPEGLI_RESTRICT tmp, T* block) {
-  float* JPEGLI_RESTRICT dct = tmp;
-  float* JPEGLI_RESTRICT scratch_space = tmp + DCTSIZE2;
+                             float* PDFCORE_RESTRICT tmp, T* block) {
+  float* PDFCORE_RESTRICT dct = tmp;
+  float* PDFCORE_RESTRICT scratch_space = tmp + DCTSIZE2;
   TransformFromPixels(pixels, stride, dct, scratch_space);
   QuantizeBlock(dct, qmc, aq_strength, zero_bias_offset, zero_bias_mul, block);
   // Center DC values around zero.
@@ -266,6 +266,6 @@ void ComputeCoefficientBlock(const float* JPEGLI_RESTRICT pixels, size_t stride,
 // NOLINTNEXTLINE(google-readability-namespace-comments)
 }  // namespace
 }  // namespace HWY_NAMESPACE
-}  // namespace jpegli
+}  // namespace pdfcore
 HWY_AFTER_NAMESPACE();
-#endif  // JPEGLI_LIB_JPEGLI_DCT_INL_H_
+#endif  // PDFCORE_LIB_PDFCORE_DCT_INL_H_

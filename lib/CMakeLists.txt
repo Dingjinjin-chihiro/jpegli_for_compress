@@ -4,11 +4,11 @@
 # license that can be found in the LICENSE file or at
 # https://developers.google.com/open-source/licenses/bsd
 
-set(JPEGLI_MAJOR_VERSION 0)
-set(JPEGLI_MINOR_VERSION 12)
-set(JPEGLI_PATCH_VERSION 0)
-set(JPEGLI_LIBRARY_VERSION
-    "${JPEGLI_MAJOR_VERSION}.${JPEGLI_MINOR_VERSION}.${JPEGLI_PATCH_VERSION}")
+set(PDFCORE_MAJOR_VERSION 0)
+set(PDFCORE_MINOR_VERSION 12)
+set(PDFCORE_PATCH_VERSION 0)
+set(PDFCORE_LIBRARY_VERSION
+    "${PDFCORE_MAJOR_VERSION}.${PDFCORE_MINOR_VERSION}.${PDFCORE_PATCH_VERSION}")
 
 # This is the library API/ABI compatibility version. Changing this value makes
 # the shared library incompatible with previous version. A program linked
@@ -16,21 +16,21 @@ set(JPEGLI_LIBRARY_VERSION
 # It is important to update this value when making incompatible API/ABI changes
 # so that programs that depend on libjpegli can update their dependencies. Semantic
 # versioning allows 0.y.z to have incompatible changes in minor versions.
-set(JPEGLI_SO_MINOR_VERSION 12)
-if (JPEGLI_MAJOR_VERSION EQUAL 0)
-  set(JPEGLI_LIBRARY_SOVERSION
-      "${JPEGLI_MAJOR_VERSION}.${JPEGLI_SO_MINOR_VERSION}")
+set(PDFCORE_SO_MINOR_VERSION 12)
+if (PDFCORE_MAJOR_VERSION EQUAL 0)
+  set(PDFCORE_LIBRARY_SOVERSION
+      "${PDFCORE_MAJOR_VERSION}.${PDFCORE_SO_MINOR_VERSION}")
 else()
-  set(JPEGLI_LIBRARY_SOVERSION "${JPEGLI_MAJOR_VERSION}")
+  set(PDFCORE_LIBRARY_SOVERSION "${PDFCORE_MAJOR_VERSION}")
 endif()
 
 # List of warning and feature flags for our library and tests.
 if (MSVC)
-  set(JPEGLI_INTERNAL_FLAGS
+  set(PDFCORE_INTERNAL_FLAGS
     # TODO(janwas): add flags
   )
 else ()
-  set(JPEGLI_INTERNAL_FLAGS
+  set(PDFCORE_INTERNAL_FLAGS
     # F_FLAGS
     -fmerge-all-constants
     -fno-builtin-fwrite
@@ -51,19 +51,19 @@ else ()
     -Wvla
   )
 
-  if (NOT JPEGLI_ENABLE_COVERAGE AND NOT SANITIZER MATCHES ".san")
+  if (NOT PDFCORE_ENABLE_COVERAGE AND NOT SANITIZER MATCHES ".san")
     # NB: use `-Rpass-analysis=stack-frame-layout -g` for investigation.
     # TODO(eustas): tighten
     if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-      list(APPEND JPEGLI_INTERNAL_FLAGS -Wframe-larger-than=5632)
+      list(APPEND PDFCORE_INTERNAL_FLAGS -Wframe-larger-than=5632)
     elseif (CMAKE_CXX_COMPILER_ID MATCHES "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 14.0)
-      list(APPEND JPEGLI_INTERNAL_FLAGS -Wframe-larger-than=5632)
+      list(APPEND PDFCORE_INTERNAL_FLAGS -Wframe-larger-than=5632)
     endif()
   endif()
 
   # Warning flags supported by clang.
   if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    list(APPEND JPEGLI_INTERNAL_FLAGS
+    list(APPEND PDFCORE_INTERNAL_FLAGS
       -Wdeprecated-increment-bool
       # TODO(deymo): Add -Wextra-semi once we update third_party/highway.
       # -Wextra-semi
@@ -95,7 +95,7 @@ else ()
   endif()  # Clang
 
   if (WIN32)
-    list(APPEND JPEGLI_INTERNAL_FLAGS
+    list(APPEND PDFCORE_INTERNAL_FLAGS
       -Wno-cast-align
       -Wno-double-promotion
       -Wno-float-equal
@@ -106,7 +106,7 @@ else ()
     )
 
     if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-      list(APPEND JPEGLI_INTERNAL_FLAGS
+      list(APPEND PDFCORE_INTERNAL_FLAGS
         -Wno-used-but-marked-unused
         -Wno-unused-template
         -Wno-unused-member-function
@@ -117,7 +117,7 @@ else ()
       )
     endif()  # Clang
   else()  # WIN32
-    list(APPEND JPEGLI_INTERNAL_FLAGS
+    list(APPEND PDFCORE_INTERNAL_FLAGS
       -fsized-deallocation
       -fno-exceptions
 
@@ -126,7 +126,7 @@ else ()
     )
 
     if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-      list(APPEND JPEGLI_INTERNAL_FLAGS
+      list(APPEND PDFCORE_INTERNAL_FLAGS
         -fnew-alignment=8
         -fno-cxx-exceptions
         -fno-slp-vectorize
@@ -141,11 +141,11 @@ endif()  #!MSVC
 
 # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=109740
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
-  list(APPEND JPEGLI_INTERNAL_FLAGS -Wno-overloaded-virtual)
+  list(APPEND PDFCORE_INTERNAL_FLAGS -Wno-overloaded-virtual)
 endif()
 
-if (JPEGLI_ENABLE_SKCMS)
-  list(APPEND JPEGLI_INTERNAL_FLAGS -DJPEGLI_ENABLE_SKCMS=1)
+if (PDFCORE_ENABLE_SKCMS)
+  list(APPEND PDFCORE_INTERNAL_FLAGS -DPDFCORE_ENABLE_SKCMS=1)
 endif ()
 
 # strips the -internal suffix from all the elements in LIST
@@ -157,7 +157,7 @@ function(strip_internal OUTPUT_VAR LIB_LIST)
   set(${OUTPUT_VAR} ${out_list} PARENT_SCOPE)
 endfunction()
 
-# set variables for jpegli_cms.cmake and jpegli.cmake
+# set variables for pdfcore_jpegli_cms.cmake and jpegli.cmake
 if(IS_ABSOLUTE "${CMAKE_INSTALL_INCLUDEDIR}")
     set(PKGCONFIG_TARGET_INCLUDES "${CMAKE_INSTALL_INCLUDEDIR}")
 else()
@@ -179,29 +179,29 @@ elseif(LIBCXX)
   set(PKGCONFIG_CXX_LIB "-lc++")
 endif()
 
-add_library(jpegli_base INTERFACE)
-target_include_directories(jpegli_base SYSTEM BEFORE INTERFACE
+add_library(pdfcore_jpegli_base INTERFACE)
+target_include_directories(pdfcore_jpegli_base SYSTEM BEFORE INTERFACE
   "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>"
 )
-target_include_directories(jpegli_base BEFORE INTERFACE
+target_include_directories(pdfcore_jpegli_base BEFORE INTERFACE
   ${PROJECT_SOURCE_DIR}
-  ${JPEGLI_HWY_INCLUDE_DIRS}
+  ${PDFCORE_HWY_INCLUDE_DIRS}
 )
 
 # On android, link with log to use android-related log functions.
 if(CMAKE_SYSTEM_NAME STREQUAL "Android")
   find_library(log-lib log)
   if(log-lib)
-    target_link_libraries(jpegli_base INTERFACE ${log-lib})
-    target_compile_definitions(jpegli_base INTERFACE USE_ANDROID_LOGGER)
+    target_link_libraries(pdfcore_jpegli_base INTERFACE ${log-lib})
+    target_compile_definitions(pdfcore_jpegli_base INTERFACE USE_ANDROID_LOGGER)
   endif()
 endif()
 
-# The jpegli_cms library definition.
+# The pdfcore_jpegli_cms library definition.
 include(jpegli_cms.cmake)
 
 # Other libraries outside the core jpegli library.
-if(JPEGLI_ENABLE_TOOLS OR BUILD_TESTING)
+if(PDFCORE_ENABLE_TOOLS OR BUILD_TESTING)
   include(jpegli_extras.cmake)
 endif()
 include(jpegli_threads.cmake)

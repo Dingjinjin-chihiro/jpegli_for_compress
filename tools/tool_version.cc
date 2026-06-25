@@ -6,12 +6,12 @@
 
 #include "tools/tool_version.h"
 
-#ifdef JPEGLI_VERSION_FROM_GIT
+#ifdef PDFCORE_VERSION_FROM_GIT
 #include "tool_version_git.h"
 #endif
 
-namespace jpegli_tools {
+namespace pdfcore_jpegli_tools {
 
-const char* kJpegliVersion = JPEGLI_VERSION;
+const char* kPdfcoreVersion = PDFCORE_VERSION;
 
-}  // namespace jpegli_tools
+}  // namespace pdfcore_jpegli_tools

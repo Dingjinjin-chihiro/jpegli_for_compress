@@ -4,8 +4,8 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
-#ifndef JPEGLI_LIB_JPEGLI_BITSTREAM_H_
-#define JPEGLI_LIB_JPEGLI_BITSTREAM_H_
+#ifndef PDFCORE_LIB_PDFCORE_BITSTREAM_H_
+#define PDFCORE_LIB_PDFCORE_BITSTREAM_H_
 
 #include <cstddef>
 #include <cstdint>
@@ -17,7 +17,7 @@
 #include "lib/jpegli/common.h"
 #include "lib/jpegli/encode_internal.h"
 
-namespace jpegli {
+namespace pdfcore {
 
 void WriteOutput(j_compress_ptr cinfo, const uint8_t* buf, size_t bufsize);
 void WriteOutput(j_compress_ptr cinfo, const std::vector<uint8_t>& bytes);
@@ -37,13 +37,13 @@ void EncodeDHT(j_compress_ptr cinfo, size_t offset, size_t num);
 void EncodeSOS(j_compress_ptr cinfo, int scan_index);
 void WriteScanHeader(j_compress_ptr cinfo, int scan_index);
 
-void WriteBlock(const int32_t* JPEGLI_RESTRICT symbols,
-                const int32_t* JPEGLI_RESTRICT extra_bits, int num_nonzeros,
-                bool emit_eob, const HuffmanCodeTable* JPEGLI_RESTRICT dc_code,
-                const HuffmanCodeTable* JPEGLI_RESTRICT ac_code,
-                JpegBitWriter* JPEGLI_RESTRICT bw);
+void WriteBlock(const int32_t* PDFCORE_RESTRICT symbols,
+                const int32_t* PDFCORE_RESTRICT extra_bits, int num_nonzeros,
+                bool emit_eob, const HuffmanCodeTable* PDFCORE_RESTRICT dc_code,
+                const HuffmanCodeTable* PDFCORE_RESTRICT ac_code,
+                JpegBitWriter* PDFCORE_RESTRICT bw);
 void WriteScanData(j_compress_ptr cinfo, int scan_index);
 
-}  // namespace jpegli
+}  // namespace pdfcore
 
-#endif  // JPEGLI_LIB_JPEGLI_BITSTREAM_H_
+#endif  // PDFCORE_LIB_PDFCORE_BITSTREAM_H_

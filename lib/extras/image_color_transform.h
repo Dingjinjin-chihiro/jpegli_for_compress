@@ -4,8 +4,8 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
-#ifndef JPEGLI_LIB_EXTRAS_IMAGE_COLOR_TRANSFORM_H_
-#define JPEGLI_LIB_EXTRAS_IMAGE_COLOR_TRANSFORM_H_
+#ifndef PDFCORE_LIB_EXTRAS_IMAGE_COLOR_TRANSFORM_H_
+#define PDFCORE_LIB_EXTRAS_IMAGE_COLOR_TRANSFORM_H_
 
 #include "lib/base/data_parallel.h"
 #include "lib/base/rect.h"
@@ -14,15 +14,15 @@
 #include "lib/cms/color_encoding_internal.h"
 #include "lib/extras/image.h"
 
-namespace jpegli {
+namespace pdfcore {
 
 Status ApplyColorTransform(const ColorEncoding& c_current,
                            float intensity_target, const Image3F& color,
                            const ImageF* black, const Rect& rect,
                            const ColorEncoding& c_desired,
-                           const JpegliCmsInterface& cms, ThreadPool* pool,
+                           const PdfcoreCmsInterface& cms, ThreadPool* pool,
                            Image3F* out);
 
-}  // namespace jpegli
+}  // namespace pdfcore
 
-#endif  // JPEGLI_LIB_EXTRAS_IMAGE_COLOR_TRANSFORM_H_
+#endif  // PDFCORE_LIB_EXTRAS_IMAGE_COLOR_TRANSFORM_H_

@@ -15,7 +15,7 @@
 #include "lib/jpegli/encode_internal.h"
 #include "lib/jpegli/memory_manager.h"
 
-namespace jpegli {
+namespace pdfcore {
 
 void JpegBitWriterInit(j_compress_ptr cinfo) {
   jpeg_comp_master* m = cinfo->master;
@@ -65,4 +65,4 @@ void JumpToByteBoundary(JpegBitWriter* bw) {
   bw->free_bits = 64;
 }
 
-}  // namespace jpegli
+}  // namespace pdfcore

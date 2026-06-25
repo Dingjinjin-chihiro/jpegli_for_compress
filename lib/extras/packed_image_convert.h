@@ -4,8 +4,8 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
-#ifndef JPEGLI_LIB_EXTRAS_PACKED_IMAGE_CONVERT_H_
-#define JPEGLI_LIB_EXTRAS_PACKED_IMAGE_CONVERT_H_
+#ifndef PDFCORE_LIB_EXTRAS_PACKED_IMAGE_CONVERT_H_
+#define PDFCORE_LIB_EXTRAS_PACKED_IMAGE_CONVERT_H_
 
 // Helper functions to convert from the external image types.
 
@@ -16,7 +16,7 @@
 #include "lib/extras/image.h"
 #include "lib/extras/packed_image.h"
 
-namespace jpegli {
+namespace pdfcore {
 namespace extras {
 
 Status GetColorEncoding(const PackedPixelFile& ppf,
@@ -30,9 +30,9 @@ Status ConvertPackedPixelFileToImage3F(const extras::PackedPixelFile& ppf,
                                        ThreadPool* pool = nullptr);
 
 StatusOr<PackedPixelFile> ConvertImage3FToPackedPixelFile(
-    const Image3F& image, const ColorEncoding& c_enc, JpegliPixelFormat format,
+    const Image3F& image, const ColorEncoding& c_enc, PdfcorePixelFormat format,
     ThreadPool* pool);
 }  // namespace extras
-}  // namespace jpegli
+}  // namespace pdfcore
 
-#endif  // JPEGLI_LIB_EXTRAS_PACKED_IMAGE_CONVERT_H_
+#endif  // PDFCORE_LIB_EXTRAS_PACKED_IMAGE_CONVERT_H_

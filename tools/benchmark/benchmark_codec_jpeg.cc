@@ -35,7 +35,7 @@
 #include "tools/speed_stats.h"
 #include "tools/thread_pool_internal.h"
 
-namespace jpegli_tools {
+namespace pdfcore_jpegli_tools {
 
 struct JPEGArgs {
   std::string base_quant_fn;
@@ -163,7 +163,7 @@ class JPEGCodec : public ImageCodec {
 
   Status Compress(const std::string& filename, const PackedPixelFile& ppf,
                   ThreadPool* pool, std::vector<uint8_t>* compressed,
-                  jpegli_tools::SpeedStats* speed_stats) override {
+                  pdfcore_jpegli_tools::SpeedStats* speed_stats) override {
     if (jpeg_encoder_.find("cjpeg") != std::string::npos) {
 // Not supported on Windows due to Linux-specific functions.
 // Not supported in Android NDK before API 28.
@@ -174,12 +174,12 @@ class JPEGCodec : public ImageCodec {
       TemporaryFile encoded_file(basename, "jpg");
       std::string in_filename;
       std::string encoded_filename;
-      JPEGLI_RETURN_IF_ERROR(in_file.GetFileName(&in_filename));
-      JPEGLI_RETURN_IF_ERROR(encoded_file.GetFileName(&encoded_filename));
-      jpegli::extras::EncodedImage encoded;
-      JPEGLI_RETURN_IF_ERROR(
-          jpegli::extras::GetPNMEncoder()->Encode(ppf, &encoded, pool));
-      JPEGLI_RETURN_IF_ERROR(WriteFile(in_filename, encoded.bitstreams[0]));
+      PDFCORE_RETURN_IF_ERROR(in_file.GetFileName(&in_filename));
+      PDFCORE_RETURN_IF_ERROR(encoded_file.GetFileName(&encoded_filename));
+      pdfcore::extras::EncodedImage encoded;
+      PDFCORE_RETURN_IF_ERROR(
+          pdfcore::extras::GetPNMEncoder()->Encode(ppf, &encoded, pool));
+      PDFCORE_RETURN_IF_ERROR(WriteFile(in_filename, encoded.bitstreams[0]));
       std::string compress_command = jpeg_encoder_;
       std::vector<std::string> arguments;
       arguments.emplace_back("-outfile");
@@ -192,23 +192,23 @@ class JPEGCodec : public ImageCodec {
       } else if (chroma_subsampling_ == "420") {
         arguments.emplace_back("2x2");
       } else if (!chroma_subsampling_.empty()) {
-        return JPEGLI_FAILURE("Unsupported chroma subsampling");
+        return PDFCORE_FAILURE("Unsupported chroma subsampling");
       }
       arguments.emplace_back("-optimize");
       arguments.push_back(in_filename);
-      const double start = jpegli::Now();
-      JPEGLI_RETURN_IF_ERROR(RunCommand(compress_command, arguments, false));
-      const double end = jpegli::Now();
+      const double start = pdfcore::Now();
+      PDFCORE_RETURN_IF_ERROR(RunCommand(compress_command, arguments, false));
+      const double end = pdfcore::Now();
       speed_stats->NotifyElapsed(end - start);
       return ReadFile(encoded_filename, compressed);
 #else
-      return JPEGLI_FAILURE("Not supported on this build");
+      return PDFCORE_FAILURE("Not supported on this build");
 #endif
     }
 
     double elapsed = 0.0;
     if (jpeg_encoder_ == "jpegli") {
-      jpegli::extras::JpegSettings settings;
+      pdfcore::extras::JpegSettings settings;
       settings.xyb = xyb_mode_;
       if (!xyb_mode_) {
         settings.use_std_quant_tables = use_std_tables_;
@@ -238,15 +238,15 @@ class JPEGCodec : public ImageCodec {
       settings.libjpeg_quality = libjpeg_quality_;
       settings.libjpeg_chroma_subsampling = libjpeg_chroma_subsampling_;
       settings.optimize_coding = !fix_codes_;
-      const double start = jpegli::Now();
-      JPEGLI_RETURN_IF_ERROR(
-          jpegli::extras::EncodeJpeg(ppf, settings, pool, compressed));
-      const double end = jpegli::Now();
+      const double start = pdfcore::Now();
+      PDFCORE_RETURN_IF_ERROR(
+          pdfcore::extras::EncodeJpeg(ppf, settings, pool, compressed));
+      const double end = pdfcore::Now();
       elapsed = end - start;
     } else {
-      jpegli::extras::EncodedImage encoded;
-      std::unique_ptr<jpegli::extras::Encoder> encoder =
-          jpegli::extras::GetJPEGEncoder();
+      pdfcore::extras::EncodedImage encoded;
+      std::unique_ptr<pdfcore::extras::Encoder> encoder =
+          pdfcore::extras::GetJPEGEncoder();
       if (!encoder) {
         fprintf(stderr, "libjpeg codec is not supported\n");
         return false;
@@ -287,9 +287,9 @@ class JPEGCodec : public ImageCodec {
       SET_ENCODER_ARG(search_tolerance);
       SET_ENCODER_ARG(search_first_iter_slope);
       SET_ENCODER_ARG(search_max_iters);
-      const double start = jpegli::Now();
-      JPEGLI_RETURN_IF_ERROR(encoder->Encode(ppf, &encoded, pool));
-      const double end = jpegli::Now();
+      const double start = pdfcore::Now();
+      PDFCORE_RETURN_IF_ERROR(encoder->Encode(ppf, &encoded, pool));
+      const double end = pdfcore::Now();
       elapsed = end - start;
       *compressed = encoded.bitstreams.back();
     }
@@ -299,28 +299,28 @@ class JPEGCodec : public ImageCodec {
 
   Status Decompress(const std::string& filename,
                     const Span<const uint8_t> compressed, ThreadPool* pool,
-                    jpegli::extras::PackedPixelFile* ppf,
-                    jpegli_tools::SpeedStats* speed_stats) override {
+                    pdfcore::extras::PackedPixelFile* ppf,
+                    pdfcore_jpegli_tools::SpeedStats* speed_stats) override {
     if (jpeg_decoder_ == "jpegli") {
       std::vector<uint8_t> jpeg_bytes(compressed.data(),
                                       compressed.data() + compressed.size());
-      const double start = jpegli::Now();
-      jpegli::extras::JpegDecompressParams dparams;
+      const double start = pdfcore::Now();
+      pdfcore::extras::JpegDecompressParams dparams;
       dparams.output_data_type =
-          bitdepth_ > 8 ? JPEGLI_TYPE_UINT16 : JPEGLI_TYPE_UINT8;
+          bitdepth_ > 8 ? PDFCORE_TYPE_UINT16 : PDFCORE_TYPE_UINT8;
       dparams.num_colors = num_colors_;
-      JPEGLI_RETURN_IF_ERROR(
-          jpegli::extras::DecodeJpeg(jpeg_bytes, dparams, pool, ppf));
-      const double end = jpegli::Now();
+      PDFCORE_RETURN_IF_ERROR(
+          pdfcore::extras::DecodeJpeg(jpeg_bytes, dparams, pool, ppf));
+      const double end = pdfcore::Now();
       speed_stats->NotifyElapsed(end - start);
     } else {
-      const double start = jpegli::Now();
-      jpegli::extras::JPGDecompressParams dparams;
+      const double start = pdfcore::Now();
+      pdfcore::extras::JPGDecompressParams dparams;
       dparams.num_colors = num_colors_;
-      JPEGLI_RETURN_IF_ERROR(jpegli::extras::DecodeImageJPG(
-          compressed, jpegli::extras::ColorHints(), ppf,
+      PDFCORE_RETURN_IF_ERROR(pdfcore::extras::DecodeImageJPG(
+          compressed, pdfcore::extras::ColorHints(), ppf,
           /*constraints=*/nullptr, &dparams));
-      const double end = jpegli::Now();
+      const double end = pdfcore::Now();
       speed_stats->NotifyElapsed(end - start);
     }
     return true;
@@ -349,4 +349,4 @@ ImageCodec* CreateNewJPEGCodec(const BenchmarkArgs& args) {
   return new JPEGCodec(args);
 }
 
-}  // namespace jpegli_tools
+}  // namespace pdfcore_jpegli_tools

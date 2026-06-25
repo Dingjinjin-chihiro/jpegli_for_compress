@@ -4,16 +4,16 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
-#ifndef JPEGLI_LIB_JPEGLI_IDCT_H_
-#define JPEGLI_LIB_JPEGLI_IDCT_H_
+#ifndef PDFCORE_LIB_PDFCORE_IDCT_H_
+#define PDFCORE_LIB_PDFCORE_IDCT_H_
 
 #include "lib/base/status.h"
 #include "lib/jpegli/common.h"
 
-namespace jpegli {
+namespace pdfcore {
 
-jpegli::Status ChooseInverseTransform(j_decompress_ptr cinfo);
+pdfcore::Status ChooseInverseTransform(j_decompress_ptr cinfo);
 
-}  // namespace jpegli
+}  // namespace pdfcore
 
-#endif  // JPEGLI_LIB_JPEGLI_IDCT_H_
+#endif  // PDFCORE_LIB_PDFCORE_IDCT_H_

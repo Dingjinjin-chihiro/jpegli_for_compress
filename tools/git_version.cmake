@@ -9,27 +9,27 @@
 find_package(Git QUIET)
 
 # Check that this script was invoked with the necessary arguments.
-if(NOT IS_DIRECTORY "${JPEGLI_ROOT_DIR}")
-  message(FATAL_ERROR "JPEGLI_ROOT_DIR is invalid")
+if(NOT IS_DIRECTORY "${PDFCORE_ROOT_DIR}")
+  message(FATAL_ERROR "PDFCORE_ROOT_DIR is invalid")
 endif()
 
 execute_process(
   COMMAND "${GIT_EXECUTABLE}" rev-parse --short HEAD
   OUTPUT_VARIABLE GIT_REV
-  WORKING_DIRECTORY "${JPEGLI_ROOT_DIR}"
+  WORKING_DIRECTORY "${PDFCORE_ROOT_DIR}"
   OUTPUT_STRIP_TRAILING_WHITESPACE
   ERROR_QUIET)
 
 # The define line in the file.
-set(JPEGLI_VERSION_DEFINE "#define JPEGLI_VERSION \"${GIT_REV}\"\n")
+set(PDFCORE_VERSION_DEFINE "#define PDFCORE_VERSION \"${GIT_REV}\"\n")
 
 # Update the header file only if needed.
 if(EXISTS "${DST}")
   file(READ "${DST}" ORIG_DST)
-  if(NOT ORIG_DST STREQUAL JPEGLI_VERSION_DEFINE)
-    message(STATUS "Changing JPEGLI_VERSION to ${GIT_REV}")
-    file(WRITE "${DST}" "${JPEGLI_VERSION_DEFINE}")
+  if(NOT ORIG_DST STREQUAL PDFCORE_VERSION_DEFINE)
+    message(STATUS "Changing PDFCORE_VERSION to ${GIT_REV}")
+    file(WRITE "${DST}" "${PDFCORE_VERSION_DEFINE}")
   endif()
 else()
-  file(WRITE "${DST}" "${JPEGLI_VERSION_DEFINE}")
+  file(WRITE "${DST}" "${PDFCORE_VERSION_DEFINE}")
 endif()

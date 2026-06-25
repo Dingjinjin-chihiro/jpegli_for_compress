@@ -15,32 +15,32 @@
 
 #include "lib/base/compiler_specific.h"
 
-namespace jpegli {
+namespace pdfcore {
 
 // static
-JpegliParallelRetCode ThreadParallelRunner::Runner(
-    void* runner_opaque, void* jpegli_opaque, JpegliParallelRunInit init,
-    JpegliParallelRunFunction func, uint32_t start_range, uint32_t end_range) {
+PdfcoreParallelRetCode ThreadParallelRunner::Runner(
+    void* runner_opaque, void* pdfcore_jpegli_opaque, PdfcoreParallelRunInit init,
+    PdfcoreParallelRunFunction func, uint32_t start_range, uint32_t end_range) {
   ThreadParallelRunner* self =
       static_cast<ThreadParallelRunner*>(runner_opaque);
-  if (start_range > end_range) return JPEGLI_PARALLEL_RET_RUNNER_ERROR;
-  if (start_range == end_range) return JPEGLI_PARALLEL_RET_SUCCESS;
+  if (start_range > end_range) return PDFCORE_PARALLEL_RET_RUNNER_ERROR;
+  if (start_range == end_range) return PDFCORE_PARALLEL_RET_SUCCESS;
 
-  int ret = init(jpegli_opaque, std::max<size_t>(self->num_worker_threads_, 1));
-  if (ret != JPEGLI_PARALLEL_RET_SUCCESS) return ret;
+  int ret = init(pdfcore_jpegli_opaque, std::max<size_t>(self->num_worker_threads_, 1));
+  if (ret != PDFCORE_PARALLEL_RET_SUCCESS) return ret;
 
   // Use a sequential run when num_worker_threads_ is zero since we have no
   // worker threads.
   if (self->num_worker_threads_ == 0) {
     const size_t thread = 0;
     for (uint32_t task = start_range; task < end_range; ++task) {
-      func(jpegli_opaque, task, thread);
+      func(pdfcore_jpegli_opaque, task, thread);
     }
-    return JPEGLI_PARALLEL_RET_SUCCESS;
+    return PDFCORE_PARALLEL_RET_SUCCESS;
   }
 
   if (self->depth_.fetch_add(1, std::memory_order_acq_rel) != 0) {
-    return JPEGLI_PARALLEL_RET_RUNNER_ERROR;  // Must not re-enter.
+    return PDFCORE_PARALLEL_RET_RUNNER_ERROR;  // Must not re-enter.
   }
 
   const WorkerCommand worker_command =
@@ -48,20 +48,20 @@ JpegliParallelRetCode ThreadParallelRunner::Runner(
   // Ensure the inputs do not result in a reserved command.
   if ((worker_command == kWorkerWait) || (worker_command == kWorkerOnce) ||
       (worker_command == kWorkerExit)) {
-    return JPEGLI_PARALLEL_RET_RUNNER_ERROR;
+    return PDFCORE_PARALLEL_RET_RUNNER_ERROR;
   }
 
   self->data_func_ = func;
-  self->jpegli_opaque_ = jpegli_opaque;
+  self->pdfcore_jpegli_opaque_ = pdfcore_jpegli_opaque;
   self->num_reserved_.store(0, std::memory_order_relaxed);
 
   self->StartWorkers(worker_command);
   self->WorkersReadyBarrier();
 
   if (self->depth_.fetch_add(-1, std::memory_order_acq_rel) != 1) {
-    return JPEGLI_PARALLEL_RET_RUNNER_ERROR;
+    return PDFCORE_PARALLEL_RET_RUNNER_ERROR;
   }
-  return JPEGLI_PARALLEL_RET_SUCCESS;
+  return PDFCORE_PARALLEL_RET_SUCCESS;
 }
 
 // static
@@ -81,7 +81,7 @@ void ThreadParallelRunner::RunRange(ThreadParallelRunner* self,
   //   because it avoids user-specified parameters.
 
   for (;;) {
-#if JPEGLI_FALSE
+#if PDFCORE_FALSE
     // dynamic
     const uint32_t my_size = std::max(num_tasks / (num_worker_threads * 4), 1);
 #else
@@ -102,7 +102,7 @@ void ThreadParallelRunner::RunRange(ThreadParallelRunner* self,
       break;
     }
     for (uint32_t task = my_begin; task < my_end; ++task) {
-      self->data_func_(self->jpegli_opaque_, task, thread);
+      self->data_func_(self->pdfcore_jpegli_opaque_, task, thread);
     }
   }
 }
@@ -126,7 +126,7 @@ void ThreadParallelRunner::ThreadFunc(ThreadParallelRunner* self,
         goto RESUME_WAIT;  // lock still held, avoid incrementing ready.
       case kWorkerOnce:
         lock.unlock();
-        self->data_func_(self->jpegli_opaque_, thread, thread);
+        self->data_func_(self->pdfcore_jpegli_opaque_, thread, thread);
         break;
       case kWorkerExit:
         return;  // exits thread
@@ -168,11 +168,11 @@ ThreadParallelRunner::~ThreadParallelRunner() {
     if (thread.joinable()) {
       thread.join();
     } else {
-#if JPEGLI_IS_DEBUG_BUILD
-      JPEGLI_PRINT_STACK_TRACE();
-      JPEGLI_CRASH();
+#if PDFCORE_IS_DEBUG_BUILD
+      PDFCORE_PRINT_STACK_TRACE();
+      PDFCORE_CRASH();
 #endif
     }
   }
 }
-}  // namespace jpegli
+}  // namespace pdfcore

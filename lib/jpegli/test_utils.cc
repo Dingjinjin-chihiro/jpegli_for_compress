@@ -40,11 +40,11 @@
 #undef JPEG_API_FLAVOUR_JPEGLI
 #undef J_TEST_UTILS
 
-namespace jpegli {
+namespace pdfcore {
 
 void Check(bool ok) {
   if (!ok) {
-    JPEGLI_CRASH();
+    PDFCORE_CRASH();
   }
 }
 #define QUIT(M) Check(false);
@@ -57,12 +57,12 @@ std::string GetTestDataPath(const std::string& filename) {
 using ::bazel::tools::cpp::runfiles::Runfiles;
 const std::unique_ptr<Runfiles> kRunfiles(Runfiles::Create(""));
 std::string GetTestDataPath(const std::string& filename) {
-  std::string root(JPEGLI_ROOT_PACKAGE "/testdata/");
+  std::string root(PDFCORE_ROOT_PACKAGE "/testdata/");
   return kRunfiles->Rlocation(root + filename);
 }
 #endif
 
-::jpegli::StatusOr<std::vector<uint8_t>> ReadTestData(
+::pdfcore::StatusOr<std::vector<uint8_t>> ReadTestData(
     const std::string& filename) {
   std::vector<uint8_t> data;
   std::string full_path = GetTestDataPath(filename);
@@ -70,7 +70,7 @@ std::string GetTestDataPath(const std::string& filename) {
   std::ifstream file(full_path, std::ios::binary);
   std::vector<char> str((std::istreambuf_iterator<char>(file)),
                         std::istreambuf_iterator<char>());
-  JPEGLI_ENSURE(file.good());
+  PDFCORE_ENSURE(file.good());
   const uint8_t* raw = reinterpret_cast<const uint8_t*>(str.data());
   data = std::vector<uint8_t>(raw, raw + str.size());
   printf("Test data %s is %d bytes long.\n", filename.c_str(),
@@ -213,19 +213,19 @@ std::string ColorSpaceName(J_COLOR_SPACE colorspace) {
   }
 }
 
-std::string IOMethodName(JpegliDataType data_type,
-                         JpegliEndianness endianness) {
+std::string IOMethodName(PdfcoreDataType data_type,
+                         PdfcoreEndianness endianness) {
   std::string retval;
-  if (data_type == JPEGLI_TYPE_UINT8) {
+  if (data_type == PDFCORE_TYPE_UINT8) {
     return "";
-  } else if (data_type == JPEGLI_TYPE_UINT16) {
+  } else if (data_type == PDFCORE_TYPE_UINT16) {
     retval = "UINT16";
-  } else if (data_type == JPEGLI_TYPE_FLOAT) {
+  } else if (data_type == PDFCORE_TYPE_FLOAT) {
     retval = "FLOAT";
   }
-  if (endianness == JPEGLI_LITTLE_ENDIAN) {
+  if (endianness == PDFCORE_LITTLE_ENDIAN) {
     retval += "LE";
-  } else if (endianness == JPEGLI_BIG_ENDIAN) {
+  } else if (endianness == PDFCORE_BIG_ENDIAN) {
     retval += "BE";
   }
   return retval;
@@ -335,7 +335,7 @@ std::ostream& operator<<(std::ostream& os, const CompressParams& jparams) {
   return os;
 }
 
-::jpegli::Status SetNumChannels(J_COLOR_SPACE colorspace, size_t* channels) {
+::pdfcore::Status SetNumChannels(J_COLOR_SPACE colorspace, size_t* channels) {
   if (colorspace == JCS_GRAYSCALE) {
     *channels = 1;
   } else if (colorspace == JCS_RGB || colorspace == JCS_YCbCr ||
@@ -346,9 +346,9 @@ std::ostream& operator<<(std::ostream& os, const CompressParams& jparams) {
              colorspace == JCS_EXT_ARGB || colorspace == JCS_EXT_ABGR) {
     *channels = 4;
   } else if (colorspace == JCS_UNKNOWN) {
-    JPEGLI_ENSURE(*channels <= 4);
+    PDFCORE_ENSURE(*channels <= 4);
   } else {
-    return JPEGLI_FAILURE("Unsupported colorspace: %d",
+    return PDFCORE_FAILURE("Unsupported colorspace: %d",
                           static_cast<int>(colorspace));
   }
   return true;
@@ -362,8 +362,8 @@ void RGBToYCbCr(float r, float g, float b, float* y, float* cb, float* cr) {
 
 void ConvertPixel(const uint8_t* input_rgb, uint8_t* out,
                   J_COLOR_SPACE colorspace, size_t num_channels,
-                  JpegliDataType data_type = JPEGLI_TYPE_UINT8,
-                  JPEGLI_BOOL swap_endianness = JPEGLI_NATIVE_ENDIAN) {
+                  PdfcoreDataType data_type = PDFCORE_TYPE_UINT8,
+                  PDFCORE_BOOL swap_endianness = PDFCORE_NATIVE_ENDIAN) {
   const float kMul = 255.0f;
   float r = input_rgb[0] / kMul;
   float g = input_rgb[1] / kMul;
@@ -428,18 +428,18 @@ void ConvertPixel(const uint8_t* input_rgb, uint8_t* out,
   } else {
     Check(false);
   }
-  if (data_type == JPEGLI_TYPE_UINT8) {
+  if (data_type == PDFCORE_TYPE_UINT8) {
     memcpy(out, out8, num_channels);
-  } else if (data_type == JPEGLI_TYPE_UINT16) {
+  } else if (data_type == PDFCORE_TYPE_UINT16) {
     for (size_t c = 0; c < num_channels; ++c) {
       uint16_t val = (out8[c] << 8) + out8[c];
       val |= 0x40;  // Make little-endian and big-endian asymmetric
       if (swap_endianness) {
-        val = JPEGLI_BSWAP16(val);
+        val = PDFCORE_BSWAP16(val);
       }
       memcpy(&out[sizeof(val) * c], &val, sizeof(val));
     }
-  } else if (data_type == JPEGLI_TYPE_FLOAT) {
+  } else if (data_type == PDFCORE_TYPE_FLOAT) {
     for (size_t c = 0; c < num_channels; ++c) {
       float val = out8[c] / 255.0f;
       if (swap_endianness) {
@@ -452,7 +452,7 @@ void ConvertPixel(const uint8_t* input_rgb, uint8_t* out,
 
 void ConvertToGrayscale(TestImage* img) {
   if (img->color_space == JCS_GRAYSCALE) return;
-  Check(img->data_type == JPEGLI_TYPE_UINT8);
+  Check(img->data_type == PDFCORE_TYPE_UINT8);
   bool rgb_pre_alpha =
       img->color_space == JCS_EXT_ARGB || img->color_space == JCS_EXT_ABGR;
   bool rgb_post_alpha =
@@ -480,7 +480,7 @@ void ConvertToGrayscale(TestImage* img) {
 }
 
 void GeneratePixels(TestImage* img) {
-  JPEGLI_ASSIGN_OR_QUIT(std::vector<uint8_t> imgdata,
+  PDFCORE_ASSIGN_OR_QUIT(std::vector<uint8_t> imgdata,
                         ReadTestData("jxl/flower/flower.pnm"),
                         "Failed to read test data");
   size_t xsize;
@@ -502,11 +502,11 @@ void GeneratePixels(TestImage* img) {
   Check(SetNumChannels(static_cast<J_COLOR_SPACE>(img->color_space),
                        &img->components));
   size_t out_bytes_per_pixel =
-      jpegli_bytes_per_sample(img->data_type) * img->components;
+      pdfcore_jpegli_bytes_per_sample(img->data_type) * img->components;
   size_t out_stride = img->xsize * out_bytes_per_pixel;
   bool swap_endianness =
-      (img->endianness == JPEGLI_LITTLE_ENDIAN && !IsLittleEndian()) ||
-      (img->endianness == JPEGLI_BIG_ENDIAN && IsLittleEndian());
+      (img->endianness == PDFCORE_LITTLE_ENDIAN && !IsLittleEndian()) ||
+      (img->endianness == PDFCORE_BIG_ENDIAN && IsLittleEndian());
   img->pixels.resize(img->ysize * out_stride);
   for (size_t iy = 0; iy < img->ysize; ++iy) {
     size_t y = y0 + iy;
@@ -517,7 +517,7 @@ void GeneratePixels(TestImage* img) {
       ConvertPixel(&pixels[idx_in], &img->pixels[idx_out],
                    static_cast<J_COLOR_SPACE>(img->color_space),
                    img->components, img->data_type,
-                   TO_JPEGLI_BOOL(swap_endianness));
+                   TO_PDFCORE_BOOL(swap_endianness));
     }
   }
 }
@@ -573,16 +573,16 @@ void EncodeWithJpegli(const TestImage& input, const CompressParams& jparams,
   cinfo->image_height = input.ysize;
   cinfo->input_components = input.components;
   if (jparams.xyb_mode) {
-    jpegli_set_xyb_mode(cinfo);
+    pdfcore_jpegli_set_xyb_mode(cinfo);
   }
   if (jparams.libjpeg_mode) {
-    jpegli_enable_adaptive_quantization(cinfo, FALSE);
-    jpegli_use_standard_quant_tables(cinfo);
-    jpegli_set_progressive_level(cinfo, 0);
+    pdfcore_jpegli_enable_adaptive_quantization(cinfo, FALSE);
+    pdfcore_jpegli_use_standard_quant_tables(cinfo);
+    pdfcore_jpegli_set_progressive_level(cinfo, 0);
   }
-  jpegli_set_defaults(cinfo);
+  pdfcore_jpegli_set_defaults(cinfo);
   cinfo->in_color_space = static_cast<J_COLOR_SPACE>(input.color_space);
-  jpegli_default_colorspace(cinfo);
+  pdfcore_jpegli_default_colorspace(cinfo);
   if (jparams.override_JFIF >= 0) {
     cinfo->write_JFIF_header = jparams.override_JFIF;
   }
@@ -590,7 +590,7 @@ void EncodeWithJpegli(const TestImage& input, const CompressParams& jparams,
     cinfo->write_Adobe_marker = jparams.override_Adobe;
   }
   if (jparams.set_jpeg_colorspace) {
-    jpegli_set_colorspace(cinfo,
+    pdfcore_jpegli_set_colorspace(cinfo,
                           static_cast<J_COLOR_SPACE>(jparams.jpeg_color_space));
   }
   if (!jparams.comp_ids.empty()) {
@@ -604,7 +604,7 @@ void EncodeWithJpegli(const TestImage& input, const CompressParams& jparams,
       cinfo->comp_info[c].v_samp_factor = jparams.v_sampling[c];
     }
   }
-  jpegli_set_quality(cinfo, jparams.quality, TRUE);
+  pdfcore_jpegli_set_quality(cinfo, jparams.quality, TRUE);
   if (!jparams.quant_indexes.empty()) {
     for (int c = 0; c < cinfo->num_components; ++c) {
       cinfo->comp_info[c].quant_tbl_no = jparams.quant_indexes[c];
@@ -612,21 +612,21 @@ void EncodeWithJpegli(const TestImage& input, const CompressParams& jparams,
     for (const auto& table : jparams.quant_tables) {
       if (table.add_raw) {
         cinfo->quant_tbl_ptrs[table.slot_idx] =
-            jpegli_alloc_quant_table(reinterpret_cast<j_common_ptr>(cinfo));
+            pdfcore_jpegli_alloc_quant_table(reinterpret_cast<j_common_ptr>(cinfo));
         for (int k = 0; k < DCTSIZE2; ++k) {
           cinfo->quant_tbl_ptrs[table.slot_idx]->quantval[k] =
               table.quantval[k];
         }
         cinfo->quant_tbl_ptrs[table.slot_idx]->sent_table = FALSE;
       } else {
-        jpegli_add_quant_table(cinfo, table.slot_idx, table.basic_table.data(),
+        pdfcore_jpegli_add_quant_table(cinfo, table.slot_idx, table.basic_table.data(),
                                table.scale_factor,
-                               TO_JPEGLI_BOOL(table.force_baseline));
+                               TO_PDFCORE_BOOL(table.force_baseline));
       }
     }
   }
   if (jparams.simple_progression) {
-    jpegli_simple_progression(cinfo);
+    pdfcore_jpegli_simple_progression(cinfo);
     Check(jparams.progressive_mode == -1);
   }
   if (jparams.progressive_mode > 2) {
@@ -634,11 +634,11 @@ void EncodeWithJpegli(const TestImage& input, const CompressParams& jparams,
     cinfo->scan_info = script.scans;
     cinfo->num_scans = script.num_scans;
   } else if (jparams.progressive_mode >= 0) {
-    jpegli_set_progressive_level(cinfo, jparams.progressive_mode);
+    pdfcore_jpegli_set_progressive_level(cinfo, jparams.progressive_mode);
   }
-  jpegli_set_input_format(cinfo, input.data_type, input.endianness);
-  jpegli_enable_adaptive_quantization(
-      cinfo, TO_JPEGLI_BOOL(jparams.use_adaptive_quantization));
+  pdfcore_jpegli_set_input_format(cinfo, input.data_type, input.endianness);
+  pdfcore_jpegli_enable_adaptive_quantization(
+      cinfo, TO_PDFCORE_BOOL(jparams.use_adaptive_quantization));
   cinfo->restart_interval = jparams.restart_interval;
   cinfo->restart_in_rows = jparams.restart_in_rows;
   cinfo->smoothing_factor = jparams.smoothing_factor;
@@ -647,7 +647,7 @@ void EncodeWithJpegli(const TestImage& input, const CompressParams& jparams,
   } else if (jparams.optimize_coding == 0) {
     cinfo->optimize_coding = FALSE;
   }
-  cinfo->raw_data_in = TO_JPEGLI_BOOL(!input.raw_data.empty());
+  cinfo->raw_data_in = TO_PDFCORE_BOOL(!input.raw_data.empty());
   if (jparams.optimize_coding == 0 && jparams.use_flat_dc_luma_code) {
     JHUFF_TBL* tbl = cinfo->dc_huff_tbl_ptrs[0];
     memset(tbl, 0, sizeof(*tbl));
@@ -664,21 +664,21 @@ void EncodeWithJpegli(const TestImage& input, const CompressParams& jparams,
       cinfo->ac_huff_tbl_ptrs[0]->sent_table = TRUE;
       cinfo->ac_huff_tbl_ptrs[1]->sent_table = TRUE;
     }
-    jpegli_start_compress(cinfo, TO_JPEGLI_BOOL(write_all_tables));
+    pdfcore_jpegli_start_compress(cinfo, TO_PDFCORE_BOOL(write_all_tables));
     if (jparams.add_marker) {
-      jpegli_write_marker(cinfo, kSpecialMarker0, kMarkerData,
+      pdfcore_jpegli_write_marker(cinfo, kSpecialMarker0, kMarkerData,
                           sizeof(kMarkerData));
-      jpegli_write_m_header(cinfo, kSpecialMarker1, sizeof(kMarkerData));
+      pdfcore_jpegli_write_m_header(cinfo, kSpecialMarker1, sizeof(kMarkerData));
       for (uint8_t c : kMarkerData) {
-        jpegli_write_m_byte(cinfo, c);
+        pdfcore_jpegli_write_m_byte(cinfo, c);
       }
       for (size_t i = 0; i < kMarkerSequenceLen; ++i) {
-        jpegli_write_marker(cinfo, kMarkerSequence[i], kMarkerData,
+        pdfcore_jpegli_write_marker(cinfo, kMarkerSequence[i], kMarkerData,
                             ((i + 2) % sizeof(kMarkerData)));
       }
     }
     if (!jparams.icc.empty()) {
-      jpegli_write_icc_profile(cinfo, jparams.icc.data(), jparams.icc.size());
+      pdfcore_jpegli_write_icc_profile(cinfo, jparams.icc.data(), jparams.icc.size());
     }
   }
   if (cinfo->raw_data_in) {
@@ -702,7 +702,7 @@ void EncodeWithJpegli(const TestImage& input, const CompressParams& jparams,
               (y0 + i < cheight ? &raw_data[c][(y0 + i) * cwidth] : nullptr);
         }
       }
-      size_t num_lines = jpegli_write_raw_data(cinfo, data.data(), max_lines);
+      size_t num_lines = pdfcore_jpegli_write_raw_data(cinfo, data.data(), max_lines);
       Check(num_lines == max_lines);
     }
   } else if (!input.coeffs.empty()) {
@@ -717,13 +717,13 @@ void EncodeWithJpegli(const TestImage& input, const CompressParams& jparams,
           comptr, JPOOL_IMAGE, FALSE, xsize_blocks, ysize_blocks,
           cinfo->comp_info[c].v_samp_factor);
     }
-    jpegli_write_coefficients(cinfo, coef_arrays);
+    pdfcore_jpegli_write_coefficients(cinfo, coef_arrays);
     if (jparams.add_marker) {
-      jpegli_write_marker(cinfo, kSpecialMarker0, kMarkerData,
+      pdfcore_jpegli_write_marker(cinfo, kSpecialMarker0, kMarkerData,
                           sizeof(kMarkerData));
-      jpegli_write_m_header(cinfo, kSpecialMarker1, sizeof(kMarkerData));
+      pdfcore_jpegli_write_m_header(cinfo, kSpecialMarker1, sizeof(kMarkerData));
       for (uint8_t c : kMarkerData) {
-        jpegli_write_m_byte(cinfo, c);
+        pdfcore_jpegli_write_m_byte(cinfo, c);
       }
     }
     for (int c = 0; c < cinfo->num_components; ++c) {
@@ -738,15 +738,15 @@ void EncodeWithJpegli(const TestImage& input, const CompressParams& jparams,
     }
   } else {
     size_t stride = cinfo->image_width * cinfo->input_components *
-                    jpegli_bytes_per_sample(input.data_type);
+                    pdfcore_jpegli_bytes_per_sample(input.data_type);
     std::vector<uint8_t> row_bytes(stride);
     for (size_t y = 0; y < cinfo->image_height; ++y) {
       memcpy(row_bytes.data(), &input.pixels[y * stride], stride);
       JSAMPROW row[] = {row_bytes.data()};
-      jpegli_write_scanlines(cinfo, row, 1);
+      pdfcore_jpegli_write_scanlines(cinfo, row, 1);
     }
   }
-  jpegli_finish_compress(cinfo);
+  pdfcore_jpegli_finish_compress(cinfo);
 }
 
 bool EncodeWithJpegli(const TestImage& input, const CompressParams& jparams,
@@ -756,13 +756,13 @@ bool EncodeWithJpegli(const TestImage& input, const CompressParams& jparams,
   jpeg_compress_struct cinfo;
   const auto try_catch_block = [&]() -> bool {
     ERROR_HANDLER_SETUP(jpegli);
-    jpegli_create_compress(&cinfo);
-    jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
+    pdfcore_jpegli_create_compress(&cinfo);
+    pdfcore_jpegli_mem_dest(&cinfo, &buffer, &buffer_size);
     EncodeWithJpegli(input, jparams, &cinfo);
     return true;
   };
   bool success = try_catch_block();
-  jpegli_destroy_compress(&cinfo);
+  pdfcore_jpegli_destroy_compress(&cinfo);
   if (success) {
     compressed->resize(buffer_size);
     std::copy_n(buffer, buffer_size, compressed->data());
@@ -775,7 +775,7 @@ int NumTestScanScripts() { return kNumTestScripts; }
 
 void DumpImage(const TestImage& image, const std::string& fn) {
   Check(image.components == 1 || image.components == 3);
-  size_t bytes_per_sample = jpegli_bytes_per_sample(image.data_type);
+  size_t bytes_per_sample = pdfcore_jpegli_bytes_per_sample(image.data_type);
   uint32_t maxval = (1u << (8 * bytes_per_sample)) - 1;
   char type = image.components == 1 ? '5' : '6';
   std::ofstream out(fn.c_str(), std::ofstream::binary);
@@ -793,20 +793,20 @@ double DistanceRms(const TestImage& input, const TestImage& output,
   size_t start_offset = start_line * stride;
   auto get_sample = [&](const TestImage& im, const std::vector<uint8_t>& data,
                         size_t idx) -> double {
-    size_t bytes_per_sample = jpegli_bytes_per_sample(im.data_type);
+    size_t bytes_per_sample = pdfcore_jpegli_bytes_per_sample(im.data_type);
     bool is_little_endian =
-        (im.endianness == JPEGLI_LITTLE_ENDIAN ||
-         (im.endianness == JPEGLI_NATIVE_ENDIAN && IsLittleEndian()));
+        (im.endianness == PDFCORE_LITTLE_ENDIAN ||
+         (im.endianness == PDFCORE_NATIVE_ENDIAN && IsLittleEndian()));
     size_t offset = start_offset + idx * bytes_per_sample;
     Check(offset < data.size());
     const uint8_t* p = &data[offset];
-    if (im.data_type == JPEGLI_TYPE_UINT8) {
+    if (im.data_type == PDFCORE_TYPE_UINT8) {
       static const double mul8 = 1.0 / 255.0;
       return p[0] * mul8;
-    } else if (im.data_type == JPEGLI_TYPE_UINT16) {
+    } else if (im.data_type == PDFCORE_TYPE_UINT16) {
       static const double mul16 = 1.0 / 65535.0;
       return (is_little_endian ? LoadLE16(p) : LoadBE16(p)) * mul16;
-    } else if (im.data_type == JPEGLI_TYPE_FLOAT) {
+    } else if (im.data_type == PDFCORE_TYPE_FLOAT) {
       return (is_little_endian ? LoadLEFloat(p) : LoadBEFloat(p));
     }
     return 0.0;
@@ -876,4 +876,4 @@ void VerifyOutputImage(const TestImage& input, const TestImage& output,
   }
 }
 
-}  // namespace jpegli
+}  // namespace pdfcore

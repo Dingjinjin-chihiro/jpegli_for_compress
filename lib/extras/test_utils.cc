@@ -24,12 +24,12 @@
 #include "tools/cpp/runfiles/runfiles.h"
 #endif
 
-namespace jpegli {
+namespace pdfcore {
 namespace test {
 
 void Check(bool ok) {
   if (!ok) {
-    JPEGLI_CRASH();
+    PDFCORE_CRASH();
   }
 }
 
@@ -41,7 +41,7 @@ std::string GetTestDataPath(const std::string& filename) {
 using bazel::tools::cpp::runfiles::Runfiles;
 const std::unique_ptr<Runfiles> kRunfiles(Runfiles::Create(""));
 std::string GetTestDataPath(const std::string& filename) {
-  std::string root(JPEGLI_ROOT_PACKAGE "/testdata/");
+  std::string root(PDFCORE_ROOT_PACKAGE "/testdata/");
   return kRunfiles->Rlocation(root + filename);
 }
 #endif
@@ -61,13 +61,13 @@ std::vector<uint8_t> ReadTestData(const std::string& filename) {
 }
 
 StatusOr<Image3F> GetColorImage(const extras::PackedPixelFile& ppf) {
-  JpegliMemoryManager* memory_manager = jpegli::test::MemoryManager();
-  JPEGLI_ENSURE(!ppf.frames.empty());
-  JPEGLI_TEST_ASSIGN_OR_DIE(
+  PdfcoreMemoryManager* memory_manager = pdfcore::test::MemoryManager();
+  PDFCORE_ENSURE(!ppf.frames.empty());
+  PDFCORE_TEST_ASSIGN_OR_DIE(
       Image3F color, Image3F::Create(memory_manager, ppf.xsize(), ppf.ysize()));
-  JPEGLI_ENSURE(ConvertPackedPixelFileToImage3F(ppf, &color, nullptr));
+  PDFCORE_ENSURE(ConvertPackedPixelFileToImage3F(ppf, &color, nullptr));
   return color;
 }
 
 }  // namespace test
-}  // namespace jpegli
+}  // namespace pdfcore

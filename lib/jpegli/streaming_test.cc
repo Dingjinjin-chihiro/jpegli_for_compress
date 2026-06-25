@@ -20,7 +20,7 @@
 #include "lib/jpegli/test_utils.h"
 #include "lib/jpegli/testing.h"
 
-namespace jpegli {
+namespace pdfcore {
 namespace {
 
 // A simple suspending source manager with an input buffer.
@@ -34,7 +34,7 @@ struct SourceManager {
     pub.init_source = init_source;
     pub.fill_input_buffer = fill_input_buffer;
     pub.skip_input_data = skip_input_data;
-    pub.resync_to_restart = jpegli_resync_to_restart;
+    pub.resync_to_restart = pdfcore_jpegli_resync_to_restart;
     pub.term_source = term_source;
   }
 
@@ -111,8 +111,8 @@ TEST_P(StreamingTestParam, TestStreaming) {
     dinfo.client_data = cinfo.client_data;
     // Create a pair of compressor and decompressor objects, where the
     // compressor's output is connected to the decompressor's input.
-    jpegli_create_decompress(&dinfo);
-    jpegli_create_compress(&cinfo);
+    pdfcore_jpegli_create_decompress(&dinfo);
+    pdfcore_jpegli_create_compress(&cinfo);
     dinfo.src = reinterpret_cast<jpeg_source_mgr*>(&src);
     DestinationManager dest(&src);
     cinfo.dest = reinterpret_cast<jpeg_destination_mgr*>(&dest);
@@ -121,11 +121,11 @@ TEST_P(StreamingTestParam, TestStreaming) {
     cinfo.image_height = input.ysize;
     cinfo.input_components = input.components;
     cinfo.in_color_space = static_cast<J_COLOR_SPACE>(input.color_space);
-    jpegli_set_defaults(&cinfo);
+    pdfcore_jpegli_set_defaults(&cinfo);
     cinfo.comp_info[0].v_samp_factor = config.jparams.v_sampling[0];
-    jpegli_set_progressive_level(&cinfo, 0);
+    pdfcore_jpegli_set_progressive_level(&cinfo, 0);
     cinfo.optimize_coding = FALSE;
-    jpegli_start_compress(&cinfo, TRUE);
+    pdfcore_jpegli_start_compress(&cinfo, TRUE);
 
     size_t stride = cinfo.image_width * cinfo.input_components;
     size_t iMCU_height = 8 * cinfo.max_v_samp_factor;
@@ -141,10 +141,10 @@ TEST_P(StreamingTestParam, TestStreaming) {
         rows_in[i] = &row_bytes[i * stride];
       }
       EXPECT_EQ(lines_in,
-                jpegli_write_scanlines(&cinfo, rows_in.data(), lines_in));
+                pdfcore_jpegli_write_scanlines(&cinfo, rows_in.data(), lines_in));
       y_in += lines_in;
       if (y_in == cinfo.image_height) {
-        jpegli_finish_compress(&cinfo);
+        pdfcore_jpegli_finish_compress(&cinfo);
       }
 
       // After the first iMCU row, we don't yet expect any output because the
@@ -159,14 +159,14 @@ TEST_P(StreamingTestParam, TestStreaming) {
       // while emitting the first compressed iMCU row.
       if (y_in == std::min<size_t>(2 * iMCU_height, cinfo.image_height)) {
         EXPECT_EQ(JPEG_REACHED_SOS,
-                  jpegli_read_header(&dinfo, /*require_image=*/TRUE));
+                  pdfcore_jpegli_read_header(&dinfo, /*require_image=*/TRUE));
         output.xsize = dinfo.image_width;
         output.ysize = dinfo.image_height;
         output.components = dinfo.num_components;
         EXPECT_EQ(output.xsize, input.xsize);
         EXPECT_EQ(output.ysize, input.ysize);
         EXPECT_EQ(output.components, input.components);
-        EXPECT_TRUE(jpegli_start_decompress(&dinfo));
+        EXPECT_TRUE(pdfcore_jpegli_start_decompress(&dinfo));
         output.pixels.resize(output.ysize * stride);
         if (y_in < cinfo.image_height) {
           continue;
@@ -194,19 +194,19 @@ TEST_P(StreamingTestParam, TestStreaming) {
             reinterpret_cast<JSAMPLE*>(&output.pixels[(y_out + i) * stride]);
       }
       EXPECT_EQ(lines_out,
-                jpegli_read_scanlines(&dinfo, rows_out.data(), lines_out));
+                pdfcore_jpegli_read_scanlines(&dinfo, rows_out.data(), lines_out));
       VerifyOutputImage(input, output, y_out, lines_out, 3.8f);
       y_out += lines_out;
 
       if (y_out == cinfo.image_height) {
-        EXPECT_TRUE(jpegli_finish_decompress(&dinfo));
+        EXPECT_TRUE(pdfcore_jpegli_finish_decompress(&dinfo));
       }
     }
     return true;
   };
   EXPECT_TRUE(try_catch_block());
-  jpegli_destroy_decompress(&dinfo);
-  jpegli_destroy_compress(&cinfo);
+  pdfcore_jpegli_destroy_decompress(&dinfo);
+  pdfcore_jpegli_destroy_compress(&cinfo);
 }
 
 std::vector<TestConfig> GenerateTests() {
@@ -239,9 +239,9 @@ std::string TestDescription(
   return name.str();
 }
 
-JPEGLI_INSTANTIATE_TEST_SUITE_P(StreamingTest, StreamingTestParam,
+PDFCORE_INSTANTIATE_TEST_SUITE_P(StreamingTest, StreamingTestParam,
                                 testing::ValuesIn(GenerateTests()),
                                 TestDescription);
 
 }  // namespace
-}  // namespace jpegli
+}  // namespace pdfcore

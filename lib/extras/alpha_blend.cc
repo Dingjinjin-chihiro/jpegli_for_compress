@@ -12,7 +12,7 @@
 #include "lib/base/types.h"
 #include "lib/extras/packed_image.h"
 
-namespace jpegli {
+namespace pdfcore {
 namespace extras {
 
 namespace {
@@ -20,12 +20,12 @@ namespace {
 Status AlphaBlend(PackedFrame* frame, const float background[3]) {
   if (!frame) return true;
   const PackedImage& im = frame->color;
-  JpegliPixelFormat format = im.format;
+  PdfcorePixelFormat format = im.format;
   if (format.num_channels != 2 && format.num_channels != 4) {
     return true;
   }
   --format.num_channels;
-  JPEGLI_ASSIGN_OR_RETURN(PackedImage blended,
+  PDFCORE_ASSIGN_OR_RETURN(PackedImage blended,
                           PackedImage::Create(im.xsize, im.ysize, format));
   // TODO(szabadka) SIMDify this and make it work for float16.
   for (size_t y = 0; y < im.ysize; ++y) {
@@ -49,7 +49,7 @@ Status AlphaBlend(PackedFrame* frame, const float background[3]) {
       }
     }
   }
-  JPEGLI_ASSIGN_OR_RETURN(frame->color, blended.Copy());
+  PDFCORE_ASSIGN_OR_RETURN(frame->color, blended.Copy());
   return true;
 }
 
@@ -60,12 +60,12 @@ Status AlphaBlend(PackedPixelFile* ppf, const float background[3]) {
     return true;
   }
   ppf->info.alpha_bits = 0;
-  JPEGLI_RETURN_IF_ERROR(AlphaBlend(ppf->preview_frame.get(), background));
+  PDFCORE_RETURN_IF_ERROR(AlphaBlend(ppf->preview_frame.get(), background));
   for (auto& frame : ppf->frames) {
-    JPEGLI_RETURN_IF_ERROR(AlphaBlend(&frame, background));
+    PDFCORE_RETURN_IF_ERROR(AlphaBlend(&frame, background));
   }
   return true;
 }
 
 }  // namespace extras
-}  // namespace jpegli
+}  // namespace pdfcore

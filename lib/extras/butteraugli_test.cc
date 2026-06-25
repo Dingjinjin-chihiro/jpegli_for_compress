@@ -21,15 +21,15 @@
 #include "lib/extras/test_memory_manager.h"
 #include "lib/extras/test_utils.h"
 
-namespace jpegli {
+namespace pdfcore {
 namespace {
 
-using ::jpegli::test::GetColorImage;
-using ::jpegli::test::TestImage;
+using ::pdfcore::test::GetColorImage;
+using ::pdfcore::test::TestImage;
 
 Image3F SinglePixelImage(float red, float green, float blue) {
-  JpegliMemoryManager* memory_manager = jpegli::test::MemoryManager();
-  JPEGLI_TEST_ASSIGN_OR_DIE(Image3F img, Image3F::Create(memory_manager, 1, 1));
+  PdfcoreMemoryManager* memory_manager = pdfcore::test::MemoryManager();
+  PDFCORE_TEST_ASSIGN_OR_DIE(Image3F img, Image3F::Create(memory_manager, 1, 1));
   img.PlaneRow(0, 0)[0] = red;
   img.PlaneRow(1, 0)[0] = green;
   img.PlaneRow(2, 0)[0] = blue;
@@ -75,15 +75,15 @@ TEST(ButteraugliInPlaceTest, SinglePixel) {
 }
 
 TEST(ButteraugliInPlaceTest, LargeImage) {
-  JpegliMemoryManager* memory_manager = jpegli::test::MemoryManager();
+  PdfcoreMemoryManager* memory_manager = pdfcore::test::MemoryManager();
   const size_t xsize = 1024;
   const size_t ysize = 1024;
   TestImage img;
   ASSERT_TRUE(img.SetDimensions(xsize, ysize));
-  JPEGLI_TEST_ASSIGN_OR_DIE(auto frame, img.AddFrame());
+  PDFCORE_TEST_ASSIGN_OR_DIE(auto frame, img.AddFrame());
   frame.RandomFill(777);
-  JPEGLI_TEST_ASSIGN_OR_DIE(Image3F rgb0, GetColorImage(img.ppf()));
-  JPEGLI_TEST_ASSIGN_OR_DIE(Image3F rgb1,
+  PDFCORE_TEST_ASSIGN_OR_DIE(Image3F rgb0, GetColorImage(img.ppf()));
+  PDFCORE_TEST_ASSIGN_OR_DIE(Image3F rgb1,
                             Image3F::Create(memory_manager, xsize, ysize));
   ASSERT_TRUE(CopyImageTo(rgb0, &rgb1));
   AddUniformNoise(&rgb1, 0.02f, 7777);
@@ -93,7 +93,7 @@ TEST(ButteraugliInPlaceTest, LargeImage) {
   double diffval;
   EXPECT_TRUE(
       ButteraugliInterface(rgb0, rgb1, butteraugli_params, diffmap, diffval));
-  JPEGLI_TEST_ASSIGN_OR_DIE(double distp,
+  PDFCORE_TEST_ASSIGN_OR_DIE(double distp,
                             ComputeDistanceP(diffmap, butteraugli_params, 3.0));
   EXPECT_NEAR(diffval, 4.0, 0.5);
   EXPECT_NEAR(distp, 1.5, 0.5);
@@ -102,11 +102,11 @@ TEST(ButteraugliInPlaceTest, LargeImage) {
   EXPECT_TRUE(ButteraugliInterfaceInPlace(std::move(rgb0), std::move(rgb1),
                                           butteraugli_params, diffmap2,
                                           diffval2));
-  JPEGLI_TEST_ASSIGN_OR_DIE(
+  PDFCORE_TEST_ASSIGN_OR_DIE(
       double distp2, ComputeDistanceP(diffmap2, butteraugli_params, 3.0));
   EXPECT_NEAR(diffval, diffval2, 5e-7);
   EXPECT_NEAR(distp, distp2, 1e-7);
 }
 
 }  // namespace
-}  // namespace jpegli
+}  // namespace pdfcore

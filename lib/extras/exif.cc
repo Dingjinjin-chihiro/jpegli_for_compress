@@ -11,7 +11,7 @@
 
 #include "lib/base/byte_order.h"
 
-namespace jpegli {
+namespace pdfcore {
 
 constexpr uint16_t kExifOrientationTag = 274;
 
@@ -56,4 +56,4 @@ void ResetExifOrientation(std::vector<uint8_t>& exif) {
   }
 }
 
-}  // namespace jpegli
+}  // namespace pdfcore

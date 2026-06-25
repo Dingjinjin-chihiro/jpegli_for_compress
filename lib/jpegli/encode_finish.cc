@@ -26,7 +26,7 @@
 #include "lib/jpegli/dct-inl.h"
 
 HWY_BEFORE_NAMESPACE();
-namespace jpegli {
+namespace pdfcore {
 namespace HWY_NAMESPACE {
 
 // These templates are not found via ADL.
@@ -140,11 +140,11 @@ void ReQuantizeCoeffs(j_compress_ptr cinfo) {
 
 // NOLINTNEXTLINE(google-readability-namespace-comments)
 }  // namespace HWY_NAMESPACE
-}  // namespace jpegli
+}  // namespace pdfcore
 HWY_AFTER_NAMESPACE();
 
 #if HWY_ONCE
-namespace jpegli {
+namespace pdfcore {
 namespace {
 HWY_EXPORT(ComputePSNR);
 HWY_EXPORT(ReQuantizeCoeffs);
@@ -234,5 +234,5 @@ void QuantizetoPSNR(j_compress_ptr cinfo) {
   ReQuantizeCoeffs(cinfo);
 }
 
-}  // namespace jpegli
+}  // namespace pdfcore
 #endif  // HWY_ONCE

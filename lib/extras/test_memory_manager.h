@@ -3,17 +3,17 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-#ifndef JPEGLI_LIB_EXTRAS_TEST_MEMORY_MANAGER_H_
-#define JPEGLI_LIB_EXTRAS_TEST_MEMORY_MANAGER_H_
+#ifndef PDFCORE_LIB_EXTRAS_TEST_MEMORY_MANAGER_H_
+#define PDFCORE_LIB_EXTRAS_TEST_MEMORY_MANAGER_H_
 
 #include "lib/base/memory_manager.h"
 
-namespace jpegli {
+namespace pdfcore {
 namespace test {
 
-JpegliMemoryManager* MemoryManager();
+PdfcoreMemoryManager* MemoryManager();
 
 }  // namespace test
-}  // namespace jpegli
+}  // namespace pdfcore
 
-#endif  // JPEGLI_LIB_EXTRAS_TEST_MEMORY_MANAGER_H_
+#endif  // PDFCORE_LIB_EXTRAS_TEST_MEMORY_MANAGER_H_

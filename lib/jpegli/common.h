@@ -6,7 +6,7 @@
 //
 // This file contains the C API of the common encoder/decoder part of libjpegli
 // library, which is based on the C API of libjpeg, with the function names
-// changed from jpeg_* to jpegli_*, while compressor and decompressor object
+// changed from jpeg_* to pdfcore_jpegli_*, while compressor and decompressor object
 // definitions are included directly from jpeglib.h
 //
 // Applications can use the libjpegli library in one of the following ways:
@@ -18,8 +18,8 @@
 //      with the one built by this project that is API- and ABI-compatible with
 //      libjpeg-turbo's version of libjpeg.so.
 
-#ifndef JPEGLI_LIB_JPEGLI_COMMON_H_
-#define JPEGLI_LIB_JPEGLI_COMMON_H_
+#ifndef PDFCORE_LIB_PDFCORE_COMMON_H_
+#define PDFCORE_LIB_PDFCORE_COMMON_H_
 
 #include "lib/base/include_jpeglib.h"  // IWYU pragma: export
 
@@ -27,18 +27,18 @@
 extern "C" {
 #endif
 
-struct jpeg_error_mgr* jpegli_std_error(struct jpeg_error_mgr* err);
+struct jpeg_error_mgr* pdfcore_jpegli_std_error(struct jpeg_error_mgr* err);
 
-void jpegli_abort(j_common_ptr cinfo);
+void pdfcore_jpegli_abort(j_common_ptr cinfo);
 
-void jpegli_destroy(j_common_ptr cinfo);
+void pdfcore_jpegli_destroy(j_common_ptr cinfo);
 
-JQUANT_TBL* jpegli_alloc_quant_table(j_common_ptr cinfo);
+JQUANT_TBL* pdfcore_jpegli_alloc_quant_table(j_common_ptr cinfo);
 
-JHUFF_TBL* jpegli_alloc_huff_table(j_common_ptr cinfo);
+JHUFF_TBL* pdfcore_jpegli_alloc_huff_table(j_common_ptr cinfo);
 
 #ifdef __cplusplus
 }  // extern "C"
 #endif
 
-#endif  // JPEGLI_LIB_JPEGLI_COMMON_H_
+#endif  // PDFCORE_LIB_PDFCORE_COMMON_H_

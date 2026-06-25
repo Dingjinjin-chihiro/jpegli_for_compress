@@ -14,7 +14,7 @@
 #include "lib/jpegli/error.h"
 #include "lib/jpegli/memory_manager.h"
 
-namespace jpegli {
+namespace pdfcore {
 
 constexpr size_t kDestBufferSize = 64 << 10;
 
@@ -32,7 +32,7 @@ struct StdioDestinationManager {
   static boolean empty_output_buffer(j_compress_ptr cinfo) {
     auto* dest = reinterpret_cast<StdioDestinationManager*>(cinfo->dest);
     if (fwrite(dest->buffer, 1, kDestBufferSize, dest->f) != kDestBufferSize) {
-      JPEGLI_ERROR("Failed to write to output stream.");
+      PDFCORE_ERROR("Failed to write to output stream.");
     }
     dest->pub.next_output_byte = dest->buffer;
     dest->pub.free_in_buffer = kDestBufferSize;
@@ -44,11 +44,11 @@ struct StdioDestinationManager {
     size_t bytes_left = kDestBufferSize - dest->pub.free_in_buffer;
     if (bytes_left &&
         fwrite(dest->buffer, 1, bytes_left, dest->f) != bytes_left) {
-      JPEGLI_ERROR("Failed to write to output stream.");
+      PDFCORE_ERROR("Failed to write to output stream.");
     }
     fflush(dest->f);
     if (ferror(dest->f)) {
-      JPEGLI_ERROR("Failed to write to output stream.");
+      PDFCORE_ERROR("Failed to write to output stream.");
     }
   }
 };
@@ -90,61 +90,61 @@ struct MemoryDestinationManager {
   }
 };
 
-}  // namespace jpegli
+}  // namespace pdfcore
 
-void jpegli_stdio_dest(j_compress_ptr cinfo, FILE* outfile) {
+void pdfcore_jpegli_stdio_dest(j_compress_ptr cinfo, FILE* outfile) {
   if (outfile == nullptr) {
-    JPEGLI_ERROR("jpegli_stdio_dest: Invalid destination.");
+    PDFCORE_ERROR("pdfcore_jpegli_stdio_dest: Invalid destination.");
   }
   if (cinfo->dest && cinfo->dest->init_destination !=
-                         jpegli::StdioDestinationManager::init_destination) {
-    JPEGLI_ERROR("jpegli_stdio_dest: a different dest manager was already set");
+                         pdfcore::StdioDestinationManager::init_destination) {
+    PDFCORE_ERROR("pdfcore_jpegli_stdio_dest: a different dest manager was already set");
   }
   if (!cinfo->dest) {
     cinfo->dest = reinterpret_cast<jpeg_destination_mgr*>(
-        jpegli::Allocate<jpegli::StdioDestinationManager>(cinfo, 1));
+        pdfcore::Allocate<pdfcore::StdioDestinationManager>(cinfo, 1));
   }
-  auto* dest = reinterpret_cast<jpegli::StdioDestinationManager*>(cinfo->dest);
+  auto* dest = reinterpret_cast<pdfcore::StdioDestinationManager*>(cinfo->dest);
   dest->f = outfile;
-  dest->buffer = jpegli::Allocate<uint8_t>(cinfo, jpegli::kDestBufferSize);
+  dest->buffer = pdfcore::Allocate<uint8_t>(cinfo, pdfcore::kDestBufferSize);
   dest->pub.next_output_byte = dest->buffer;
-  dest->pub.free_in_buffer = jpegli::kDestBufferSize;
+  dest->pub.free_in_buffer = pdfcore::kDestBufferSize;
   dest->pub.init_destination =
-      jpegli::StdioDestinationManager::init_destination;
+      pdfcore::StdioDestinationManager::init_destination;
   dest->pub.empty_output_buffer =
-      jpegli::StdioDestinationManager::empty_output_buffer;
+      pdfcore::StdioDestinationManager::empty_output_buffer;
   dest->pub.term_destination =
-      jpegli::StdioDestinationManager::term_destination;
+      pdfcore::StdioDestinationManager::term_destination;
 }
 
-void jpegli_mem_dest(j_compress_ptr cinfo, unsigned char** outbuffer,
+void pdfcore_jpegli_mem_dest(j_compress_ptr cinfo, unsigned char** outbuffer,
                      unsigned long* outsize /* NOLINT */) {
   if (outbuffer == nullptr || outsize == nullptr) {
-    JPEGLI_ERROR("jpegli_mem_dest: Invalid destination.");
+    PDFCORE_ERROR("pdfcore_jpegli_mem_dest: Invalid destination.");
   }
   if (cinfo->dest && cinfo->dest->init_destination !=
-                         jpegli::MemoryDestinationManager::init_destination) {
-    JPEGLI_ERROR("jpegli_mem_dest: a different dest manager was already set");
+                         pdfcore::MemoryDestinationManager::init_destination) {
+    PDFCORE_ERROR("pdfcore_jpegli_mem_dest: a different dest manager was already set");
   }
   if (!cinfo->dest) {
-    auto* dest = jpegli::Allocate<jpegli::MemoryDestinationManager>(cinfo, 1);
+    auto* dest = pdfcore::Allocate<pdfcore::MemoryDestinationManager>(cinfo, 1);
     dest->temp_buffer = nullptr;
     cinfo->dest = reinterpret_cast<jpeg_destination_mgr*>(dest);
   }
-  auto* dest = reinterpret_cast<jpegli::MemoryDestinationManager*>(cinfo->dest);
+  auto* dest = reinterpret_cast<pdfcore::MemoryDestinationManager*>(cinfo->dest);
   dest->pub.init_destination =
-      jpegli::MemoryDestinationManager::init_destination;
+      pdfcore::MemoryDestinationManager::init_destination;
   dest->pub.empty_output_buffer =
-      jpegli::MemoryDestinationManager::empty_output_buffer;
+      pdfcore::MemoryDestinationManager::empty_output_buffer;
   dest->pub.term_destination =
-      jpegli::MemoryDestinationManager::term_destination;
+      pdfcore::MemoryDestinationManager::term_destination;
   dest->output = outbuffer;
   dest->output_size = outsize;
   if (*outbuffer == nullptr || *outsize == 0) {
     dest->temp_buffer =
-        reinterpret_cast<uint8_t*>(malloc(jpegli::kDestBufferSize));
+        reinterpret_cast<uint8_t*>(malloc(pdfcore::kDestBufferSize));
     *outbuffer = dest->temp_buffer;
-    *outsize = jpegli::kDestBufferSize;
+    *outsize = pdfcore::kDestBufferSize;
   }
   dest->current_buffer = *outbuffer;
   dest->buffer_size = *outsize;

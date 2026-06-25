@@ -31,7 +31,7 @@
 #include "lib/jpegli/entropy_coding-inl.h"
 
 HWY_BEFORE_NAMESPACE();
-namespace jpegli {
+namespace pdfcore {
 namespace HWY_NAMESPACE {
 
 void ComputeTokensSequential(const coeff_t* block, int last_dc, int dc_ctx,
@@ -42,11 +42,11 @@ void ComputeTokensSequential(const coeff_t* block, int last_dc, int dc_ctx,
 
 // NOLINTNEXTLINE(google-readability-namespace-comments)
 }  // namespace HWY_NAMESPACE
-}  // namespace jpegli
+}  // namespace pdfcore
 HWY_AFTER_NAMESPACE();
 
 #if HWY_ONCE
-namespace jpegli {
+namespace pdfcore {
 
 size_t MaxNumTokensPerMCURow(j_compress_ptr cinfo) {
   int MCUs_per_row = DivCeil(cinfo->image_width, 8 * cinfo->max_h_samp_factor);
@@ -87,7 +87,7 @@ void TokenizeProgressiveDC(const coeff_t* coeffs, int context, int Al,
     temp = -temp;
     temp2--;
   }
-  int nbits = (temp == 0) ? 0 : (jpegli::FloorLog2Nonzero<uint32_t>(temp) + 1);
+  int nbits = (temp == 0) ? 0 : (pdfcore::FloorLog2Nonzero<uint32_t>(temp) + 1);
   int bits = temp2 & ((1 << nbits) - 1);
   *(*next_token)++ = Token(context, nbits, bits);
 }
@@ -113,7 +113,7 @@ void TokenizeACProgressiveScan(j_compress_ptr cinfo, int scan_index,
   sti->token_offset = m->total_num_tokens + ta->num_tokens;
   sti->restarts = Allocate<size_t>(cinfo, num_restarts, JPOOL_IMAGE);
   const auto emit_eob_run = [&]() {
-    int nbits = jpegli::FloorLog2Nonzero<uint32_t>(eob_run);
+    int nbits = pdfcore::FloorLog2Nonzero<uint32_t>(eob_run);
     int symbol = nbits << 4u;
     *m->next_token++ = Token(context, symbol, eob_run & ((1 << nbits) - 1));
     eob_run = 0;
@@ -175,7 +175,7 @@ void TokenizeACProgressiveScan(j_compress_ptr cinfo, int scan_index,
           *m->next_token++ = Token(context, 0xf0, 0);
           r -= 16;
         }
-        int nbits = jpegli::FloorLog2Nonzero<uint32_t>(temp) + 1;
+        int nbits = pdfcore::FloorLog2Nonzero<uint32_t>(temp) + 1;
         int symbol = (r << 4u) + nbits;
         *m->next_token++ = Token(context, symbol, temp2 & ((1 << nbits) - 1));
         ++num_nzeros;
@@ -337,7 +337,7 @@ void TokenizeScan(j_compress_ptr cinfo, size_t scan_index, int ac_ctx_offset,
   // "Non-interleaved" means color data comes in separate scans, in other words
   // each scan can contain only one color component.
   const bool is_interleaved = (scan_info->comps_in_scan > 1);
-  const bool is_progressive = FROM_JPEGLI_BOOL(cinfo->progressive_mode);
+  const bool is_progressive = FROM_PDFCORE_BOOL(cinfo->progressive_mode);
   const int Ah = scan_info->Ah;
   const int Al = scan_info->Al;
   HWY_ALIGN constexpr coeff_t kSinkBlock[DCTSIZE2] = {0};
@@ -437,14 +437,14 @@ void TokenizeScan(j_compress_ptr cinfo, size_t scan_index, int ac_ctx_offset,
     }
     ta->num_tokens = m->next_token - ta->tokens;
   }
-  JPEGLI_DASSERT(block_idx == sti->num_blocks);
+  PDFCORE_DASSERT(block_idx == sti->num_blocks);
   sti->num_tokens =
       Ah > 0 ? sti->num_blocks
              : m->total_num_tokens + ta->num_tokens - sti->token_offset;
   sti->restarts[restart_idx++] =
       Ah > 0 ? sti->num_blocks : m->total_num_tokens + ta->num_tokens;
   if (Ah == 0 && cinfo->progressive_mode) {
-    JPEGLI_DASSERT(sti->num_blocks == sti->num_tokens);
+    PDFCORE_DASSERT(sti->num_blocks == sti->num_tokens);
   }
 }
 
@@ -501,7 +501,7 @@ void TokenizeJpeg(j_compress_ptr cinfo) {
         new_refinement_bits += sti->num_nonzeros;
       }
     }
-    JPEGLI_DASSERT(m->next_refinement_bit <=
+    PDFCORE_DASSERT(m->next_refinement_bit <=
                    refinement_bits + num_refinement_bits);
     num_refinement_bits += new_refinement_bits;
   }
@@ -640,7 +640,7 @@ void ClusterJpegHistograms(j_compress_ptr cinfo, const Histogram* histograms,
       const Histogram& prev = clusters->histograms[histogram_index];
       AddHistograms(prev, cur, &clusters->histograms[histogram_index]);
       clusters->histogram_indexes[i] = histogram_index;
-      JPEGLI_CHECK(clusters->slot_ids[histogram_index] == best_slot);
+      PDFCORE_CHECK(clusters->slot_ids[histogram_index] == best_slot);
       slot_costs[best_slot] += best_cost;
     }
   }
@@ -651,7 +651,7 @@ void CopyHuffmanTable(j_compress_ptr cinfo, int index, bool is_dc,
                       JHUFF_TBL* huffman_tables, size_t* num_huffman_tables) {
   const char* type = is_dc ? "DC" : "AC";
   if (index < 0 || index >= NUM_HUFF_TBLS) {
-    JPEGLI_ERROR("Invalid %s Huffman table index %d", type, index);
+    PDFCORE_ERROR("Invalid %s Huffman table index %d", type, index);
   }
   // Check if we have already copied this Huffman table.
   int slot_idx = index + (is_dc ? 0 : NUM_HUFF_TBLS);
@@ -663,7 +663,7 @@ void CopyHuffmanTable(j_compress_ptr cinfo, int index, bool is_dc,
   JHUFF_TBL* table =
       is_dc ? cinfo->dc_huff_tbl_ptrs[index] : cinfo->ac_huff_tbl_ptrs[index];
   if (table == nullptr) {
-    JPEGLI_ERROR("Missing %s Huffman table %d", type, index);
+    PDFCORE_ERROR("Missing %s Huffman table %d", type, index);
   }
   ValidateHuffmanTable(reinterpret_cast<j_common_ptr>(cinfo), table, is_dc);
   // Copy Huffman table to the end of the list and save slot id.
@@ -846,5 +846,5 @@ void InitEntropyCoder(j_compress_ptr cinfo) {
   }
 }
 
-}  // namespace jpegli
+}  // namespace pdfcore
 #endif  // HWY_ONCE

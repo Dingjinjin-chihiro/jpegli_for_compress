@@ -4,8 +4,8 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
-#ifndef JPEGLI_LIB_BASE_COMMON_H_
-#define JPEGLI_LIB_BASE_COMMON_H_
+#ifndef PDFCORE_LIB_BASE_COMMON_H_
+#define PDFCORE_LIB_BASE_COMMON_H_
 
 // Shared constants and helper functions.
 
@@ -21,7 +21,7 @@
 
 #include "lib/base/compiler_specific.h"
 
-namespace jpegli {
+namespace pdfcore {
 // Some enums and typedefs used by more than one header file.
 
 constexpr size_t kBitsPerByte = 8;  // more clear than CHAR_BIT
@@ -154,7 +154,7 @@ constexpr auto to_array(T (&&arr)[N]) -> std::array<remove_cv_t<T>, N> {
 }
 
 template <typename T>
-JPEGLI_INLINE T Clamp1(T val, T low, T hi) {
+PDFCORE_INLINE T Clamp1(T val, T low, T hi) {
   return val < low ? low : val > hi ? hi : val;
 }
 
@@ -175,9 +175,9 @@ std::string ToString(T n) {
   return data;
 }
 
-#define JPEGLI_JOIN(x, y) JPEGLI_DO_JOIN(x, y)
-#define JPEGLI_DO_JOIN(x, y) x##y
+#define PDFCORE_JOIN(x, y) PDFCORE_DO_JOIN(x, y)
+#define PDFCORE_DO_JOIN(x, y) x##y
 
-}  // namespace jpegli
+}  // namespace pdfcore
 
-#endif  // JPEGLI_LIB_BASE_COMMON_H_
+#endif  // PDFCORE_LIB_BASE_COMMON_H_

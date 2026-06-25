@@ -4,8 +4,8 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
-#ifndef JPEGLI_CMS_H_
-#define JPEGLI_CMS_H_
+#ifndef PDFCORE_CMS_H_
+#define PDFCORE_CMS_H_
 
 // ICC profiles and color space conversions.
 
@@ -17,10 +17,10 @@
 extern "C" {
 #endif
 
-JPEGLI_CMS_EXPORT const JpegliCmsInterface* JpegliGetDefaultCms();
+PDFCORE_CMS_EXPORT const PdfcoreCmsInterface* PdfcoreGetDefaultCms();
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif  // JPEGLI_CMS_H_
+#endif  // PDFCORE_CMS_H_

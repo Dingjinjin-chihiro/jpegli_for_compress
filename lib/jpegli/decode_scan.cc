@@ -17,7 +17,7 @@
 #include "lib/jpegli/error.h"
 #include "lib/jpegli/huffman.h"
 
-namespace jpegli {
+namespace pdfcore {
 namespace {
 
 // Max 14 block per MCU (when 1 channel is subsampled)
@@ -136,18 +136,18 @@ int ReadSymbol(const HuffmanTableEntry* table, BitReaderState* br) {
  * Returns the DC diff or AC value for extra bits value x and prefix code s.
  *
  * CCITT Rec. T.81 (1992 E)
- * Table F.1 â€“ Difference magnitude categories for DC coding
+ * Table F.1 â€?Difference magnitude categories for DC coding
  *  SSSS | DIFF values
  * ------+--------------------------
  *     0 | 0
- *     1 | â€“1, 1
- *     2 | â€“3, â€“2, 2, 3
- *     3 | â€“7..â€“4, 4..7
+ *     1 | â€?, 1
+ *     2 | â€?, â€?, 2, 3
+ *     3 | â€?..â€?, 4..7
  * ......|..........................
- *    11 | â€“2047..â€“1024, 1024..2047
+ *    11 | â€?047..â€?024, 1024..2047
  *
  * CCITT Rec. T.81 (1992 E)
- * Table F.2 â€“ Categories assigned to coefficient values
+ * Table F.2 â€?Categories assigned to coefficient values
  * [ Same as Table F.1, but does not include SSSS equal to 0 and 11]
  *
  *
@@ -155,7 +155,7 @@ int ReadSymbol(const HuffmanTableEntry* table, BitReaderState* br) {
  * F.1.2.1.1 Structure of DC code table
  * For each category,... additional bits... appended... to uniquely identify
  * which difference... occurred... When DIFF is positive... SSSS... bits of DIFF
- * are appended. When DIFF is negative... SSSS... bits of (DIFF â€“ 1) are
+ * are appended. When DIFF is negative... SSSS... bits of (DIFF â€?1) are
  * appended... Most significant bit... is 0 for negative differences and 1 for
  * positive differences.
  *
@@ -163,10 +163,10 @@ int ReadSymbol(const HuffmanTableEntry* table, BitReaderState* br) {
  * The lower half represents the negative DIFFs with an offset.
  */
 int HuffExtend(int x, int s) {
-  JPEGLI_DASSERT(s > 0);
+  PDFCORE_DASSERT(s > 0);
   int half = 1 << (s - 1);
   if (x >= half) {
-    JPEGLI_DASSERT(x < (1 << s));
+    PDFCORE_DASSERT(x < (1 << s));
     return x;
   } else {
     return x - (1 << s) + 1;
@@ -397,7 +397,7 @@ bool FinishScan(j_decompress_ptr cinfo, const uint8_t* data, const size_t len,
                 size_t* pos, size_t* bit_pos) {
   jpeg_decomp_master* m = cinfo->master;
   if (m->eobrun_ > 0) {
-    JPEGLI_ERROR("End-of-block run too long.");
+    PDFCORE_ERROR("End-of-block run too long.");
   }
   m->eobrun_ = -1;
   memset(m->last_dc_coeff_, 0, sizeof(m->last_dc_coeff_));
@@ -407,9 +407,9 @@ bool FinishScan(j_decompress_ptr cinfo, const uint8_t* data, const size_t len,
   if (data[*pos] == 0xff) {
     // After last br.FinishStream we checked that there is at least 2 bytes
     // in the buffer.
-    JPEGLI_DASSERT(*pos + 1 < len);
+    PDFCORE_DASSERT(*pos + 1 < len);
     // br.FinishStream would have detected an early marker.
-    JPEGLI_DASSERT(data[*pos + 1] == 0);
+    PDFCORE_DASSERT(data[*pos + 1] == 0);
     *pos += 2;
   } else {
     *pos += 1;
@@ -455,7 +455,7 @@ int ProcessScan(j_decompress_ptr cinfo, const uint8_t* const data,
         ++num_skipped;
       }
       if (num_skipped > 0) {
-        JPEGLI_WARN("Skipped %d bytes before restart marker",
+        PDFCORE_WARN("Skipped %d bytes before restart marker",
                     static_cast<int>(num_skipped));
       }
       if (*pos + 2 > len) {
@@ -533,14 +533,14 @@ int ProcessScan(j_decompress_ptr cinfo, const uint8_t* const data,
     *bit_pos = new_bit_pos;
     if (!stream_ok) {
       // We hit a marker during parsing.
-      JPEGLI_DASSERT(data[*pos] == 0xff);
-      JPEGLI_DASSERT(data[*pos + 1] != 0);
+      PDFCORE_DASSERT(data[*pos] == 0xff);
+      PDFCORE_DASSERT(data[*pos + 1] != 0);
       RestoreMCUCodingState(cinfo);
-      JPEGLI_WARN("Incomplete scan detected.");
+      PDFCORE_WARN("Incomplete scan detected.");
       return JPEG_SCAN_COMPLETED;
     }
     if (!scan_ok) {
-      JPEGLI_ERROR("Failed to decode DCT block");
+      PDFCORE_ERROR("Failed to decode DCT block");
     }
     if (m->restarts_to_go_ > 0) {
       --m->restarts_to_go_;
@@ -568,4 +568,4 @@ int ProcessScan(j_decompress_ptr cinfo, const uint8_t* const data,
   return JPEG_SCAN_COMPLETED;
 }
 
-}  // namespace jpegli
+}  // namespace pdfcore

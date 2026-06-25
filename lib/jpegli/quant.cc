@@ -16,7 +16,7 @@
 #include "lib/jpegli/encode_internal.h"
 #include "lib/jpegli/error.h"
 
-namespace jpegli {
+namespace pdfcore {
 
 namespace {
 
@@ -685,7 +685,7 @@ void SetQuantMatrices(j_compress_ptr cinfo, float distances[NUM_QUANT_TBLS],
     const float* base_qm = base_quant_matrix[quant_idx];
     JQUANT_TBL** qtable = &cinfo->quant_tbl_ptrs[quant_idx];
     if (*qtable == nullptr) {
-      *qtable = jpegli_alloc_quant_table(reinterpret_cast<j_common_ptr>(cinfo));
+      *qtable = pdfcore_jpegli_alloc_quant_table(reinterpret_cast<j_common_ptr>(cinfo));
     }
     for (int k = 0; k < DCTSIZE2; ++k) {
       float scale = global_scale;
@@ -711,13 +711,13 @@ void InitQuantizer(j_compress_ptr cinfo, QuantPass pass) {
     int quant_idx = cinfo->comp_info[c].quant_tbl_no;
     JQUANT_TBL* quant_table = cinfo->quant_tbl_ptrs[quant_idx];
     if (!quant_table) {
-      JPEGLI_ERROR("Missing quantization table %d for component %d", quant_idx,
+      PDFCORE_ERROR("Missing quantization table %d for component %d", quant_idx,
                    c);
     }
     for (size_t k = 0; k < DCTSIZE2; k++) {
       int val = quant_table->quantval[k];
       if (val == 0) {
-        JPEGLI_ERROR("Invalid quantval 0.");
+        PDFCORE_ERROR("Invalid quantval 0.");
       }
       switch (pass) {
         case QuantPass::NO_SEARCH:
@@ -766,4 +766,4 @@ void InitQuantizer(j_compress_ptr cinfo, QuantPass pass) {
   }
 }
 
-}  // namespace jpegli
+}  // namespace pdfcore

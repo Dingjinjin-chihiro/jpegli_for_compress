@@ -20,7 +20,7 @@
 #include "lib/jpegli/common.h"
 #include "lib/jpegli/encode.h"
 
-namespace org_jpeg_jpegli_wrapper {
+namespace org_jpeg_pdfcore_jpegli_wrapper {
 namespace {
 
 jint JNI_VERSION = JNI_VERSION_1_6;
@@ -42,7 +42,7 @@ enum ReturnCode {
 void ExitHandler(j_common_ptr cinfo) {
   (*cinfo->err->output_message)(cinfo);
   jmp_buf* env = reinterpret_cast<jmp_buf*>(cinfo->client_data);
-  jpegli_destroy(cinfo);
+  pdfcore_jpegli_destroy(cinfo);
   longjmp(*env, 1);
 }
 
@@ -136,7 +136,7 @@ class Encoder {
     output_buffer_size_ = output_buffer_tmp;
   }
 
-  ~Encoder() { jpegli_destroy_compress(&cinfo_); }
+  ~Encoder() { pdfcore_jpegli_destroy_compress(&cinfo_); }
 
   int Run() {
     if (!healthy_) RETURN_ERROR(INVALID_PARAMS);
@@ -162,26 +162,26 @@ class Encoder {
     dest_.Rewind();
 
     // Setup error handling.
-    cinfo_.err = jpegli_std_error(&err_);
+    cinfo_.err = pdfcore_jpegli_std_error(&err_);
     cinfo_.client_data = reinterpret_cast<void*>(&env_);
     cinfo_.err->error_exit = &ExitHandler;
     if (setjmp(env_)) {
       RETURN_ERROR(INTERNAL);
     }
 
-    jpegli_create_compress(&cinfo_);
+    pdfcore_jpegli_create_compress(&cinfo_);
     cinfo_.dest = reinterpret_cast<jpeg_destination_mgr*>(&dest_);
 
     cinfo_.image_width = width_;
     cinfo_.image_height = height_;
     cinfo_.input_components = 3;
     cinfo_.in_color_space = JCS_RGB;
-    jpegli_set_defaults(&cinfo_);
-    jpegli_set_quality(&cinfo_, quality_, TRUE);
+    pdfcore_jpegli_set_defaults(&cinfo_);
+    pdfcore_jpegli_set_quality(&cinfo_, quality_, TRUE);
     cinfo_.comp_info[0].v_samp_factor = v_sampling_[0];
-    jpegli_set_progressive_level(&cinfo_, 0);
+    pdfcore_jpegli_set_progressive_level(&cinfo_, 0);
     cinfo_.optimize_coding = FALSE;
-    jpegli_start_compress(&cinfo_, TRUE);
+    pdfcore_jpegli_start_compress(&cinfo_, TRUE);
 
     while (cinfo_.next_scanline < cinfo_.image_height) {
       size_t lines_left = cinfo_.image_height - cinfo_.next_scanline;
@@ -194,7 +194,7 @@ class Encoder {
       }
       size_t lines_done = 0;
       while (lines_done < num_lines) {
-        lines_done += jpegli_write_scanlines(
+        lines_done += pdfcore_jpegli_write_scanlines(
             &cinfo_, batch_rows.get() + lines_done, num_lines - lines_done);
         if (dest_.has_error) {
           RETURN_ERROR(INTERNAL);
@@ -202,7 +202,7 @@ class Encoder {
       }
     }
 
-    jpegli_finish_compress(&cinfo_);
+    pdfcore_jpegli_finish_compress(&cinfo_);
     if (dest_.has_error) {
       RETURN_ERROR(INTERNAL);
     }
@@ -258,7 +258,7 @@ char* kEncodeSig =
 const JNINativeMethod kEncoderMethods[] = {
     {kEncodeName, kEncodeSig,
      reinterpret_cast<void*>(
-         Java_org_jpeg_jpegli_wrapper_Encoder_nativeEncode)}};
+         Java_org_jpeg_pdfcore_jpegli_wrapper_Encoder_nativeEncode)}};
 
 const size_t kNumEncoderMethods = 1;
 
@@ -282,18 +282,18 @@ jint JniRegister(JavaVM* vm) {
   return JNI_VERSION;
 }
 
-}  // namespace org_jpeg_jpegli_wrapper
+}  // namespace org_jpeg_pdfcore_jpegli_wrapper
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 JNIEXPORT jint JNICALL
-Java_org_jpeg_jpegli_wrapper_Encoder_nativeInit(JNIEnv* env, jobject /*jobj*/) {
-  using org_jpeg_jpegli_wrapper::ERROR_INTERNAL;
-  using org_jpeg_jpegli_wrapper::JC_WritableByteChannel;
-  using org_jpeg_jpegli_wrapper::JMID_WritableByteChannel_write;
-  using org_jpeg_jpegli_wrapper::OK;
+Java_org_jpeg_pdfcore_jpegli_wrapper_Encoder_nativeInit(JNIEnv* env, jobject /*jobj*/) {
+  using org_jpeg_pdfcore_jpegli_wrapper::ERROR_INTERNAL;
+  using org_jpeg_pdfcore_jpegli_wrapper::JC_WritableByteChannel;
+  using org_jpeg_pdfcore_jpegli_wrapper::JMID_WritableByteChannel_write;
+  using org_jpeg_pdfcore_jpegli_wrapper::OK;
 
   jclass localClassRef =
       env->FindClass("java/nio/channels/WritableByteChannel");
@@ -315,13 +315,13 @@ Java_org_jpeg_jpegli_wrapper_Encoder_nativeInit(JNIEnv* env, jobject /*jobj*/) {
   return OK;
 }
 
-JNIEXPORT jint JNICALL Java_org_jpeg_jpegli_wrapper_Encoder_nativeEncode(
+JNIEXPORT jint JNICALL Java_org_jpeg_pdfcore_jpegli_wrapper_Encoder_nativeEncode(
     JNIEnv* env, jobject /*jobj*/, jint width, jint height, jintArray config,
     jintArray input, jobject output) {
-  using org_jpeg_jpegli_wrapper::Config;
-  using org_jpeg_jpegli_wrapper::Encoder;
-  using org_jpeg_jpegli_wrapper::ERROR_ALLOCATION;
-  using org_jpeg_jpegli_wrapper::ERROR_INVALID_PARAMS;
+  using org_jpeg_pdfcore_jpegli_wrapper::Config;
+  using org_jpeg_pdfcore_jpegli_wrapper::Encoder;
+  using org_jpeg_pdfcore_jpegli_wrapper::ERROR_ALLOCATION;
+  using org_jpeg_pdfcore_jpegli_wrapper::ERROR_INVALID_PARAMS;
 
   Config config_values;
   env->GetIntArrayRegion(config, 0, 33, config_values.data());

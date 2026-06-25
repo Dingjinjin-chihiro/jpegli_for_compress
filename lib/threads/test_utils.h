@@ -4,8 +4,8 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
-#ifndef JPEGLI_LIB_THREADS_TEST_UTILS_H_
-#define JPEGLI_LIB_THREADS_TEST_UTILS_H_
+#ifndef PDFCORE_LIB_THREADS_TEST_UTILS_H_
+#define PDFCORE_LIB_THREADS_TEST_UTILS_H_
 
 #include <cstddef>
 #include <cstdint>
@@ -16,15 +16,15 @@
 #include "lib/base/data_parallel.h"
 #include "lib/threads/thread_parallel_runner_cxx.h"
 
-namespace jpegli {
+namespace pdfcore {
 namespace test {
 
 class ThreadPoolForTests {
  public:
   explicit ThreadPoolForTests(int num_threads) {
-    runner_ = JpegliThreadParallelRunnerMake(/* memory_manager */ nullptr,
+    runner_ = PdfcoreThreadParallelRunnerMake(/* memory_manager */ nullptr,
                                              num_threads);
-    pool_ = jpegli::make_unique<ThreadPool>(JpegliThreadParallelRunner,
+    pool_ = pdfcore::make_unique<ThreadPool>(PdfcoreThreadParallelRunner,
                                             runner_.get());
   }
   ThreadPoolForTests(const ThreadPoolForTests&) = delete;
@@ -32,11 +32,11 @@ class ThreadPoolForTests {
   ThreadPool* get() { return pool_.get(); }
 
  private:
-  JpegliThreadParallelRunnerPtr runner_;
+  PdfcoreThreadParallelRunnerPtr runner_;
   std::unique_ptr<ThreadPool> pool_;
 };
 
 }  // namespace test
-}  // namespace jpegli
+}  // namespace pdfcore
 
-#endif  // JPEGLI_LIB_THREADS_TEST_UTILS_H_
+#endif  // PDFCORE_LIB_THREADS_TEST_UTILS_H_

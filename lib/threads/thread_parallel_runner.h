@@ -5,12 +5,12 @@
  * https://developers.google.com/open-source/licenses/bsd
  */
 
-/** Implementation of JpegliParallelRunner than can be used to enable
+/** Implementation of PdfcoreParallelRunner than can be used to enable
  * multithreading when using the JPEGLI library. This uses std::thread
  * internally and related synchronization functions. The number of threads
  * created is fixed at construction time and the threads are re-used for every
  * ThreadParallelRunner::Runner call. Only one concurrent
- * JpegliThreadParallelRunner call per instance is allowed at a time.
+ * PdfcoreThreadParallelRunner call per instance is allowed at a time.
  *
  * This is a scalable, lower-overhead thread pool runner, especially suitable
  * for data-parallel computations in the fork-join model, where clients need to
@@ -22,8 +22,8 @@
  * 10-20x higher when using std::async, and ~200x for a queue-based thread
  */
 
-#ifndef JPEGLI_THREAD_PARALLEL_RUNNER_H_
-#define JPEGLI_THREAD_PARALLEL_RUNNER_H_
+#ifndef PDFCORE_THREAD_PARALLEL_RUNNER_H_
+#define PDFCORE_THREAD_PARALLEL_RUNNER_H_
 
 #include <jpegli/jpegli_threads_export.h>
 #include <stddef.h>
@@ -38,31 +38,31 @@ extern "C" {
 #endif
 
 /** Parallel runner internally using std::thread. Use as @ref
- * JpegliParallelRunner.
+ * PdfcoreParallelRunner.
  */
-JPEGLI_THREADS_EXPORT JpegliParallelRetCode JpegliThreadParallelRunner(
-    void* runner_opaque, void* jpegli_opaque, JpegliParallelRunInit init,
-    JpegliParallelRunFunction func, uint32_t start_range, uint32_t end_range);
+PDFCORE_THREADS_EXPORT PdfcoreParallelRetCode PdfcoreThreadParallelRunner(
+    void* runner_opaque, void* pdfcore_jpegli_opaque, PdfcoreParallelRunInit init,
+    PdfcoreParallelRunFunction func, uint32_t start_range, uint32_t end_range);
 
-/** Creates the runner for @ref JpegliThreadParallelRunner. Use as the opaque
+/** Creates the runner for @ref PdfcoreThreadParallelRunner. Use as the opaque
  * runner.
  */
-JPEGLI_THREADS_EXPORT void* JpegliThreadParallelRunnerCreate(
-    const JpegliMemoryManager* memory_manager, size_t num_worker_threads);
+PDFCORE_THREADS_EXPORT void* PdfcoreThreadParallelRunnerCreate(
+    const PdfcoreMemoryManager* memory_manager, size_t num_worker_threads);
 
-/** Destroys the runner created by @ref JpegliThreadParallelRunnerCreate.
+/** Destroys the runner created by @ref PdfcoreThreadParallelRunnerCreate.
  */
-JPEGLI_THREADS_EXPORT void JpegliThreadParallelRunnerDestroy(
+PDFCORE_THREADS_EXPORT void PdfcoreThreadParallelRunnerDestroy(
     void* runner_opaque);
 
 /** Returns a default num_worker_threads value for
- * @ref JpegliThreadParallelRunnerCreate.
+ * @ref PdfcoreThreadParallelRunnerCreate.
  */
-JPEGLI_THREADS_EXPORT size_t
-JpegliThreadParallelRunnerDefaultNumWorkerThreads(void);
+PDFCORE_THREADS_EXPORT size_t
+PdfcoreThreadParallelRunnerDefaultNumWorkerThreads(void);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* JPEGLI_THREAD_PARALLEL_RUNNER_H_ */
+#endif /* PDFCORE_THREAD_PARALLEL_RUNNER_H_ */

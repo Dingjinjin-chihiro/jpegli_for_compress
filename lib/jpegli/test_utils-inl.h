@@ -22,37 +22,37 @@
 
 #if defined(JPEG_API_FLAVOUR_JPEGLI)
 #include "lib/jpegli/decode.h"
-#define JPEG_API_FN(name) jpegli_##name
+#define JPEG_API_FN(name) pdfcore_jpegli_##name
 #else
 #define JPEG_API_FN(name) jpeg_##name
 #endif  // JPEG_API_FLAVOUR_JPEGLI
 
 namespace J_TEST_UTILS {
 
-using ::jpegli::CompressParams;
-using ::jpegli::CQUANT_1PASS;
-using ::jpegli::CQUANT_2PASS;
-using ::jpegli::CQUANT_EXTERNAL;
-using ::jpegli::CQUANT_REUSE;
-using ::jpegli::DecompressParams;
-using ::jpegli::DivCeil;
-using ::jpegli::kLastScan;
-using ::jpegli::kMarkerData;
-using ::jpegli::kSpecialMarker0;
-using ::jpegli::kSpecialMarker1;
-using ::jpegli::kTestColorMap;
-using ::jpegli::kTestColorMapNumColors;
-using ::jpegli::RAW_DATA;
-using ::jpegli::ScanDecompressParams;
-using ::jpegli::TestImage;
+using ::pdfcore::CompressParams;
+using ::pdfcore::CQUANT_1PASS;
+using ::pdfcore::CQUANT_2PASS;
+using ::pdfcore::CQUANT_EXTERNAL;
+using ::pdfcore::CQUANT_REUSE;
+using ::pdfcore::DecompressParams;
+using ::pdfcore::DivCeil;
+using ::pdfcore::kLastScan;
+using ::pdfcore::kMarkerData;
+using ::pdfcore::kSpecialMarker0;
+using ::pdfcore::kSpecialMarker1;
+using ::pdfcore::kTestColorMap;
+using ::pdfcore::kTestColorMapNumColors;
+using ::pdfcore::RAW_DATA;
+using ::pdfcore::ScanDecompressParams;
+using ::pdfcore::TestImage;
 
 #if defined(JPEG_API_FLAVOUR_JPEGLI)
-using ::jpegli::Check;
+using ::pdfcore::Check;
 #else
 namespace {
 void Check(bool ok) {
   if (!ok) {
-    JPEGLI_CRASH();
+    PDFCORE_CRASH();
   }
 }
 }  // namespace
@@ -273,7 +273,7 @@ void SetScanDecompressParams(const DecompressParams& dparams,
       cinfo->colormap = (*cinfo->mem->alloc_sarray)(
           reinterpret_cast<j_common_ptr>(cinfo), JPOOL_IMAGE,
           cinfo->actual_number_of_colors, 3);
-      jpegli::msan::UnpoisonMemory(reinterpret_cast<void*>(cinfo->colormap),
+      pdfcore::msan::UnpoisonMemory(reinterpret_cast<void*>(cinfo->colormap),
                                    3 * sizeof(JSAMPLE*));
       for (int i = 0; i < kTestColorMapNumColors; ++i) {
         cinfo->colormap[0][i] = (kTestColorMap[i] >> 16) & 0xff;
@@ -330,8 +330,8 @@ void CheckMarkerPresent(j_decompress_ptr cinfo, uint8_t marker_type) {
   bool marker_found = false;
   for (jpeg_saved_marker_ptr marker = cinfo->marker_list; marker != nullptr;
        marker = marker->next) {
-    jpegli::msan::UnpoisonMemory(marker, sizeof(*marker));
-    jpegli::msan::UnpoisonMemory(marker->data, marker->data_length);
+    pdfcore::msan::UnpoisonMemory(marker, sizeof(*marker));
+    pdfcore::msan::UnpoisonMemory(marker->data, marker->data_length);
     if (marker->marker == marker_type &&
         marker->data_length == sizeof(kMarkerData) &&
         memcmp(marker->data, kMarkerData, sizeof(kMarkerData)) == 0) {
@@ -355,7 +355,7 @@ void VerifyHeader(const CompressParams& jparams, j_decompress_ptr cinfo) {
     CheckMarkerPresent(cinfo, kSpecialMarker0);
     CheckMarkerPresent(cinfo, kSpecialMarker1);
   }
-  jpegli::msan::UnpoisonMemory(
+  pdfcore::msan::UnpoisonMemory(
       cinfo->comp_info, cinfo->num_components * sizeof(cinfo->comp_info[0]));
   int max_h_samp_factor = 1;
   int max_v_samp_factor = 1;
@@ -396,7 +396,7 @@ void VerifyHeader(const CompressParams& jparams, j_decompress_ptr cinfo) {
       continue;
     }
     Check(quant_table != nullptr);
-    jpegli::msan::UnpoisonMemory(quant_table, sizeof(*quant_table));
+    pdfcore::msan::UnpoisonMemory(quant_table, sizeof(*quant_table));
     for (int k = 0; k < DCTSIZE2; ++k) {
       Check(quant_table->quantval[k] == table.quantval[k]);
     }
@@ -467,7 +467,7 @@ void VerifyScanHeader(const CompressParams& jparams, j_decompress_ptr cinfo) {
     }
     if (jparams.use_flat_dc_luma_code) {
       JHUFF_TBL* tbl = cinfo->dc_huff_tbl_ptrs[0];
-      jpegli::msan::UnpoisonMemory(tbl, sizeof(*tbl));
+      pdfcore::msan::UnpoisonMemory(tbl, sizeof(*tbl));
       for (int i = 0; i < 15; ++i) {
         Check(tbl->huffval[i] == i);
       }

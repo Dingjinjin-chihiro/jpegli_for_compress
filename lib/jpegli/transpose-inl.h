@@ -6,11 +6,11 @@
 
 #include <cstddef>
 
-#if defined(JPEGLI_LIB_JPEGLI_TRANSPOSE_INL_H_) == defined(HWY_TARGET_TOGGLE)
-#ifdef JPEGLI_LIB_JPEGLI_TRANSPOSE_INL_H_
-#undef JPEGLI_LIB_JPEGLI_TRANSPOSE_INL_H_
+#if defined(PDFCORE_LIB_PDFCORE_TRANSPOSE_INL_H_) == defined(HWY_TARGET_TOGGLE)
+#ifdef PDFCORE_LIB_PDFCORE_TRANSPOSE_INL_H_
+#undef PDFCORE_LIB_PDFCORE_TRANSPOSE_INL_H_
 #else
-#define JPEGLI_LIB_JPEGLI_TRANSPOSE_INL_H_
+#define PDFCORE_LIB_PDFCORE_TRANSPOSE_INL_H_
 #endif
 
 #include <hwy/highway.h>
@@ -18,13 +18,13 @@
 #include "lib/base/compiler_specific.h"
 
 HWY_BEFORE_NAMESPACE();
-namespace jpegli {
+namespace pdfcore {
 namespace HWY_NAMESPACE {
 namespace {
 
 #if HWY_CAP_GE256
-JPEGLI_INLINE void Transpose8x8Block(const float* JPEGLI_RESTRICT from,
-                                     float* JPEGLI_RESTRICT to) {
+PDFCORE_INLINE void Transpose8x8Block(const float* PDFCORE_RESTRICT from,
+                                     float* PDFCORE_RESTRICT to) {
   const HWY_CAPPED(float, 8) d;
   auto i0 = Load(d, from);
   auto i1 = Load(d, from + 1 * 8);
@@ -72,8 +72,8 @@ JPEGLI_INLINE void Transpose8x8Block(const float* JPEGLI_RESTRICT from,
   Store(i7, d, to + 7 * 8);
 }
 #elif HWY_TARGET != HWY_SCALAR
-JPEGLI_INLINE void Transpose8x8Block(const float* JPEGLI_RESTRICT from,
-                                     float* JPEGLI_RESTRICT to) {
+PDFCORE_INLINE void Transpose8x8Block(const float* PDFCORE_RESTRICT from,
+                                     float* PDFCORE_RESTRICT to) {
   const HWY_CAPPED(float, 4) d;
   for (size_t n = 0; n < 8; n += 4) {
     for (size_t m = 0; m < 8; m += 4) {
@@ -98,8 +98,8 @@ JPEGLI_INLINE void Transpose8x8Block(const float* JPEGLI_RESTRICT from,
   }
 }
 #else
-static JPEGLI_INLINE void Transpose8x8Block(const float* JPEGLI_RESTRICT from,
-                                            float* JPEGLI_RESTRICT to) {
+static PDFCORE_INLINE void Transpose8x8Block(const float* PDFCORE_RESTRICT from,
+                                            float* PDFCORE_RESTRICT to) {
   for (size_t n = 0; n < 8; ++n) {
     for (size_t m = 0; m < 8; ++m) {
       to[8 * n + m] = from[8 * m + n];
@@ -111,6 +111,6 @@ static JPEGLI_INLINE void Transpose8x8Block(const float* JPEGLI_RESTRICT from,
 // NOLINTNEXTLINE(google-readability-namespace-comments)
 }  // namespace
 }  // namespace HWY_NAMESPACE
-}  // namespace jpegli
+}  // namespace pdfcore
 HWY_AFTER_NAMESPACE();
-#endif  // JPEGLI_LIB_JPEGLI_TRANSPOSE_INL_H_
+#endif  // PDFCORE_LIB_PDFCORE_TRANSPOSE_INL_H_

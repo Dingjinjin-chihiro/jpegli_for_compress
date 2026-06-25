@@ -4,8 +4,8 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
-#ifndef JPEGLI_LIB_JPEGLI_ERROR_H_
-#define JPEGLI_LIB_JPEGLI_ERROR_H_
+#ifndef PDFCORE_LIB_PDFCORE_ERROR_H_
+#define PDFCORE_LIB_PDFCORE_ERROR_H_
 
 #include <stdarg.h>
 #include <stdint.h>
@@ -13,36 +13,36 @@
 #include "lib/base/compiler_specific.h"
 #include "lib/jpegli/common.h"
 
-namespace jpegli {
+namespace pdfcore {
 
 bool FormatString(char* buffer, const char* format, ...);
 
-}  // namespace jpegli
+}  // namespace pdfcore
 
 // `error_exit` should be no-return; but let's add some guarantees on our side.
-#define JPEGLI_ERROR(format, ...)                                            \
-  jpegli::FormatString(cinfo->err->msg_parm.s, ("%s:%d: " format), __FILE__, \
+#define PDFCORE_ERROR(format, ...)                                            \
+  pdfcore::FormatString(cinfo->err->msg_parm.s, ("%s:%d: " format), __FILE__, \
                        __LINE__, ##__VA_ARGS__),                             \
       (*cinfo->err->error_exit)(reinterpret_cast<j_common_ptr>(cinfo)),      \
-      JPEGLI_CRASH()
+      PDFCORE_CRASH()
 
-#define JPEGLI_WARN(format, ...)                                             \
-  jpegli::FormatString(cinfo->err->msg_parm.s, ("%s:%d: " format), __FILE__, \
+#define PDFCORE_WARN(format, ...)                                             \
+  pdfcore::FormatString(cinfo->err->msg_parm.s, ("%s:%d: " format), __FILE__, \
                        __LINE__, ##__VA_ARGS__),                             \
       (*cinfo->err->emit_message)(reinterpret_cast<j_common_ptr>(cinfo), -1)
 
-#define JPEGLI_TRACE(level, format, ...)                                     \
+#define PDFCORE_TRACE(level, format, ...)                                     \
   if (cinfo->err->trace_level >= (level))                                    \
-  jpegli::FormatString(cinfo->err->msg_parm.s, ("%s:%d: " format), __FILE__, \
+  pdfcore::FormatString(cinfo->err->msg_parm.s, ("%s:%d: " format), __FILE__, \
                        __LINE__, ##__VA_ARGS__),                             \
       (*cinfo->err->emit_message)(reinterpret_cast<j_common_ptr>(cinfo),     \
                                   (level))
 
-#define JPEGLI_CHECK(condition)                     \
+#define PDFCORE_CHECK(condition)                     \
   do {                                              \
     if (!(condition)) {                             \
-      JPEGLI_ERROR("JPEGLI_CHECK: %s", #condition); \
+      PDFCORE_ERROR("PDFCORE_CHECK: %s", #condition); \
     }                                               \
   } while (0)
 
-#endif  // JPEGLI_LIB_JPEGLI_ERROR_H_
+#endif  // PDFCORE_LIB_PDFCORE_ERROR_H_

@@ -23,7 +23,7 @@
 #include "lib/extras/enc/encode.h"
 #include "lib/extras/packed_image.h"
 
-namespace jpegli {
+namespace pdfcore {
 namespace extras {
 namespace {
 
@@ -33,18 +33,18 @@ class BasePNMEncoder : public Encoder {
  public:
   Status Encode(const PackedPixelFile& ppf, EncodedImage* encoded_image,
                 ThreadPool* pool) const override {
-    JPEGLI_RETURN_IF_ERROR(VerifyBasicInfo(ppf.info));
+    PDFCORE_RETURN_IF_ERROR(VerifyBasicInfo(ppf.info));
     if (!ppf.metadata.exif.empty() || !ppf.metadata.iptc.empty() ||
         !ppf.metadata.jumbf.empty() || !ppf.metadata.xmp.empty()) {
-      JPEGLI_WARNING("PNM encoder ignoring metadata - use a different codec");
+      PDFCORE_WARNING("PNM encoder ignoring metadata - use a different codec");
     }
     encoded_image->icc = ppf.icc;
     encoded_image->bitstreams.clear();
     encoded_image->bitstreams.reserve(ppf.frames.size());
     for (const auto& frame : ppf.frames) {
-      JPEGLI_RETURN_IF_ERROR(VerifyPackedImage(frame.color, ppf.info));
+      PDFCORE_RETURN_IF_ERROR(VerifyPackedImage(frame.color, ppf.info));
       encoded_image->bitstreams.emplace_back();
-      JPEGLI_RETURN_IF_ERROR(
+      PDFCORE_RETURN_IF_ERROR(
           EncodeFrame(ppf, frame, &encoded_image->bitstreams.back()));
     }
     for (size_t i = 0; i < ppf.extra_channels_info.size(); ++i) {
@@ -53,7 +53,7 @@ class BasePNMEncoder : public Encoder {
       auto& ec_bitstreams = encoded_image->extra_channel_bitstreams.back();
       for (const auto& frame : ppf.frames) {
         ec_bitstreams.emplace_back();
-        JPEGLI_RETURN_IF_ERROR(EncodeExtraChannel(frame.extra_channels[i],
+        PDFCORE_RETURN_IF_ERROR(EncodeExtraChannel(frame.extra_channels[i],
                                                   ec_info.bits_per_sample,
                                                   &ec_bitstreams.back()));
       }
@@ -72,9 +72,9 @@ class BasePNMEncoder : public Encoder {
 
 class PNMEncoder : public BasePNMEncoder {
  public:
-  static const std::vector<JpegliPixelFormat> kAcceptedFormats;
+  static const std::vector<PdfcorePixelFormat> kAcceptedFormats;
 
-  std::vector<JpegliPixelFormat> AcceptedFormats() const override {
+  std::vector<PdfcorePixelFormat> AcceptedFormats() const override {
     return kAcceptedFormats;
   }
 
@@ -96,7 +96,7 @@ class PNMEncoder : public BasePNMEncoder {
     size_t header_size =
         snprintf(header, kMaxHeaderSize, "P%c\n%" PRIuS " %" PRIuS "\n%u\n",
                  type, image.xsize, image.ysize, maxval);
-    JPEGLI_RETURN_IF_ERROR(header_size < kMaxHeaderSize);
+    PDFCORE_RETURN_IF_ERROR(header_size < kMaxHeaderSize);
     bytes->resize(header_size + image.pixels_size);
     memcpy(bytes->data(), header, header_size);
     memcpy(bytes->data() + header_size,
@@ -107,32 +107,32 @@ class PNMEncoder : public BasePNMEncoder {
 
 class PGMEncoder : public PNMEncoder {
  public:
-  static const std::vector<JpegliPixelFormat> kAcceptedFormats;
+  static const std::vector<PdfcorePixelFormat> kAcceptedFormats;
 
-  std::vector<JpegliPixelFormat> AcceptedFormats() const override {
+  std::vector<PdfcorePixelFormat> AcceptedFormats() const override {
     return kAcceptedFormats;
   }
 };
 
-const std::vector<JpegliPixelFormat> PGMEncoder::kAcceptedFormats = {
-    JpegliPixelFormat{1, JPEGLI_TYPE_UINT8, JPEGLI_BIG_ENDIAN, 0},
-    JpegliPixelFormat{1, JPEGLI_TYPE_UINT16, JPEGLI_BIG_ENDIAN, 0}};
+const std::vector<PdfcorePixelFormat> PGMEncoder::kAcceptedFormats = {
+    PdfcorePixelFormat{1, PDFCORE_TYPE_UINT8, PDFCORE_BIG_ENDIAN, 0},
+    PdfcorePixelFormat{1, PDFCORE_TYPE_UINT16, PDFCORE_BIG_ENDIAN, 0}};
 
 class PPMEncoder : public PNMEncoder {
  public:
-  static const std::vector<JpegliPixelFormat> kAcceptedFormats;
+  static const std::vector<PdfcorePixelFormat> kAcceptedFormats;
 
-  std::vector<JpegliPixelFormat> AcceptedFormats() const override {
+  std::vector<PdfcorePixelFormat> AcceptedFormats() const override {
     return kAcceptedFormats;
   }
 };
 
-const std::vector<JpegliPixelFormat> PPMEncoder::kAcceptedFormats = {
-    JpegliPixelFormat{3, JPEGLI_TYPE_UINT8, JPEGLI_BIG_ENDIAN, 0},
-    JpegliPixelFormat{3, JPEGLI_TYPE_UINT16, JPEGLI_BIG_ENDIAN, 0}};
+const std::vector<PdfcorePixelFormat> PPMEncoder::kAcceptedFormats = {
+    PdfcorePixelFormat{3, PDFCORE_TYPE_UINT8, PDFCORE_BIG_ENDIAN, 0},
+    PdfcorePixelFormat{3, PDFCORE_TYPE_UINT16, PDFCORE_BIG_ENDIAN, 0}};
 
-const std::vector<JpegliPixelFormat> PNMEncoder::kAcceptedFormats = [] {
-  std::vector<JpegliPixelFormat> combined = PPMEncoder::kAcceptedFormats;
+const std::vector<PdfcorePixelFormat> PNMEncoder::kAcceptedFormats = [] {
+  std::vector<PdfcorePixelFormat> combined = PPMEncoder::kAcceptedFormats;
   combined.insert(combined.end(), PGMEncoder::kAcceptedFormats.begin(),
                   PGMEncoder::kAcceptedFormats.end());
   return combined;
@@ -140,13 +140,13 @@ const std::vector<JpegliPixelFormat> PNMEncoder::kAcceptedFormats = [] {
 
 class PFMEncoder : public BasePNMEncoder {
  public:
-  std::vector<JpegliPixelFormat> AcceptedFormats() const override {
-    std::vector<JpegliPixelFormat> formats;
+  std::vector<PdfcorePixelFormat> AcceptedFormats() const override {
+    std::vector<PdfcorePixelFormat> formats;
     for (const uint32_t num_channels : {1, 3}) {
-      for (JpegliEndianness endianness :
-           {JPEGLI_BIG_ENDIAN, JPEGLI_LITTLE_ENDIAN}) {
-        formats.push_back(JpegliPixelFormat{/*num_channels=*/num_channels,
-                                            /*data_type=*/JPEGLI_TYPE_FLOAT,
+      for (PdfcoreEndianness endianness :
+           {PDFCORE_BIG_ENDIAN, PDFCORE_LITTLE_ENDIAN}) {
+        formats.push_back(PdfcorePixelFormat{/*num_channels=*/num_channels,
+                                            /*data_type=*/PDFCORE_TYPE_FLOAT,
                                             /*endianness=*/endianness,
                                             /*align=*/0});
       }
@@ -166,12 +166,12 @@ class PFMEncoder : public BasePNMEncoder {
   static Status EncodeImage(const PackedImage& image,
                             std::vector<uint8_t>* bytes) {
     char type = image.format.num_channels == 1 ? 'f' : 'F';
-    double scale = image.format.endianness == JPEGLI_LITTLE_ENDIAN ? -1.0 : 1.0;
+    double scale = image.format.endianness == PDFCORE_LITTLE_ENDIAN ? -1.0 : 1.0;
     char header[kMaxHeaderSize];
     size_t header_size =
         snprintf(header, kMaxHeaderSize, "P%c\n%" PRIuS " %" PRIuS "\n%.1f\n",
                  type, image.xsize, image.ysize, scale);
-    JPEGLI_RETURN_IF_ERROR(header_size < kMaxHeaderSize);
+    PDFCORE_RETURN_IF_ERROR(header_size < kMaxHeaderSize);
     bytes->resize(header_size + image.pixels_size);
     memcpy(bytes->data(), header, header_size);
     const uint8_t* in = reinterpret_cast<const uint8_t*>(image.pixels());
@@ -188,14 +188,14 @@ class PFMEncoder : public BasePNMEncoder {
 
 class PAMEncoder : public BasePNMEncoder {
  public:
-  std::vector<JpegliPixelFormat> AcceptedFormats() const override {
-    std::vector<JpegliPixelFormat> formats;
+  std::vector<PdfcorePixelFormat> AcceptedFormats() const override {
+    std::vector<PdfcorePixelFormat> formats;
     for (const uint32_t num_channels : {1, 2, 3, 4}) {
-      for (const JpegliDataType data_type :
-           {JPEGLI_TYPE_UINT8, JPEGLI_TYPE_UINT16}) {
-        formats.push_back(JpegliPixelFormat{/*num_channels=*/num_channels,
+      for (const PdfcoreDataType data_type :
+           {PDFCORE_TYPE_UINT8, PDFCORE_TYPE_UINT16}) {
+        formats.push_back(PdfcorePixelFormat{/*num_channels=*/num_channels,
                                             /*data_type=*/data_type,
-                                            /*endianness=*/JPEGLI_BIG_ENDIAN,
+                                            /*endianness=*/PDFCORE_BIG_ENDIAN,
                                             /*align=*/0});
       }
     }
@@ -207,23 +207,23 @@ class PAMEncoder : public BasePNMEncoder {
                      std::vector<uint8_t>* bytes) const override {
     const PackedImage& color = frame.color;
     const auto& ec_info = ppf.extra_channels_info;
-    JPEGLI_RETURN_IF_ERROR(frame.extra_channels.size() == ec_info.size());
+    PDFCORE_RETURN_IF_ERROR(frame.extra_channels.size() == ec_info.size());
     for (const auto& ec : frame.extra_channels) {
       if (ec.xsize != color.xsize || ec.ysize != color.ysize) {
-        return JPEGLI_FAILURE("Extra channel and color size mismatch.");
+        return PDFCORE_FAILURE("Extra channel and color size mismatch.");
       }
       if (ec.format.data_type != color.format.data_type ||
           ec.format.endianness != color.format.endianness) {
-        return JPEGLI_FAILURE("Extra channel and color format mismatch.");
+        return PDFCORE_FAILURE("Extra channel and color format mismatch.");
       }
     }
     if (ppf.info.alpha_bits &&
         (ppf.info.bits_per_sample != ppf.info.alpha_bits)) {
-      return JPEGLI_FAILURE("Alpha bit depth does not match image bit depth");
+      return PDFCORE_FAILURE("Alpha bit depth does not match image bit depth");
     }
     for (const auto& it : ec_info) {
       if (it.ec_info.bits_per_sample != ppf.info.bits_per_sample) {
-        return JPEGLI_FAILURE(
+        return PDFCORE_FAILURE(
             "Extra channel bit depth does not match image bit depth");
       }
     }
@@ -240,21 +240,21 @@ class PAMEncoder : public BasePNMEncoder {
                      color.xsize, color.ysize, depth, maxval,
                      kColorTypes[color.format.num_channels - 1]);
     if (n < 0 || static_cast<size_t>(n) >= kMaxHeaderSize - pos) {
-      return JPEGLI_FAILURE("PNM header is too long");
+      return PDFCORE_FAILURE("PNM header is too long");
     }
-    JPEGLI_RETURN_IF_ERROR(pos < kMaxHeaderSize);
+    PDFCORE_RETURN_IF_ERROR(pos < kMaxHeaderSize);
     pos += n;
     for (const auto& info : ec_info) {
       n = snprintf(header + pos, kMaxHeaderSize - pos, "TUPLTYPE %s\n",
                    ExtraChannelTypeName(info.ec_info.type).c_str());
       if (n < 0 || static_cast<size_t>(n) >= kMaxHeaderSize - pos) {
-        return JPEGLI_FAILURE("PNM header is too long");
+        return PDFCORE_FAILURE("PNM header is too long");
       }
       pos += n;
     }
     n = snprintf(header + pos, kMaxHeaderSize - pos, "ENDHDR\n");
     if (n < 0 || static_cast<size_t>(n) >= kMaxHeaderSize - pos) {
-      return JPEGLI_FAILURE("PNM header is too long");
+      return PDFCORE_FAILURE("PNM header is too long");
     }
     pos += n;
     size_t total_size = color.pixels_size;
@@ -277,7 +277,7 @@ class PAMEncoder : public BasePNMEncoder {
           reinterpret_cast<const uint8_t*>(frame.extra_channels[i].pixels());
     }
     uint8_t* out = bytes->data() + pos;
-    JPEGLI_RETURN_IF_ERROR(
+    PDFCORE_RETURN_IF_ERROR(
         PackedImage::ValidateDataType(color.format.data_type));
     size_t pwidth = PackedImage::BitsPerChannel(color.format.data_type) / 8;
     for (size_t y = 0; y < color.ysize; ++y) {
@@ -300,25 +300,25 @@ class PAMEncoder : public BasePNMEncoder {
   }
 
  private:
-  static std::string ExtraChannelTypeName(JpegliExtraChannelType type) {
+  static std::string ExtraChannelTypeName(PdfcoreExtraChannelType type) {
     switch (type) {
-      case JPEGLI_CHANNEL_ALPHA:
+      case PDFCORE_CHANNEL_ALPHA:
         return std::string("Alpha");
-      case JPEGLI_CHANNEL_DEPTH:
+      case PDFCORE_CHANNEL_DEPTH:
         return std::string("Depth");
-      case JPEGLI_CHANNEL_SPOT_COLOR:
+      case PDFCORE_CHANNEL_SPOT_COLOR:
         return std::string("SpotColor");
-      case JPEGLI_CHANNEL_SELECTION_MASK:
+      case PDFCORE_CHANNEL_SELECTION_MASK:
         return std::string("SelectionMask");
-      case JPEGLI_CHANNEL_BLACK:
+      case PDFCORE_CHANNEL_BLACK:
         return std::string("Black");
-      case JPEGLI_CHANNEL_CFA:
+      case PDFCORE_CHANNEL_CFA:
         return std::string("CFA");
-      case JPEGLI_CHANNEL_THERMAL:
+      case PDFCORE_CHANNEL_THERMAL:
         return std::string("Thermal");
-      case JPEGLI_CHANNEL_UNKNOWN:
+      case PDFCORE_CHANNEL_UNKNOWN:
         return std::string("Unknown");
-      case JPEGLI_CHANNEL_OPTIONAL:
+      case PDFCORE_CHANNEL_OPTIONAL:
         return std::string("Optional");
       default:
         return std::string("UNKNOWN");
@@ -329,24 +329,24 @@ class PAMEncoder : public BasePNMEncoder {
 }  // namespace
 
 std::unique_ptr<Encoder> GetPPMEncoder() {
-  return jpegli::make_unique<PPMEncoder>();
+  return pdfcore::make_unique<PPMEncoder>();
 }
 
 std::unique_ptr<Encoder> GetPNMEncoder() {
-  return jpegli::make_unique<PNMEncoder>();
+  return pdfcore::make_unique<PNMEncoder>();
 }
 
 std::unique_ptr<Encoder> GetPFMEncoder() {
-  return jpegli::make_unique<PFMEncoder>();
+  return pdfcore::make_unique<PFMEncoder>();
 }
 
 std::unique_ptr<Encoder> GetPGMEncoder() {
-  return jpegli::make_unique<PGMEncoder>();
+  return pdfcore::make_unique<PGMEncoder>();
 }
 
 std::unique_ptr<Encoder> GetPAMEncoder() {
-  return jpegli::make_unique<PAMEncoder>();
+  return pdfcore::make_unique<PAMEncoder>();
 }
 
 }  // namespace extras
-}  // namespace jpegli
+}  // namespace pdfcore

@@ -24,7 +24,7 @@
 #include "lib/jpegli/error.h"
 
 HWY_BEFORE_NAMESPACE();
-namespace jpegli {
+namespace pdfcore {
 namespace HWY_NAMESPACE {
 
 // These templates are not found via ADL.
@@ -95,9 +95,9 @@ void YCbCrToABGR(float* row[kMaxComponents], size_t xsize) {
 
 void YCCKToCMYK(float* row[kMaxComponents], size_t xsize) {
   const HWY_CAPPED(float, 8) df;
-  float* JPEGLI_RESTRICT row0 = row[0];
-  float* JPEGLI_RESTRICT row1 = row[1];
-  float* JPEGLI_RESTRICT row2 = row[2];
+  float* PDFCORE_RESTRICT row0 = row[0];
+  float* PDFCORE_RESTRICT row1 = row[1];
+  float* PDFCORE_RESTRICT row2 = row[2];
   YCbCrToRGB(row, xsize);
   const auto offset = Set(df, -1.0f / 255.0f);
   for (size_t x = 0; x < xsize; x += Lanes(df)) {
@@ -165,9 +165,9 @@ void ABGRToYCbCr(float* row[kMaxComponents], size_t xsize) {
 
 void CMYKToYCCK(float* row[kMaxComponents], size_t xsize) {
   const HWY_CAPPED(float, 8) df;
-  float* JPEGLI_RESTRICT row0 = row[0];
-  float* JPEGLI_RESTRICT row1 = row[1];
-  float* JPEGLI_RESTRICT row2 = row[2];
+  float* PDFCORE_RESTRICT row0 = row[0];
+  float* PDFCORE_RESTRICT row1 = row[1];
+  float* PDFCORE_RESTRICT row2 = row[2];
   const auto unity = Set(df, 255.0f);
   for (size_t x = 0; x < xsize; x += Lanes(df)) {
     Store(Sub(unity, Load(df, row0 + x)), df, row0 + x);
@@ -179,11 +179,11 @@ void CMYKToYCCK(float* row[kMaxComponents], size_t xsize) {
 
 // NOLINTNEXTLINE(google-readability-namespace-comments)
 }  // namespace HWY_NAMESPACE
-}  // namespace jpegli
+}  // namespace pdfcore
 HWY_AFTER_NAMESPACE();
 
 #if HWY_ONCE
-namespace jpegli {
+namespace pdfcore {
 
 HWY_EXPORT(CMYKToYCCK);
 HWY_EXPORT(YCCKToCMYK);
@@ -304,17 +304,17 @@ void ChooseColorTransform(j_compress_ptr cinfo) {
   jpeg_comp_master* m = cinfo->master;
   if (!CheckColorSpaceComponents(cinfo->input_components,
                                  cinfo->in_color_space)) {
-    JPEGLI_ERROR("Invalid number of input components %d for colorspace %d",
+    PDFCORE_ERROR("Invalid number of input components %d for colorspace %d",
                  cinfo->input_components, cinfo->in_color_space);
   }
   if (!CheckColorSpaceComponents(cinfo->num_components,
                                  cinfo->jpeg_color_space)) {
-    JPEGLI_ERROR("Invalid number of components %d for colorspace %d",
+    PDFCORE_ERROR("Invalid number of components %d for colorspace %d",
                  cinfo->num_components, cinfo->jpeg_color_space);
   }
   if (cinfo->jpeg_color_space == cinfo->in_color_space) {
     if (cinfo->num_components != cinfo->input_components) {
-      JPEGLI_ERROR("Input/output components mismatch:  %d vs %d",
+      PDFCORE_ERROR("Input/output components mismatch:  %d vs %d",
                    cinfo->input_components, cinfo->num_components);
     }
     // No color transform requested.
@@ -323,7 +323,7 @@ void ChooseColorTransform(j_compress_ptr cinfo) {
   }
 
   if (cinfo->in_color_space == JCS_RGB && m->xyb_mode) {
-    JPEGLI_ERROR("Color transform on XYB colorspace is not supported.");
+    PDFCORE_ERROR("Color transform on XYB colorspace is not supported.");
   }
 
   m->color_transform = nullptr;
@@ -391,7 +391,7 @@ void ChooseColorTransform(j_compress_ptr cinfo) {
 
   if (m->color_transform == nullptr) {
     // TODO(szabadka) Support more color transforms.
-    JPEGLI_ERROR("Unsupported color transform %d -> %d", cinfo->in_color_space,
+    PDFCORE_ERROR("Unsupported color transform %d -> %d", cinfo->in_color_space,
                  cinfo->jpeg_color_space);
   }
 }
@@ -400,17 +400,17 @@ void ChooseColorTransform(j_decompress_ptr cinfo) {
   jpeg_decomp_master* m = cinfo->master;
   if (!CheckColorSpaceComponents(cinfo->out_color_components,
                                  cinfo->out_color_space)) {
-    JPEGLI_ERROR("Invalid number of output components %d for colorspace %d",
+    PDFCORE_ERROR("Invalid number of output components %d for colorspace %d",
                  cinfo->out_color_components, cinfo->out_color_space);
   }
   if (!CheckColorSpaceComponents(cinfo->num_components,
                                  cinfo->jpeg_color_space)) {
-    JPEGLI_ERROR("Invalid number of components %d for colorspace %d",
+    PDFCORE_ERROR("Invalid number of components %d for colorspace %d",
                  cinfo->num_components, cinfo->jpeg_color_space);
   }
   if (cinfo->jpeg_color_space == cinfo->out_color_space) {
     if (cinfo->num_components != cinfo->out_color_components) {
-      JPEGLI_ERROR("Input/output components mismatch:  %d vs %d",
+      PDFCORE_ERROR("Input/output components mismatch:  %d vs %d",
                    cinfo->num_components, cinfo->out_color_components);
     }
     // No color transform requested.
@@ -546,10 +546,10 @@ void ChooseColorTransform(j_decompress_ptr cinfo) {
 
   if (m->color_transform == nullptr) {
     // TODO(szabadka) Support more color transforms.
-    JPEGLI_ERROR("Unsupported color transform %d -> %d",
+    PDFCORE_ERROR("Unsupported color transform %d -> %d",
                  cinfo->jpeg_color_space, cinfo->out_color_space);
   }
 }
 
-}  // namespace jpegli
+}  // namespace pdfcore
 #endif  // HWY_ONCE

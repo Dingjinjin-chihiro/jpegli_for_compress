@@ -8,11 +8,11 @@
 
 #include <cstdint>
 
-#if defined(JPEGLI_LIB_BASE_FAST_MATH_INL_H_) == defined(HWY_TARGET_TOGGLE)
-#ifdef JPEGLI_LIB_BASE_FAST_MATH_INL_H_
-#undef JPEGLI_LIB_BASE_FAST_MATH_INL_H_
+#if defined(PDFCORE_LIB_BASE_FAST_MATH_INL_H_) == defined(HWY_TARGET_TOGGLE)
+#ifdef PDFCORE_LIB_BASE_FAST_MATH_INL_H_
+#undef PDFCORE_LIB_BASE_FAST_MATH_INL_H_
 #else
-#define JPEGLI_LIB_BASE_FAST_MATH_INL_H_
+#define PDFCORE_LIB_BASE_FAST_MATH_INL_H_
 #endif
 
 #include <hwy/highway.h>
@@ -20,7 +20,7 @@
 #include "lib/base/common.h"
 #include "lib/base/rational_polynomial-inl.h"
 HWY_BEFORE_NAMESPACE();
-namespace jpegli {
+namespace pdfcore {
 namespace HWY_NAMESPACE {
 
 // These templates are not found via ADL.
@@ -216,16 +216,16 @@ V CubeRootAndAdd(const V x, const V add) {
 
 // NOLINTNEXTLINE(google-readability-namespace-comments)
 }  // namespace HWY_NAMESPACE
-}  // namespace jpegli
+}  // namespace pdfcore
 HWY_AFTER_NAMESPACE();
 
-#endif  // JPEGLI_LIB_BASE_FAST_MATH_INL_H_
+#endif  // PDFCORE_LIB_BASE_FAST_MATH_INL_H_
 
 #if HWY_ONCE
-#ifndef JPEGLI_LIB_BASE_FAST_MATH_ONCE
-#define JPEGLI_LIB_BASE_FAST_MATH_ONCE
+#ifndef PDFCORE_LIB_BASE_FAST_MATH_ONCE
+#define PDFCORE_LIB_BASE_FAST_MATH_ONCE
 
-namespace jpegli {
+namespace pdfcore {
 inline float FastLog2f(float f) { return HWY_STATIC_DISPATCH(FastLog2f)(f); }
 inline float FastPow2f(float f) { return HWY_STATIC_DISPATCH(FastPow2f)(f); }
 inline float FastPowf(float b, float e) {
@@ -233,7 +233,7 @@ inline float FastPowf(float b, float e) {
 }
 inline float FastCosf(float f) { return HWY_STATIC_DISPATCH(FastCosf)(f); }
 inline float FastErff(float f) { return HWY_STATIC_DISPATCH(FastErff)(f); }
-}  // namespace jpegli
+}  // namespace pdfcore
 
-#endif  // JPEGLI_LIB_BASE_FAST_MATH_ONCE
+#endif  // PDFCORE_LIB_BASE_FAST_MATH_ONCE
 #endif  // HWY_ONCE

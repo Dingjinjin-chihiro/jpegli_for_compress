@@ -4,8 +4,8 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
-#ifndef JPEGLI_LIB_JPEGLI_TESTING_H_
-#define JPEGLI_LIB_JPEGLI_TESTING_H_
+#ifndef PDFCORE_LIB_PDFCORE_TESTING_H_
+#define PDFCORE_LIB_PDFCORE_TESTING_H_
 
 // GTest specific macros / wrappers.
 
@@ -14,13 +14,13 @@
 // googletest before 1.10 didn't define INSTANTIATE_TEST_SUITE_P() but instead
 // used INSTANTIATE_TEST_CASE_P which is now deprecated.
 #ifdef INSTANTIATE_TEST_SUITE_P
-#define JPEGLI_INSTANTIATE_TEST_SUITE_P INSTANTIATE_TEST_SUITE_P
+#define PDFCORE_INSTANTIATE_TEST_SUITE_P INSTANTIATE_TEST_SUITE_P
 #else
-#define JPEGLI_INSTANTIATE_TEST_SUITE_P INSTANTIATE_TEST_CASE_P
+#define PDFCORE_INSTANTIATE_TEST_SUITE_P INSTANTIATE_TEST_CASE_P
 #endif
 
 // Replacement for ASSERT_TRUE inside try-catch blocks.
-#define JPEGLI_TEST_ENSURE_TRUE(C) \
+#define PDFCORE_TEST_ENSURE_TRUE(C) \
   if (!(C)) return false;
 
 #define QUIT(M) FAIL() << M
@@ -35,4 +35,4 @@
     EXPECT_GE(_actual, 0.75 * _expected); \
   }
 
-#endif  // JPEGLI_LIB_JPEGLI_TESTING_H_
+#endif  // PDFCORE_LIB_PDFCORE_TESTING_H_

@@ -4,18 +4,18 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
-#ifndef JPEGLI_LIB_EXTRAS_ALPHA_BLEND_H_
-#define JPEGLI_LIB_EXTRAS_ALPHA_BLEND_H_
+#ifndef PDFCORE_LIB_EXTRAS_ALPHA_BLEND_H_
+#define PDFCORE_LIB_EXTRAS_ALPHA_BLEND_H_
 
 #include "lib/base/status.h"
 #include "lib/extras/packed_image.h"
 
-namespace jpegli {
+namespace pdfcore {
 namespace extras {
 
 Status AlphaBlend(PackedPixelFile* ppf, const float background[3]);
 
 }  // namespace extras
-}  // namespace jpegli
+}  // namespace pdfcore
 
-#endif  // JPEGLI_LIB_EXTRAS_ALPHA_BLEND_H_
+#endif  // PDFCORE_LIB_EXTRAS_ALPHA_BLEND_H_

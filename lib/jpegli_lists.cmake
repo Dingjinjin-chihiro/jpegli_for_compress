@@ -6,7 +6,7 @@
 
 # This file is generated, do not modify by manually.
 # Run `tools/scripts/build_cleaner.py --update` to regenerate it.
-set(JPEGLI_INTERNAL_BASE_SOURCES
+set(PDFCORE_INTERNAL_BASE_SOURCES
   base/bits.h
   base/byte_order.h
   base/c_callback_support.h
@@ -32,7 +32,7 @@ set(JPEGLI_INTERNAL_BASE_SOURCES
   base/types.h
 )
 
-set(JPEGLI_INTERNAL_CMS_SOURCES
+set(PDFCORE_INTERNAL_CMS_SOURCES
   cms/cms.h
   cms/cms_interface.h
   cms/color_encoding.h
@@ -47,64 +47,64 @@ set(JPEGLI_INTERNAL_CMS_SOURCES
   cms/transfer_functions.h
 )
 
-set(JPEGLI_INTERNAL_CODEC_APNG_SOURCES
+set(PDFCORE_INTERNAL_CODEC_APNG_SOURCES
   extras/dec/apng.h
   extras/enc/apng.h
 )
 
-set(JPEGLI_INTERNAL_CODEC_EXR_SOURCES
+set(PDFCORE_INTERNAL_CODEC_EXR_SOURCES
   extras/dec/exr.cc
   extras/dec/exr.h
   extras/enc/exr.cc
   extras/enc/exr.h
 )
 
-set(JPEGLI_INTERNAL_CODEC_GIF_SOURCES
+set(PDFCORE_INTERNAL_CODEC_GIF_SOURCES
   extras/dec/gif.cc
   extras/dec/gif.h
 )
 
-set(JPEGLI_INTERNAL_CODEC_JPEGLI_SOURCES
+set(PDFCORE_INTERNAL_CODEC_PDFCORE_SOURCES
   extras/dec/jpegli.cc
   extras/dec/jpegli.h
   extras/enc/jpegli.cc
   extras/enc/jpegli.h
 )
 
-set(JPEGLI_INTERNAL_CODEC_JPG_SOURCES
+set(PDFCORE_INTERNAL_CODEC_JPG_SOURCES
   extras/dec/jpg.cc
   extras/dec/jpg.h
   extras/enc/jpg.cc
   extras/enc/jpg.h
 )
 
-set(JPEGLI_INTERNAL_CODEC_NPY_SOURCES
+set(PDFCORE_INTERNAL_CODEC_NPY_SOURCES
   extras/enc/npy.cc
   extras/enc/npy.h
 )
 
-set(JPEGLI_INTERNAL_CODEC_PGX_SOURCES
+set(PDFCORE_INTERNAL_CODEC_PGX_SOURCES
   extras/dec/pgx.cc
   extras/dec/pgx.h
   extras/enc/pgx.cc
   extras/enc/pgx.h
 )
 
-set(JPEGLI_INTERNAL_CODEC_PNM_SOURCES
+set(PDFCORE_INTERNAL_CODEC_PNM_SOURCES
   extras/dec/pnm.cc
   extras/dec/pnm.h
   extras/enc/pnm.cc
   extras/enc/pnm.h
 )
 
-set(JPEGLI_INTERNAL_EXTRAS_FOR_TOOLS_SOURCES
+set(PDFCORE_INTERNAL_EXTRAS_FOR_TOOLS_SOURCES
   extras/metrics.cc
   extras/metrics.h
   extras/packed_image_convert.cc
   extras/packed_image_convert.h
 )
 
-set(JPEGLI_INTERNAL_EXTRAS_SOURCES
+set(PDFCORE_INTERNAL_EXTRAS_SOURCES
   extras/alpha_blend.cc
   extras/alpha_blend.h
   extras/butteraugli.cc
@@ -144,12 +144,12 @@ set(JPEGLI_INTERNAL_EXTRAS_SOURCES
   extras/xyb_transform.h
 )
 
-set(JPEGLI_INTERNAL_JPEGLI_LIBJPEG_HELPER_FILES
+set(PDFCORE_INTERNAL_PDFCORE_LIBJPEG_HELPER_FILES
   jpegli/libjpeg_test_util.cc
   jpegli/libjpeg_test_util.h
 )
 
-set(JPEGLI_INTERNAL_JPEGLI_SOURCES
+set(PDFCORE_INTERNAL_PDFCORE_SOURCES
   jpegli/adaptive_quantization.cc
   jpegli/adaptive_quantization.h
   jpegli/bit_writer.cc
@@ -207,7 +207,7 @@ set(JPEGLI_INTERNAL_JPEGLI_SOURCES
   jpegli/upsample.h
 )
 
-set(JPEGLI_INTERNAL_JPEGLI_TESTLIB_FILES
+set(PDFCORE_INTERNAL_PDFCORE_TESTLIB_FILES
   jpegli/fuzztest.h
   jpegli/test_params.h
   jpegli/test_utils-inl.h
@@ -215,7 +215,7 @@ set(JPEGLI_INTERNAL_JPEGLI_TESTLIB_FILES
   jpegli/test_utils.h
 )
 
-set(JPEGLI_INTERNAL_JPEGLI_TESTS
+set(PDFCORE_INTERNAL_PDFCORE_TESTS
   jpegli/decode_api_test.cc
   jpegli/encode_api_test.cc
   jpegli/error_handling_test.cc
@@ -226,11 +226,11 @@ set(JPEGLI_INTERNAL_JPEGLI_TESTS
   jpegli/transcode_api_test.cc
 )
 
-set(JPEGLI_INTERNAL_JPEGLI_WRAPPER_SOURCES
+set(PDFCORE_INTERNAL_PDFCORE_WRAPPER_SOURCES
   jpegli/libjpeg_wrapper.cc
 )
 
-set(JPEGLI_INTERNAL_TESTLIB_FILES
+set(PDFCORE_INTERNAL_TESTLIB_FILES
   extras/test_image.cc
   extras/test_image.h
   extras/test_memory_manager.cc
@@ -240,7 +240,7 @@ set(JPEGLI_INTERNAL_TESTLIB_FILES
   threads/test_utils.h
 )
 
-set(JPEGLI_INTERNAL_TESTS
+set(PDFCORE_INTERNAL_TESTS
   cms/tone_mapping_test.cc
   cms/transfer_functions_test.cc
   extras/butteraugli_test.cc
@@ -250,7 +250,7 @@ set(JPEGLI_INTERNAL_TESTS
   threads/thread_parallel_runner_test.cc
 )
 
-set(JPEGLI_INTERNAL_THREADS_SOURCES
+set(PDFCORE_INTERNAL_THREADS_SOURCES
   threads/thread_parallel_runner.cc
   threads/thread_parallel_runner.h
   threads/thread_parallel_runner_cxx.h

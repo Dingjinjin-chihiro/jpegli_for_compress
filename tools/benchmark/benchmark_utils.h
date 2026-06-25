@@ -4,17 +4,17 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
-#ifndef JPEGLI_TOOLS_BENCHMARK_BENCHMARK_UTILS_H_
-#define JPEGLI_TOOLS_BENCHMARK_BENCHMARK_UTILS_H_
+#ifndef PDFCORE_TOOLS_BENCHMARK_BENCHMARK_UTILS_H_
+#define PDFCORE_TOOLS_BENCHMARK_BENCHMARK_UTILS_H_
 
 #include <string>
 #include <vector>
 
 #include "lib/base/status.h"
 
-namespace jpegli_tools {
+namespace pdfcore_jpegli_tools {
 
-using ::jpegli::Status;
+using ::pdfcore::Status;
 
 class TemporaryFile final {
  public:
@@ -36,6 +36,6 @@ Status RunCommand(const std::string& command,
                   const std::vector<std::string>& arguments,
                   bool quiet = false);
 
-}  // namespace jpegli_tools
+}  // namespace pdfcore_jpegli_tools
 
-#endif  // JPEGLI_TOOLS_BENCHMARK_BENCHMARK_UTILS_H_
+#endif  // PDFCORE_TOOLS_BENCHMARK_BENCHMARK_UTILS_H_

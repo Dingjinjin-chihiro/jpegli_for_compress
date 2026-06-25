@@ -24,7 +24,7 @@
 #include "lib/jpegli/error.h"
 
 HWY_BEFORE_NAMESPACE();
-namespace jpegli {
+namespace pdfcore {
 namespace HWY_NAMESPACE {
 
 using hwy::HWY_NAMESPACE::Mul;
@@ -61,7 +61,7 @@ void ReadUint16Row(const uint8_t* row_in, size_t x0, size_t len,
   for (size_t x = x0; x < len; ++x) {
     for (size_t c = 0; c < C; ++c) {
       uint16_t val = row16[C * x + c];
-      if (swap_endianness) val = JPEGLI_BSWAP16(val);
+      if (swap_endianness) val = PDFCORE_BSWAP16(val);
       row_out[c][x] = val * kMul16;
     }
   }
@@ -84,7 +84,7 @@ void ReadUint8RowSingle(const uint8_t* row_in, size_t len,
                         float* row_out[kMaxComponents]) {
   const size_t N = Lanes(d);
   const size_t simd_len = len & (~(N - 1));
-  float* JPEGLI_RESTRICT const row0 = row_out[0];
+  float* PDFCORE_RESTRICT const row0 = row_out[0];
   for (size_t x = 0; x < simd_len; x += N) {
     Store(ConvertTo(d, PromoteTo(du, LoadU(du8, row_in + x))), d, row0 + x);
   }
@@ -95,8 +95,8 @@ void ReadUint8RowInterleaved2(const uint8_t* row_in, size_t len,
                               float* row_out[kMaxComponents]) {
   const size_t N = Lanes(d);
   const size_t simd_len = len & (~(N - 1));
-  float* JPEGLI_RESTRICT const row0 = row_out[0];
-  float* JPEGLI_RESTRICT const row1 = row_out[1];
+  float* PDFCORE_RESTRICT const row0 = row_out[0];
+  float* PDFCORE_RESTRICT const row1 = row_out[1];
   Vec<DU8> out0, out1;  // NOLINT
   for (size_t x = 0; x < simd_len; x += N) {
     LoadInterleaved2(du8, row_in + 2 * x, out0, out1);
@@ -110,9 +110,9 @@ void ReadUint8RowInterleaved3(const uint8_t* row_in, size_t len,
                               float* row_out[kMaxComponents]) {
   const size_t N = Lanes(d);
   const size_t simd_len = len & (~(N - 1));
-  float* JPEGLI_RESTRICT const row0 = row_out[0];
-  float* JPEGLI_RESTRICT const row1 = row_out[1];
-  float* JPEGLI_RESTRICT const row2 = row_out[2];
+  float* PDFCORE_RESTRICT const row0 = row_out[0];
+  float* PDFCORE_RESTRICT const row1 = row_out[1];
+  float* PDFCORE_RESTRICT const row2 = row_out[2];
   Vec<DU8> out0, out1, out2;  // NOLINT
   for (size_t x = 0; x < simd_len; x += N) {
     LoadInterleaved3(du8, row_in + 3 * x, out0, out1, out2);
@@ -127,10 +127,10 @@ void ReadUint8RowInterleaved4(const uint8_t* row_in, size_t len,
                               float* row_out[kMaxComponents]) {
   const size_t N = Lanes(d);
   const size_t simd_len = len & (~(N - 1));
-  float* JPEGLI_RESTRICT const row0 = row_out[0];
-  float* JPEGLI_RESTRICT const row1 = row_out[1];
-  float* JPEGLI_RESTRICT const row2 = row_out[2];
-  float* JPEGLI_RESTRICT const row3 = row_out[3];
+  float* PDFCORE_RESTRICT const row0 = row_out[0];
+  float* PDFCORE_RESTRICT const row1 = row_out[1];
+  float* PDFCORE_RESTRICT const row2 = row_out[2];
+  float* PDFCORE_RESTRICT const row3 = row_out[3];
   Vec<DU8> out0, out1, out2, out3;  // NOLINT
   for (size_t x = 0; x < simd_len; x += N) {
     LoadInterleaved4(du8, row_in + 4 * x, out0, out1, out2, out3);
@@ -147,9 +147,9 @@ void ReadUint16RowSingle(const uint8_t* row_in, size_t len,
   const size_t N = Lanes(d);
   const size_t simd_len = len & (~(N - 1));
   const auto mul = Set(d, kMul16);
-  const uint16_t* JPEGLI_RESTRICT const row =
+  const uint16_t* PDFCORE_RESTRICT const row =
       reinterpret_cast<const uint16_t*>(row_in);
-  float* JPEGLI_RESTRICT const row0 = row_out[0];
+  float* PDFCORE_RESTRICT const row0 = row_out[0];
   for (size_t x = 0; x < simd_len; x += N) {
     Store(Mul(mul, ConvertTo(d, PromoteTo(du, LoadU(du16, row + x)))), d,
           row0 + x);
@@ -162,10 +162,10 @@ void ReadUint16RowInterleaved2(const uint8_t* row_in, size_t len,
   const size_t N = Lanes(d);
   const size_t simd_len = len & (~(N - 1));
   const auto mul = Set(d, kMul16);
-  const uint16_t* JPEGLI_RESTRICT const row =
+  const uint16_t* PDFCORE_RESTRICT const row =
       reinterpret_cast<const uint16_t*>(row_in);
-  float* JPEGLI_RESTRICT const row0 = row_out[0];
-  float* JPEGLI_RESTRICT const row1 = row_out[1];
+  float* PDFCORE_RESTRICT const row0 = row_out[0];
+  float* PDFCORE_RESTRICT const row1 = row_out[1];
   Vec<DU16> out0, out1;  // NOLINT
   for (size_t x = 0; x < simd_len; x += N) {
     LoadInterleaved2(du16, row + 2 * x, out0, out1);
@@ -180,11 +180,11 @@ void ReadUint16RowInterleaved3(const uint8_t* row_in, size_t len,
   const size_t N = Lanes(d);
   const size_t simd_len = len & (~(N - 1));
   const auto mul = Set(d, kMul16);
-  const uint16_t* JPEGLI_RESTRICT const row =
+  const uint16_t* PDFCORE_RESTRICT const row =
       reinterpret_cast<const uint16_t*>(row_in);
-  float* JPEGLI_RESTRICT const row0 = row_out[0];
-  float* JPEGLI_RESTRICT const row1 = row_out[1];
-  float* JPEGLI_RESTRICT const row2 = row_out[2];
+  float* PDFCORE_RESTRICT const row0 = row_out[0];
+  float* PDFCORE_RESTRICT const row1 = row_out[1];
+  float* PDFCORE_RESTRICT const row2 = row_out[2];
   Vec<DU16> out0, out1, out2;  // NOLINT
   for (size_t x = 0; x < simd_len; x += N) {
     LoadInterleaved3(du16, row + 3 * x, out0, out1, out2);
@@ -200,12 +200,12 @@ void ReadUint16RowInterleaved4(const uint8_t* row_in, size_t len,
   const size_t N = Lanes(d);
   const size_t simd_len = len & (~(N - 1));
   const auto mul = Set(d, kMul16);
-  const uint16_t* JPEGLI_RESTRICT const row =
+  const uint16_t* PDFCORE_RESTRICT const row =
       reinterpret_cast<const uint16_t*>(row_in);
-  float* JPEGLI_RESTRICT const row0 = row_out[0];
-  float* JPEGLI_RESTRICT const row1 = row_out[1];
-  float* JPEGLI_RESTRICT const row2 = row_out[2];
-  float* JPEGLI_RESTRICT const row3 = row_out[3];
+  float* PDFCORE_RESTRICT const row0 = row_out[0];
+  float* PDFCORE_RESTRICT const row1 = row_out[1];
+  float* PDFCORE_RESTRICT const row2 = row_out[2];
+  float* PDFCORE_RESTRICT const row3 = row_out[3];
   Vec<DU16> out0, out1, out2, out3;  // NOLINT
   for (size_t x = 0; x < simd_len; x += N) {
     LoadInterleaved4(du16, row + 4 * x, out0, out1, out2, out3);
@@ -242,9 +242,9 @@ void ReadFloatRowSingle(const uint8_t* row_in, size_t len,
   const size_t N = Lanes(d);
   const size_t simd_len = len & (~(N - 1));
   const auto mul = Set(d, kMulFloat);
-  const float* JPEGLI_RESTRICT const row =
+  const float* PDFCORE_RESTRICT const row =
       reinterpret_cast<const float*>(row_in);
-  float* JPEGLI_RESTRICT const row0 = row_out[0];
+  float* PDFCORE_RESTRICT const row0 = row_out[0];
   for (size_t x = 0; x < simd_len; x += N) {
     Store(Mul(mul, LoadU(d, row + x)), d, row0 + x);
   }
@@ -256,10 +256,10 @@ void ReadFloatRowInterleaved2(const uint8_t* row_in, size_t len,
   const size_t N = Lanes(d);
   const size_t simd_len = len & (~(N - 1));
   const auto mul = Set(d, kMulFloat);
-  const float* JPEGLI_RESTRICT const row =
+  const float* PDFCORE_RESTRICT const row =
       reinterpret_cast<const float*>(row_in);
-  float* JPEGLI_RESTRICT const row0 = row_out[0];
-  float* JPEGLI_RESTRICT const row1 = row_out[1];
+  float* PDFCORE_RESTRICT const row0 = row_out[0];
+  float* PDFCORE_RESTRICT const row1 = row_out[1];
   Vec<D> out0, out1;  // NOLINT
   for (size_t x = 0; x < simd_len; x += N) {
     LoadInterleaved2(d, row + 2 * x, out0, out1);
@@ -274,11 +274,11 @@ void ReadFloatRowInterleaved3(const uint8_t* row_in, size_t len,
   const size_t N = Lanes(d);
   const size_t simd_len = len & (~(N - 1));
   const auto mul = Set(d, kMulFloat);
-  const float* JPEGLI_RESTRICT const row =
+  const float* PDFCORE_RESTRICT const row =
       reinterpret_cast<const float*>(row_in);
-  float* JPEGLI_RESTRICT const row0 = row_out[0];
-  float* JPEGLI_RESTRICT const row1 = row_out[1];
-  float* JPEGLI_RESTRICT const row2 = row_out[2];
+  float* PDFCORE_RESTRICT const row0 = row_out[0];
+  float* PDFCORE_RESTRICT const row1 = row_out[1];
+  float* PDFCORE_RESTRICT const row2 = row_out[2];
   Vec<D> out0, out1, out2;  // NOLINT
   for (size_t x = 0; x < simd_len; x += N) {
     LoadInterleaved3(d, row + 3 * x, out0, out1, out2);
@@ -294,12 +294,12 @@ void ReadFloatRowInterleaved4(const uint8_t* row_in, size_t len,
   const size_t N = Lanes(d);
   const size_t simd_len = len & (~(N - 1));
   const auto mul = Set(d, kMulFloat);
-  const float* JPEGLI_RESTRICT const row =
+  const float* PDFCORE_RESTRICT const row =
       reinterpret_cast<const float*>(row_in);
-  float* JPEGLI_RESTRICT const row0 = row_out[0];
-  float* JPEGLI_RESTRICT const row1 = row_out[1];
-  float* JPEGLI_RESTRICT const row2 = row_out[2];
-  float* JPEGLI_RESTRICT const row3 = row_out[3];
+  float* PDFCORE_RESTRICT const row0 = row_out[0];
+  float* PDFCORE_RESTRICT const row1 = row_out[1];
+  float* PDFCORE_RESTRICT const row2 = row_out[2];
+  float* PDFCORE_RESTRICT const row3 = row_out[3];
   Vec<D> out0, out1, out2, out3;  // NOLINT
   for (size_t x = 0; x < simd_len; x += N) {
     LoadInterleaved4(d, row + 4 * x, out0, out1, out2, out3);
@@ -333,11 +333,11 @@ void ReadFloatRowInterleaved4Swap(const uint8_t* row_in, size_t len,
 
 // NOLINTNEXTLINE(google-readability-namespace-comments)
 }  // namespace HWY_NAMESPACE
-}  // namespace jpegli
+}  // namespace pdfcore
 HWY_AFTER_NAMESPACE();
 
 #if HWY_ONCE
-namespace jpegli {
+namespace pdfcore {
 
 HWY_EXPORT(ReadUint8RowSingle);
 HWY_EXPORT(ReadUint8RowInterleaved2);
@@ -363,10 +363,10 @@ HWY_EXPORT(ReadFloatRowInterleaved4Swap);
 void ChooseInputMethod(j_compress_ptr cinfo) {
   jpeg_comp_master* m = cinfo->master;
   bool swap_endianness =
-      (m->endianness == JPEGLI_LITTLE_ENDIAN && !IsLittleEndian()) ||
-      (m->endianness == JPEGLI_BIG_ENDIAN && IsLittleEndian());
+      (m->endianness == PDFCORE_LITTLE_ENDIAN && !IsLittleEndian()) ||
+      (m->endianness == PDFCORE_BIG_ENDIAN && IsLittleEndian());
   m->input_method = nullptr;
-  if (m->data_type == JPEGLI_TYPE_UINT8) {
+  if (m->data_type == PDFCORE_TYPE_UINT8) {
     if (cinfo->raw_data_in || cinfo->input_components == 1) {
       m->input_method = HWY_DYNAMIC_DISPATCH(ReadUint8RowSingle);
     } else if (cinfo->input_components == 2) {
@@ -376,7 +376,7 @@ void ChooseInputMethod(j_compress_ptr cinfo) {
     } else if (cinfo->input_components == 4) {
       m->input_method = HWY_DYNAMIC_DISPATCH(ReadUint8RowInterleaved4);
     }
-  } else if (m->data_type == JPEGLI_TYPE_UINT16 && !swap_endianness) {
+  } else if (m->data_type == PDFCORE_TYPE_UINT16 && !swap_endianness) {
     if (cinfo->raw_data_in || cinfo->input_components == 1) {
       m->input_method = HWY_DYNAMIC_DISPATCH(ReadUint16RowSingle);
     } else if (cinfo->input_components == 2) {
@@ -386,7 +386,7 @@ void ChooseInputMethod(j_compress_ptr cinfo) {
     } else if (cinfo->input_components == 4) {
       m->input_method = HWY_DYNAMIC_DISPATCH(ReadUint16RowInterleaved4);
     }
-  } else if (m->data_type == JPEGLI_TYPE_UINT16 && swap_endianness) {
+  } else if (m->data_type == PDFCORE_TYPE_UINT16 && swap_endianness) {
     if (cinfo->raw_data_in || cinfo->input_components == 1) {
       m->input_method = HWY_DYNAMIC_DISPATCH(ReadUint16RowSingleSwap);
     } else if (cinfo->input_components == 2) {
@@ -396,7 +396,7 @@ void ChooseInputMethod(j_compress_ptr cinfo) {
     } else if (cinfo->input_components == 4) {
       m->input_method = HWY_DYNAMIC_DISPATCH(ReadUint16RowInterleaved4Swap);
     }
-  } else if (m->data_type == JPEGLI_TYPE_FLOAT && !swap_endianness) {
+  } else if (m->data_type == PDFCORE_TYPE_FLOAT && !swap_endianness) {
     if (cinfo->raw_data_in || cinfo->input_components == 1) {
       m->input_method = HWY_DYNAMIC_DISPATCH(ReadFloatRowSingle);
     } else if (cinfo->input_components == 2) {
@@ -406,7 +406,7 @@ void ChooseInputMethod(j_compress_ptr cinfo) {
     } else if (cinfo->input_components == 4) {
       m->input_method = HWY_DYNAMIC_DISPATCH(ReadFloatRowInterleaved4);
     }
-  } else if (m->data_type == JPEGLI_TYPE_FLOAT && swap_endianness) {
+  } else if (m->data_type == PDFCORE_TYPE_FLOAT && swap_endianness) {
     if (cinfo->raw_data_in || cinfo->input_components == 1) {
       m->input_method = HWY_DYNAMIC_DISPATCH(ReadFloatRowSingleSwap);
     } else if (cinfo->input_components == 2) {
@@ -418,9 +418,9 @@ void ChooseInputMethod(j_compress_ptr cinfo) {
     }
   }
   if (m->input_method == nullptr) {
-    JPEGLI_ERROR("Could not find input method.");
+    PDFCORE_ERROR("Could not find input method.");
   }
 }
 
-}  // namespace jpegli
+}  // namespace pdfcore
 #endif  // HWY_ONCE

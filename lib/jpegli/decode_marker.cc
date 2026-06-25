@@ -18,7 +18,7 @@
 #include "lib/jpegli/error.h"
 #include "lib/jpegli/memory_manager.h"
 
-namespace jpegli {
+namespace pdfcore {
 namespace {
 
 constexpr int kMaxDimPixels = 65535;
@@ -28,19 +28,19 @@ constexpr uint8_t kIccProfileTag[12] = "ICC_PROFILE";
 
 #define JPEG_VERIFY_LEN(n)                               \
   if (pos + (n) > len) {                                 \
-    JPEGLI_ERROR("Unexpected end of marker: pos=%" PRIuS \
+    PDFCORE_ERROR("Unexpected end of marker: pos=%" PRIuS \
                  " need=%d len=%" PRIuS,                 \
                  pos, static_cast<int>(n), len);         \
   }
 
 #define JPEG_VERIFY_INPUT(var, low, high)                        \
   if ((var) < (low) || (var) > (high)) {                         \
-    JPEGLI_ERROR("Invalid " #var ": %d", static_cast<int>(var)); \
+    PDFCORE_ERROR("Invalid " #var ": %d", static_cast<int>(var)); \
   }
 
 #define JPEG_VERIFY_MARKER_END()                                              \
   if (pos != len) {                                                           \
-    JPEGLI_ERROR("Invalid marker length: declared=%" PRIuS " actual=%" PRIuS, \
+    PDFCORE_ERROR("Invalid marker length: declared=%" PRIuS " actual=%" PRIuS, \
                  len, pos);                                                   \
   }
 
@@ -57,13 +57,13 @@ inline int ReadUint16(const uint8_t* data, size_t* pos) {
 void ProcessSOF(j_decompress_ptr cinfo, const uint8_t* data, size_t len) {
   jpeg_decomp_master* m = cinfo->master;
   if (!m->found_soi_) {
-    JPEGLI_ERROR("Unexpected SOF marker.");
+    PDFCORE_ERROR("Unexpected SOF marker.");
   }
   if (m->found_sof_) {
-    JPEGLI_ERROR("Duplicate SOF marker.");
+    PDFCORE_ERROR("Duplicate SOF marker.");
   }
   m->found_sof_ = true;
-  cinfo->progressive_mode = TO_JPEGLI_BOOL(cinfo->unread_marker == 0xc2);
+  cinfo->progressive_mode = TO_PDFCORE_BOOL(cinfo->unread_marker == 0xc2);
   cinfo->arith_code = 0;
   size_t pos = 2;
   JPEG_VERIFY_LEN(6);
@@ -76,7 +76,7 @@ void ProcessSOF(j_decompress_ptr cinfo, const uint8_t* data, size_t len) {
   JPEG_VERIFY_INPUT(cinfo->image_width, 1, kMaxDimPixels);
   JPEG_VERIFY_INPUT(cinfo->num_components, 1, kMaxComponents);
   JPEG_VERIFY_LEN(3 * cinfo->num_components);
-  cinfo->comp_info = jpegli::Allocate<jpeg_component_info>(
+  cinfo->comp_info = pdfcore::Allocate<jpeg_component_info>(
       cinfo, cinfo->num_components, JPOOL_IMAGE);
 
   // Read sampling factors and quant table index for each component.
@@ -88,7 +88,7 @@ void ProcessSOF(j_decompress_ptr cinfo, const uint8_t* data, size_t len) {
     comp->component_index = i;
     const int id = ReadUint8(data, &pos);
     if (ids_seen[id]) {  // (cf. section B.2.2, syntax of Ci)
-      JPEGLI_ERROR("Duplicate ID %d in SOF.", id);
+      PDFCORE_ERROR("Duplicate ID %d in SOF.", id);
     }
     ids_seen[id] = 1;
     comp->component_id = id;
@@ -151,7 +151,7 @@ void ProcessSOF(j_decompress_ptr cinfo, const uint8_t* data, size_t len) {
     jpeg_component_info* comp = &cinfo->comp_info[i];
     if (cinfo->max_h_samp_factor % comp->h_samp_factor != 0 ||
         cinfo->max_v_samp_factor % comp->v_samp_factor != 0) {
-      JPEGLI_ERROR("Non-integral subsampling ratios.");
+      PDFCORE_ERROR("Non-integral subsampling ratios.");
     }
     m->h_factor[i] = cinfo->max_h_samp_factor / comp->h_samp_factor;
     m->v_factor[i] = cinfo->max_v_samp_factor / comp->v_samp_factor;
@@ -166,7 +166,7 @@ void ProcessSOF(j_decompress_ptr cinfo, const uint8_t* data, size_t len) {
 void ProcessSOS(j_decompress_ptr cinfo, const uint8_t* data, size_t len) {
   jpeg_decomp_master* m = cinfo->master;
   if (!m->found_sof_) {
-    JPEGLI_ERROR("Unexpected SOS marker.");
+    PDFCORE_ERROR("Unexpected SOS marker.");
   }
   m->found_sos_ = true;
   size_t pos = 2;
@@ -182,7 +182,7 @@ void ProcessSOS(j_decompress_ptr cinfo, const uint8_t* data, size_t len) {
   for (int i = 0; i < cinfo->comps_in_scan; ++i) {
     int id = ReadUint8(data, &pos);
     if (ids_seen[id]) {  // (cf. section B.2.3, regarding CSj)
-      JPEGLI_ERROR("Duplicate ID %d in SOS.", id);
+      PDFCORE_ERROR("Duplicate ID %d in SOS.", id);
     }
     ids_seen[id] = 1;
     jpeg_component_info* comp = nullptr;
@@ -193,7 +193,7 @@ void ProcessSOS(j_decompress_ptr cinfo, const uint8_t* data, size_t len) {
       }
     }
     if (!comp) {
-      JPEGLI_ERROR("SOS marker: Could not find component with id %d", id);
+      PDFCORE_ERROR("SOS marker: Could not find component with id %d", id);
     }
     int c = ReadUint8(data, &pos);
     comp->dc_tbl_no = c >> 4;
@@ -204,7 +204,7 @@ void ProcessSOS(j_decompress_ptr cinfo, const uint8_t* data, size_t len) {
     comp->MCU_height = is_interleaved ? comp->v_samp_factor : 1;
     comp->MCU_blocks = comp->MCU_width * comp->MCU_height;
     if (cinfo->blocks_in_MCU + comp->MCU_blocks > D_MAX_BLOCKS_IN_MCU) {
-      JPEGLI_ERROR("Too many blocks in MCU.");
+      PDFCORE_ERROR("Too many blocks in MCU.");
     }
     for (int j = 0; j < comp->MCU_blocks; ++j) {
       cinfo->MCU_membership[cinfo->blocks_in_MCU++] = i;
@@ -222,12 +222,12 @@ void ProcessSOS(j_decompress_ptr cinfo, const uint8_t* data, size_t len) {
 
   if (cinfo->input_scan_number == 0) {
     m->is_multiscan_ = (cinfo->comps_in_scan < cinfo->num_components ||
-                        FROM_JPEGLI_BOOL(cinfo->progressive_mode));
+                        FROM_PDFCORE_BOOL(cinfo->progressive_mode));
   }
   if (cinfo->Ah != 0 && cinfo->Al != cinfo->Ah - 1) {
     // section G.1.1.1.2 : Successive approximation control only improves
     // by one bit at a time.
-    JPEGLI_ERROR("Invalid progressive parameters: Al=%d Ah=%d", cinfo->Al,
+    PDFCORE_ERROR("Invalid progressive parameters: Al=%d Ah=%d", cinfo->Al,
                  cinfo->Ah);
   }
   if (!cinfo->progressive_mode) {
@@ -261,12 +261,12 @@ void ProcessSOS(j_decompress_ptr cinfo, const uint8_t* data, size_t len) {
     int comp_idx = cinfo->cur_comp_info[i]->component_index;
     for (int k = cinfo->Ss; k <= cinfo->Se; ++k) {
       if (m->scan_progression_[comp_idx][k] & scan_bitmask) {
-        JPEGLI_ERROR(
+        PDFCORE_ERROR(
             "Overlapping scans: component=%d k=%d prev_mask: %u cur_mask %u",
             comp_idx, k, m->scan_progression_[i][k], scan_bitmask);
       }
       if (m->scan_progression_[comp_idx][k] & refinement_bitmask) {
-        JPEGLI_ERROR(
+        PDFCORE_ERROR(
             "Invalid scan order, a more refined scan was already done: "
             "component=%d k=%d prev_mask=%u cur_mask=%u",
             comp_idx, k, m->scan_progression_[i][k], scan_bitmask);
@@ -275,7 +275,7 @@ void ProcessSOS(j_decompress_ptr cinfo, const uint8_t* data, size_t len) {
     }
   }
   if (cinfo->Al > 10) {
-    JPEGLI_ERROR("Scan parameter Al=%d is not supported.", cinfo->Al);
+    PDFCORE_ERROR("Scan parameter Al=%d is not supported.", cinfo->Al);
   }
 }
 
@@ -285,7 +285,7 @@ void ProcessSOS(j_decompress_ptr cinfo, const uint8_t* data, size_t len) {
 void ProcessDHT(j_decompress_ptr cinfo, const uint8_t* data, size_t len) {
   size_t pos = 2;
   if (pos == len) {
-    JPEGLI_ERROR("DHT marker: no Huffman table found");
+    PDFCORE_ERROR("DHT marker: no Huffman table found");
   }
   while (pos < len) {
     JPEG_VERIFY_LEN(1 + kJpegHuffmanMaxBitLength);
@@ -304,7 +304,7 @@ void ProcessDHT(j_decompress_ptr cinfo, const uint8_t* data, size_t len) {
       table = &cinfo->dc_huff_tbl_ptrs[huffman_index];
     }
     if (*table == nullptr) {
-      *table = jpegli_alloc_huff_table(reinterpret_cast<j_common_ptr>(cinfo));
+      *table = pdfcore_jpegli_alloc_huff_table(reinterpret_cast<j_common_ptr>(cinfo));
     }
     int total_count = 0;
     for (size_t i = 1; i <= kJpegHuffmanMaxBitLength; ++i) {
@@ -339,11 +339,11 @@ void ProcessDHT(j_decompress_ptr cinfo, const uint8_t* data, size_t len) {
 void ProcessDQT(j_decompress_ptr cinfo, const uint8_t* data, size_t len) {
   jpeg_decomp_master* m = cinfo->master;
   if (m->found_sos_) {
-    JPEGLI_ERROR("Updating quant tables between scans is not supported.");
+    PDFCORE_ERROR("Updating quant tables between scans is not supported.");
   }
   size_t pos = 2;
   if (pos == len) {
-    JPEGLI_ERROR("DQT marker: no quantization table found");
+    PDFCORE_ERROR("DQT marker: no quantization table found");
   }
   while (pos < len) {
     JPEG_VERIFY_LEN(1);
@@ -356,7 +356,7 @@ void ProcessDQT(j_decompress_ptr cinfo, const uint8_t* data, size_t len) {
 
     if (cinfo->quant_tbl_ptrs[quant_table_index] == nullptr) {
       cinfo->quant_tbl_ptrs[quant_table_index] =
-          jpegli_alloc_quant_table(reinterpret_cast<j_common_ptr>(cinfo));
+          pdfcore_jpegli_alloc_quant_table(reinterpret_cast<j_common_ptr>(cinfo));
     }
     JQUANT_TBL* quant_table = cinfo->quant_tbl_ptrs[quant_table_index];
 
@@ -377,7 +377,7 @@ void ProcessDNL(j_decompress_ptr cinfo, const uint8_t* data, size_t len) {
 void ProcessDRI(j_decompress_ptr cinfo, const uint8_t* data, size_t len) {
   jpeg_decomp_master* m = cinfo->master;
   if (m->found_dri_) {
-    JPEGLI_ERROR("Duplicate DRI marker.");
+    PDFCORE_ERROR("Duplicate DRI marker.");
   }
   m->found_dri_ = true;
   size_t pos = 2;
@@ -411,24 +411,24 @@ void ProcessAPP(j_decompress_ptr cinfo, const uint8_t* data, size_t len) {
       payload += sizeof(kIccProfileTag);
       payload_size -= sizeof(kIccProfileTag);
       if (payload_size < 2) {
-        JPEGLI_ERROR("ICC chunk is too small.");
+        PDFCORE_ERROR("ICC chunk is too small.");
       }
       uint8_t index = payload[0];
       uint8_t total = payload[1];
       ++m->icc_index_;
       if (m->icc_index_ != index) {
-        JPEGLI_ERROR("Invalid ICC chunk order.");
+        PDFCORE_ERROR("Invalid ICC chunk order.");
       }
       if (total == 0) {
-        JPEGLI_ERROR("Invalid ICC chunk total.");
+        PDFCORE_ERROR("Invalid ICC chunk total.");
       }
       if (m->icc_total_ == 0) {
         m->icc_total_ = total;
       } else if (m->icc_total_ != total) {
-        JPEGLI_ERROR("Invalid ICC chunk total.");
+        PDFCORE_ERROR("Invalid ICC chunk total.");
       }
       if (m->icc_index_ > m->icc_total_) {
-        JPEGLI_ERROR("Invalid ICC chunk index.");
+        PDFCORE_ERROR("Invalid ICC chunk index.");
       }
       m->icc_profile_.insert(m->icc_profile_.end(), payload + 2,
                              payload + payload_size);
@@ -443,7 +443,7 @@ void ProcessCOM(j_decompress_ptr cinfo, const uint8_t* data, size_t len) {
 void ProcessSOI(j_decompress_ptr cinfo, const uint8_t* data, size_t len) {
   jpeg_decomp_master* m = cinfo->master;
   if (m->found_soi_) {
-    JPEGLI_ERROR("Duplicate SOI marker");
+    PDFCORE_ERROR("Duplicate SOI marker");
   }
   m->found_soi_ = true;
 }
@@ -460,13 +460,13 @@ void SaveMarker(j_decompress_ptr cinfo, const uint8_t* data, size_t len) {
   // Insert new saved marker to the head of the list.
   jpeg_saved_marker_ptr next = cinfo->marker_list;
   cinfo->marker_list =
-      jpegli::Allocate<jpeg_marker_struct>(cinfo, 1, JPOOL_IMAGE);
+      pdfcore::Allocate<jpeg_marker_struct>(cinfo, 1, JPOOL_IMAGE);
   cinfo->marker_list->next = next;
   cinfo->marker_list->marker = marker;
   cinfo->marker_list->original_length = payload_size;
   cinfo->marker_list->data_length = payload_size;
   cinfo->marker_list->data =
-      jpegli::Allocate<uint8_t>(cinfo, payload_size, JPOOL_IMAGE);
+      pdfcore::Allocate<uint8_t>(cinfo, payload_size, JPOOL_IMAGE);
   memcpy(cinfo->marker_list->data, payload, payload_size);
 }
 
@@ -494,17 +494,17 @@ uint8_t ProcessNextMarker(j_decompress_ptr cinfo, const uint8_t* const data,
     marker = data[*pos + 1];
     if (num_skipped > 0) {
       if (m->found_soi_) {
-        JPEGLI_WARN("Skipped %d bytes before marker 0x%02x",
+        PDFCORE_WARN("Skipped %d bytes before marker 0x%02x",
                     static_cast<int>(num_skipped), marker);
       } else {
-        JPEGLI_ERROR("Did not find SOI marker.");
+        PDFCORE_ERROR("Did not find SOI marker.");
       }
     }
     *pos += 2;
     cinfo->unread_marker = marker;
   }
   if (!m->found_soi_ && marker != 0xd8) {
-    JPEGLI_ERROR("Did not find SOI marker.");
+    PDFCORE_ERROR("Did not find SOI marker.");
   }
   if (GetMarkerProcessor(cinfo)) {
     return kHandleMarkerProcessor;
@@ -517,7 +517,7 @@ uint8_t ProcessNextMarker(j_decompress_ptr cinfo, const uint8_t* const data,
     }
     marker_len += (data[*pos] << 8) + data[*pos + 1];
     if (marker_len < 2) {
-      JPEGLI_ERROR("Invalid marker length");
+      PDFCORE_ERROR("Invalid marker length");
     }
     if (*pos + marker_len > len) {
       // TODO(szabadka) Limit our memory usage by using the skip_input_data
@@ -549,7 +549,7 @@ uint8_t ProcessNextMarker(j_decompress_ptr cinfo, const uint8_t* const data,
   } else if (marker == 0xd9) {
     ProcessEOI(cinfo, marker_data, marker_len);
   } else {
-    JPEGLI_ERROR("Unexpected marker 0x%x", marker);
+    PDFCORE_ERROR("Unexpected marker 0x%x", marker);
   }
   *pos += marker_len;
   cinfo->unread_marker = 0;
@@ -585,4 +585,4 @@ int ProcessMarkers(j_decompress_ptr cinfo, const uint8_t* const data,
   }
 }
 
-}  // namespace jpegli
+}  // namespace pdfcore

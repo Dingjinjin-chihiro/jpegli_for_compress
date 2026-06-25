@@ -4,8 +4,8 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
-#ifndef JPEGLI_LIB_JPEGLI_TEST_UTILS_H_
-#define JPEGLI_LIB_JPEGLI_TEST_UTILS_H_
+#ifndef PDFCORE_LIB_PDFCORE_TEST_UTILS_H_
+#define PDFCORE_LIB_PDFCORE_TEST_UTILS_H_
 
 #include <csetjmp>
 #include <cstddef>
@@ -21,7 +21,7 @@
 #include "lib/jpegli/test_params.h"
 #include "lib/jpegli/types.h"
 
-namespace jpegli {
+namespace pdfcore {
 
 #define ERROR_HANDLER_SETUP(flavor)                                \
   jpeg_error_mgr jerr;                                             \
@@ -38,7 +38,7 @@ namespace jpegli {
     longjmp(*env, 1);                                              \
   };
 
-std::string IOMethodName(JpegliDataType data_type, JpegliEndianness endianness);
+std::string IOMethodName(PdfcoreDataType data_type, PdfcoreEndianness endianness);
 
 std::string ColorSpaceName(J_COLOR_SPACE colorspace);
 
@@ -63,7 +63,7 @@ void UnmapColors(uint8_t* row, size_t xsize, int components,
                  JSAMPARRAY colormap, size_t num_colors);
 
 std::string GetTestDataPath(const std::string& filename);
-jpegli::StatusOr<std::vector<uint8_t>> ReadTestData(
+pdfcore::StatusOr<std::vector<uint8_t>> ReadTestData(
     const std::string& filename);
 
 class PNMParser {
@@ -93,7 +93,7 @@ bool ReadPNM(const std::vector<uint8_t>& data, size_t* xsize, size_t* ysize,
              size_t* num_channels, size_t* bitdepth,
              std::vector<uint8_t>* pixels);
 
-jpegli::Status SetNumChannels(J_COLOR_SPACE colorspace, size_t* channels);
+pdfcore::Status SetNumChannels(J_COLOR_SPACE colorspace, size_t* channels);
 
 void ConvertToGrayscale(TestImage* img);
 
@@ -125,6 +125,6 @@ void VerifyOutputImage(const TestImage& input, const TestImage& output,
 
 void Check(bool ok);
 
-}  // namespace jpegli
+}  // namespace pdfcore
 
-#endif  // JPEGLI_LIB_JPEGLI_TEST_UTILS_H_
+#endif  // PDFCORE_LIB_PDFCORE_TEST_UTILS_H_

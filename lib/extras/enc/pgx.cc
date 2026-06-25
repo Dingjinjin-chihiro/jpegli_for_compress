@@ -21,59 +21,59 @@
 #include "lib/extras/enc/encode.h"
 #include "lib/extras/packed_image.h"
 
-namespace jpegli {
+namespace pdfcore {
 namespace extras {
 namespace {
 
 constexpr size_t kMaxHeaderSize = 200;
 
-Status EncodeHeader(const JpegliBasicInfo& info, char* header,
+Status EncodeHeader(const PdfcoreBasicInfo& info, char* header,
                     int* chars_written) {
   if (info.alpha_bits > 0) {
-    return JPEGLI_FAILURE("PGX: can't store alpha");
+    return PDFCORE_FAILURE("PGX: can't store alpha");
   }
   if (info.num_color_channels != 1) {
-    return JPEGLI_FAILURE("PGX: must be grayscale");
+    return PDFCORE_FAILURE("PGX: must be grayscale");
   }
   // TODO(lode): verify other bit depths: for other bit depths such as 1 or 4
   // bits, have a test case to verify it works correctly. For bits > 16, we may
   // need to change the way external_image works.
   if (info.bits_per_sample != 8 && info.bits_per_sample != 16) {
-    return JPEGLI_FAILURE("PGX: bits other than 8 or 16 not yet supported");
+    return PDFCORE_FAILURE("PGX: bits other than 8 or 16 not yet supported");
   }
 
   // Use ML (Big Endian), LM may not be well supported by all decoders.
   *chars_written = snprintf(header, kMaxHeaderSize, "PG ML + %u %u %u\n",
                             info.bits_per_sample, info.xsize, info.ysize);
-  JPEGLI_RETURN_IF_ERROR(static_cast<unsigned int>(*chars_written) <
+  PDFCORE_RETURN_IF_ERROR(static_cast<unsigned int>(*chars_written) <
                          kMaxHeaderSize);
   return true;
 }
 
-Status EncodeImagePGX(const PackedFrame& frame, const JpegliBasicInfo& info,
+Status EncodeImagePGX(const PackedFrame& frame, const PdfcoreBasicInfo& info,
                       std::vector<uint8_t>* bytes) {
   char header[kMaxHeaderSize];
   int header_size = 0;
-  JPEGLI_RETURN_IF_ERROR(EncodeHeader(info, header, &header_size));
+  PDFCORE_RETURN_IF_ERROR(EncodeHeader(info, header, &header_size));
 
   const PackedImage& color = frame.color;
-  const JpegliPixelFormat format = color.format;
+  const PdfcorePixelFormat format = color.format;
   const uint8_t* in = reinterpret_cast<const uint8_t*>(color.pixels());
-  JPEGLI_RETURN_IF_ERROR(PackedImage::ValidateDataType(format.data_type));
+  PDFCORE_RETURN_IF_ERROR(PackedImage::ValidateDataType(format.data_type));
   size_t data_bits_per_sample = PackedImage::BitsPerChannel(format.data_type);
   size_t bytes_per_sample = data_bits_per_sample / kBitsPerByte;
   size_t num_samples = static_cast<size_t>(info.xsize) * info.ysize;
 
   if (info.bits_per_sample != data_bits_per_sample) {
-    return JPEGLI_FAILURE("Bit depth does not match pixel data type");
+    return PDFCORE_FAILURE("Bit depth does not match pixel data type");
   }
 
   std::vector<uint8_t> pixels(num_samples * bytes_per_sample);
 
-  if (format.data_type == JPEGLI_TYPE_UINT8) {
+  if (format.data_type == PDFCORE_TYPE_UINT8) {
     memcpy(pixels.data(), in, num_samples * bytes_per_sample);
-  } else if (format.data_type == JPEGLI_TYPE_UINT16) {
-    if (format.endianness != JPEGLI_BIG_ENDIAN) {
+  } else if (format.data_type == PDFCORE_TYPE_UINT16) {
+    if (format.endianness != PDFCORE_BIG_ENDIAN) {
       const uint8_t* p_in = in;
       uint8_t* p_out = pixels.data();
       for (size_t i = 0; i < num_samples; ++i, p_in += 2, p_out += 2) {
@@ -83,7 +83,7 @@ Status EncodeImagePGX(const PackedFrame& frame, const JpegliBasicInfo& info,
       memcpy(pixels.data(), in, num_samples * bytes_per_sample);
     }
   } else {
-    return JPEGLI_FAILURE("Unsupported pixel data type");
+    return PDFCORE_FAILURE("Unsupported pixel data type");
   }
 
   bytes->resize(static_cast<size_t>(header_size) + pixels.size());
@@ -95,13 +95,13 @@ Status EncodeImagePGX(const PackedFrame& frame, const JpegliBasicInfo& info,
 
 class PGXEncoder : public Encoder {
  public:
-  std::vector<JpegliPixelFormat> AcceptedFormats() const override {
-    std::vector<JpegliPixelFormat> formats;
-    for (const JpegliDataType data_type :
-         {JPEGLI_TYPE_UINT8, JPEGLI_TYPE_UINT16}) {
-      for (JpegliEndianness endianness :
-           {JPEGLI_BIG_ENDIAN, JPEGLI_LITTLE_ENDIAN}) {
-        formats.push_back(JpegliPixelFormat{/*num_channels=*/1,
+  std::vector<PdfcorePixelFormat> AcceptedFormats() const override {
+    std::vector<PdfcorePixelFormat> formats;
+    for (const PdfcoreDataType data_type :
+         {PDFCORE_TYPE_UINT8, PDFCORE_TYPE_UINT16}) {
+      for (PdfcoreEndianness endianness :
+           {PDFCORE_BIG_ENDIAN, PDFCORE_LITTLE_ENDIAN}) {
+        formats.push_back(PdfcorePixelFormat{/*num_channels=*/1,
                                             /*data_type=*/data_type,
                                             /*endianness=*/endianness,
                                             /*align=*/0});
@@ -111,14 +111,14 @@ class PGXEncoder : public Encoder {
   }
   Status Encode(const PackedPixelFile& ppf, EncodedImage* encoded_image,
                 ThreadPool* pool) const override {
-    JPEGLI_RETURN_IF_ERROR(VerifyBasicInfo(ppf.info));
+    PDFCORE_RETURN_IF_ERROR(VerifyBasicInfo(ppf.info));
     encoded_image->icc.assign(ppf.icc.begin(), ppf.icc.end());
     encoded_image->bitstreams.clear();
     encoded_image->bitstreams.reserve(ppf.frames.size());
     for (const auto& frame : ppf.frames) {
-      JPEGLI_RETURN_IF_ERROR(VerifyPackedImage(frame.color, ppf.info));
+      PDFCORE_RETURN_IF_ERROR(VerifyPackedImage(frame.color, ppf.info));
       encoded_image->bitstreams.emplace_back();
-      JPEGLI_RETURN_IF_ERROR(
+      PDFCORE_RETURN_IF_ERROR(
           EncodeImagePGX(frame, ppf.info, &encoded_image->bitstreams.back()));
     }
     return true;
@@ -128,8 +128,8 @@ class PGXEncoder : public Encoder {
 }  // namespace
 
 std::unique_ptr<Encoder> GetPGXEncoder() {
-  return jpegli::make_unique<PGXEncoder>();
+  return pdfcore::make_unique<PGXEncoder>();
 }
 
 }  // namespace extras
-}  // namespace jpegli
+}  // namespace pdfcore

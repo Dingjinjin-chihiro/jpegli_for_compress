@@ -4,8 +4,8 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
-#ifndef JPEGLI_LIB_CMS_COLOR_ENCODING_CMS_H_
-#define JPEGLI_LIB_CMS_COLOR_ENCODING_CMS_H_
+#ifndef PDFCORE_LIB_CMS_COLOR_ENCODING_CMS_H_
+#define PDFCORE_LIB_CMS_COLOR_ENCODING_CMS_H_
 
 #include <cmath>
 #include <cstdint>
@@ -18,7 +18,7 @@
 #include "lib/cms/cms_interface.h"
 #include "lib/cms/color_encoding.h"
 
-namespace jpegli {
+namespace pdfcore {
 namespace cms {
 
 using IccBytes = std::vector<uint8_t>;
@@ -127,11 +127,11 @@ struct Customxy {
 
   Status SetValue(const CIExy& xy) {
     bool ok = (std::abs(xy.x) < kRoughLimit) && (std::abs(xy.y) < kRoughLimit);
-    if (!ok) return JPEGLI_FAILURE("X or Y is out of bounds");
+    if (!ok) return PDFCORE_FAILURE("X or Y is out of bounds");
     x = static_cast<int32_t>(roundf(xy.x * kMul));
-    if (x < kMin || x > kMax) return JPEGLI_FAILURE("X is out of bounds");
+    if (x < kMin || x > kMax) return PDFCORE_FAILURE("X is out of bounds");
     y = static_cast<int32_t>(roundf(xy.y * kMul));
-    if (y < kMin || y > kMax) return JPEGLI_FAILURE("Y is out of bounds");
+    if (y < kMin || y > kMax) return PDFCORE_FAILURE("Y is out of bounds");
     return true;
   }
 
@@ -140,62 +140,62 @@ struct Customxy {
   }
 };
 
-static inline Status WhitePointFromExternal(const JpegliWhitePoint external,
+static inline Status WhitePointFromExternal(const PdfcoreWhitePoint external,
                                             WhitePoint* out) {
   switch (external) {
-    case JPEGLI_WHITE_POINT_D65:
+    case PDFCORE_WHITE_POINT_D65:
       *out = WhitePoint::kD65;
       return true;
-    case JPEGLI_WHITE_POINT_CUSTOM:
+    case PDFCORE_WHITE_POINT_CUSTOM:
       *out = WhitePoint::kCustom;
       return true;
-    case JPEGLI_WHITE_POINT_E:
+    case PDFCORE_WHITE_POINT_E:
       *out = WhitePoint::kE;
       return true;
-    case JPEGLI_WHITE_POINT_DCI:
+    case PDFCORE_WHITE_POINT_DCI:
       *out = WhitePoint::kDCI;
       return true;
   }
-  return JPEGLI_FAILURE("Invalid WhitePoint enum value %d",
+  return PDFCORE_FAILURE("Invalid WhitePoint enum value %d",
                         static_cast<int>(external));
 }
 
-static inline Status PrimariesFromExternal(const JpegliPrimaries external,
+static inline Status PrimariesFromExternal(const PdfcorePrimaries external,
                                            Primaries* out) {
   switch (external) {
-    case JPEGLI_PRIMARIES_SRGB:
+    case PDFCORE_PRIMARIES_SRGB:
       *out = Primaries::kSRGB;
       return true;
-    case JPEGLI_PRIMARIES_CUSTOM:
+    case PDFCORE_PRIMARIES_CUSTOM:
       *out = Primaries::kCustom;
       return true;
-    case JPEGLI_PRIMARIES_2100:
+    case PDFCORE_PRIMARIES_2100:
       *out = Primaries::k2100;
       return true;
-    case JPEGLI_PRIMARIES_P3:
+    case PDFCORE_PRIMARIES_P3:
       *out = Primaries::kP3;
       return true;
   }
-  return JPEGLI_FAILURE("Invalid Primaries enum value");
+  return PDFCORE_FAILURE("Invalid Primaries enum value");
 }
 
 static inline Status RenderingIntentFromExternal(
-    const JpegliRenderingIntent external, RenderingIntent* out) {
+    const PdfcoreRenderingIntent external, RenderingIntent* out) {
   switch (external) {
-    case JPEGLI_RENDERING_INTENT_PERCEPTUAL:
+    case PDFCORE_RENDERING_INTENT_PERCEPTUAL:
       *out = RenderingIntent::kPerceptual;
       return true;
-    case JPEGLI_RENDERING_INTENT_RELATIVE:
+    case PDFCORE_RENDERING_INTENT_RELATIVE:
       *out = RenderingIntent::kRelative;
       return true;
-    case JPEGLI_RENDERING_INTENT_SATURATION:
+    case PDFCORE_RENDERING_INTENT_SATURATION:
       *out = RenderingIntent::kSaturation;
       return true;
-    case JPEGLI_RENDERING_INTENT_ABSOLUTE:
+    case PDFCORE_RENDERING_INTENT_ABSOLUTE:
       *out = RenderingIntent::kAbsolute;
       return true;
   }
-  return JPEGLI_FAILURE("Invalid RenderingIntent enum value");
+  return PDFCORE_FAILURE("Invalid RenderingIntent enum value");
 }
 
 struct CustomTransferFunction {
@@ -213,7 +213,7 @@ struct CustomTransferFunction {
       TransferFunction::kSRGB;  // Only used if !have_gamma_.
 
   TransferFunction GetTransferFunction() const {
-    JPEGLI_DASSERT(!have_gamma);
+    PDFCORE_DASSERT(!have_gamma);
     return have_gamma ? TransferFunction::kUnknown : transfer_function;
   }
   void SetTransferFunction(const TransferFunction tf) {
@@ -244,13 +244,13 @@ struct CustomTransferFunction {
   }
 
   double GetGamma() const {
-    JPEGLI_DASSERT(have_gamma);
+    PDFCORE_DASSERT(have_gamma);
     if (!have_gamma) return 0.0;
     return gamma * (1.0 / kGammaMul);  // (0, 1)
   }
   Status SetGamma(double new_gamma) {
     if (new_gamma < (1.0 / kMaxGamma) || new_gamma > 1.0) {
-      return JPEGLI_FAILURE("Invalid gamma %f", new_gamma);
+      return PDFCORE_FAILURE("Invalid gamma %f", new_gamma);
     }
 
     have_gamma = false;
@@ -289,33 +289,33 @@ struct CustomTransferFunction {
 };
 
 static inline Status ConvertExternalToInternalTransferFunction(
-    const JpegliTransferFunction external, TransferFunction* internal) {
+    const PdfcoreTransferFunction external, TransferFunction* internal) {
   switch (external) {
-    case JPEGLI_TRANSFER_FUNCTION_709:
+    case PDFCORE_TRANSFER_FUNCTION_709:
       *internal = TransferFunction::k709;
       return true;
-    case JPEGLI_TRANSFER_FUNCTION_UNKNOWN:
+    case PDFCORE_TRANSFER_FUNCTION_UNKNOWN:
       *internal = TransferFunction::kUnknown;
       return true;
-    case JPEGLI_TRANSFER_FUNCTION_LINEAR:
+    case PDFCORE_TRANSFER_FUNCTION_LINEAR:
       *internal = TransferFunction::kLinear;
       return true;
-    case JPEGLI_TRANSFER_FUNCTION_SRGB:
+    case PDFCORE_TRANSFER_FUNCTION_SRGB:
       *internal = TransferFunction::kSRGB;
       return true;
-    case JPEGLI_TRANSFER_FUNCTION_PQ:
+    case PDFCORE_TRANSFER_FUNCTION_PQ:
       *internal = TransferFunction::kPQ;
       return true;
-    case JPEGLI_TRANSFER_FUNCTION_DCI:
+    case PDFCORE_TRANSFER_FUNCTION_DCI:
       *internal = TransferFunction::kDCI;
       return true;
-    case JPEGLI_TRANSFER_FUNCTION_HLG:
+    case PDFCORE_TRANSFER_FUNCTION_HLG:
       *internal = TransferFunction::kHLG;
       return true;
-    case JPEGLI_TRANSFER_FUNCTION_GAMMA:
-      return JPEGLI_FAILURE("Gamma should be handled separately");
+    case PDFCORE_TRANSFER_FUNCTION_GAMMA:
+      return PDFCORE_FAILURE("Gamma should be handled separately");
   }
-  return JPEGLI_FAILURE("Invalid TransferFunction enum value");
+  return PDFCORE_FAILURE("Invalid TransferFunction enum value");
 }
 
 // Compact encoding of data required to interpret and translate pixels to a
@@ -352,8 +352,8 @@ struct ColorEncoding {
   size_t Channels() const { return (color_space == ColorSpace::kGray) ? 1 : 3; }
 
   Status GetPrimaries(PrimariesCIExy& xy) const {
-    JPEGLI_ENSURE(have_fields);
-    JPEGLI_ENSURE(HasPrimaries());
+    PDFCORE_ENSURE(have_fields);
+    PDFCORE_ENSURE(HasPrimaries());
     xy = {};
     switch (primaries) {
       case Primaries::kCustom:
@@ -390,18 +390,18 @@ struct ColorEncoding {
         break;
 
       default:
-        JPEGLI_DEBUG_ABORT("internal: unexpected Primaries: %d",
+        PDFCORE_DEBUG_ABORT("internal: unexpected Primaries: %d",
                            static_cast<int>(primaries));
     }
     return true;
   }
 
   Status SetPrimaries(const PrimariesCIExy& xy) {
-    JPEGLI_ENSURE(have_fields);
-    JPEGLI_ENSURE(HasPrimaries());
+    PDFCORE_ENSURE(have_fields);
+    PDFCORE_ENSURE(HasPrimaries());
     if (xy.r.x == 0.0 || xy.r.y == 0.0 || xy.g.x == 0.0 || xy.g.y == 0.0 ||
         xy.b.x == 0.0 || xy.b.y == 0.0) {
-      return JPEGLI_FAILURE("Invalid primaries %f %f %f %f %f %f", xy.r.x,
+      return PDFCORE_FAILURE("Invalid primaries %f %f %f %f %f %f", xy.r.x,
                             xy.r.y, xy.g.x, xy.g.y, xy.b.x, xy.b.y);
     }
 
@@ -426,15 +426,15 @@ struct ColorEncoding {
     }
 
     primaries = Primaries::kCustom;
-    JPEGLI_RETURN_IF_ERROR(red.SetValue(xy.r));
-    JPEGLI_RETURN_IF_ERROR(green.SetValue(xy.g));
-    JPEGLI_RETURN_IF_ERROR(blue.SetValue(xy.b));
+    PDFCORE_RETURN_IF_ERROR(red.SetValue(xy.r));
+    PDFCORE_RETURN_IF_ERROR(green.SetValue(xy.g));
+    PDFCORE_RETURN_IF_ERROR(blue.SetValue(xy.b));
     return true;
   }
 
   CIExy GetWhitePoint() const {
     CIExy xy{};
-    JPEGLI_DASSERT(have_fields);
+    PDFCORE_DASSERT(have_fields);
     if (!have_fields) return xy;
     switch (white_point) {
       case WhitePoint::kCustom:
@@ -457,16 +457,16 @@ struct ColorEncoding {
         break;
 
       default:
-        JPEGLI_DEBUG_ABORT("internal: unexpected WhitePoint: %d",
+        PDFCORE_DEBUG_ABORT("internal: unexpected WhitePoint: %d",
                            static_cast<int>(white_point));
     }
     return xy;
   }
 
   Status SetWhitePoint(const CIExy& xy) {
-    JPEGLI_ENSURE(have_fields);
+    PDFCORE_ENSURE(have_fields);
     if (xy.x == 0.0 || xy.y == 0.0) {
-      return JPEGLI_FAILURE("Invalid white point %f %f", xy.x, xy.y);
+      return PDFCORE_FAILURE("Invalid white point %f %f", xy.x, xy.y);
     }
     if (ApproxEq(xy.x, 0.3127) && ApproxEq(xy.y, 0.3290)) {
       white_point = WhitePoint::kD65;
@@ -516,48 +516,48 @@ struct ColorEncoding {
 
   // Returns true if all fields have been initialized (possibly to kUnknown).
   // Returns false if the ICC profile is invalid or decoding it fails.
-  Status SetFieldsFromICC(IccBytes&& new_icc, const JpegliCmsInterface& cms) {
+  Status SetFieldsFromICC(IccBytes&& new_icc, const PdfcoreCmsInterface& cms) {
     // In case parsing fails, mark the ColorEncoding as invalid.
-    JPEGLI_ENSURE(!new_icc.empty());
+    PDFCORE_ENSURE(!new_icc.empty());
     color_space = ColorSpace::kUnknown;
     tf.transfer_function = TransferFunction::kUnknown;
     icc.clear();
 
-    JpegliColorEncoding external;
-    JPEGLI_BOOL new_cmyk;
-    JPEGLI_RETURN_IF_ERROR(
+    PdfcoreColorEncoding external;
+    PDFCORE_BOOL new_cmyk;
+    PDFCORE_RETURN_IF_ERROR(
         cms.set_fields_from_icc(cms.set_fields_data, new_icc.data(),
                                 new_icc.size(), &external, &new_cmyk));
     cmyk = static_cast<bool>(new_cmyk);
-    JPEGLI_RETURN_IF_ERROR(FromExternal(external));
+    PDFCORE_RETURN_IF_ERROR(FromExternal(external));
     icc = std::move(new_icc);
     return true;
   }
 
-  JpegliColorEncoding ToExternal() const {
-    JpegliColorEncoding external = {};
+  PdfcoreColorEncoding ToExternal() const {
+    PdfcoreColorEncoding external = {};
     auto set_error = [&]() {
-      external.color_space = JPEGLI_COLOR_SPACE_UNKNOWN;
-      external.primaries = JPEGLI_PRIMARIES_CUSTOM;
-      external.rendering_intent = JPEGLI_RENDERING_INTENT_PERCEPTUAL;  //?
-      external.transfer_function = JPEGLI_TRANSFER_FUNCTION_UNKNOWN;
-      external.white_point = JPEGLI_WHITE_POINT_CUSTOM;
+      external.color_space = PDFCORE_COLOR_SPACE_UNKNOWN;
+      external.primaries = PDFCORE_PRIMARIES_CUSTOM;
+      external.rendering_intent = PDFCORE_RENDERING_INTENT_PERCEPTUAL;  //?
+      external.transfer_function = PDFCORE_TRANSFER_FUNCTION_UNKNOWN;
+      external.white_point = PDFCORE_WHITE_POINT_CUSTOM;
     };
     if (!have_fields) {
       set_error();
       return external;
     }
-    external.color_space = static_cast<JpegliColorSpace>(color_space);
+    external.color_space = static_cast<PdfcoreColorSpace>(color_space);
 
-    external.white_point = static_cast<JpegliWhitePoint>(white_point);
+    external.white_point = static_cast<PdfcoreWhitePoint>(white_point);
 
     CIExy wp = GetWhitePoint();
     external.white_point_xy[0] = wp.x;
     external.white_point_xy[1] = wp.y;
 
-    if (external.color_space == JPEGLI_COLOR_SPACE_RGB ||
-        external.color_space == JPEGLI_COLOR_SPACE_UNKNOWN) {
-      external.primaries = static_cast<JpegliPrimaries>(primaries);
+    if (external.color_space == PDFCORE_COLOR_SPACE_RGB ||
+        external.color_space == PDFCORE_COLOR_SPACE_UNKNOWN) {
+      external.primaries = static_cast<PdfcorePrimaries>(primaries);
       PrimariesCIExy p;
       if (!GetPrimaries(p)) {
         set_error();
@@ -572,38 +572,38 @@ struct ColorEncoding {
     }
 
     if (tf.have_gamma) {
-      external.transfer_function = JPEGLI_TRANSFER_FUNCTION_GAMMA;
+      external.transfer_function = PDFCORE_TRANSFER_FUNCTION_GAMMA;
       external.gamma = tf.GetGamma();
     } else {
       external.transfer_function =
-          static_cast<JpegliTransferFunction>(tf.GetTransferFunction());
+          static_cast<PdfcoreTransferFunction>(tf.GetTransferFunction());
       external.gamma = 0;
     }
 
     external.rendering_intent =
-        static_cast<JpegliRenderingIntent>(rendering_intent);
+        static_cast<PdfcoreRenderingIntent>(rendering_intent);
     return external;
   }
 
   // NB: does not create ICC.
-  Status FromExternal(const JpegliColorEncoding& external) {
+  Status FromExternal(const PdfcoreColorEncoding& external) {
     // TODO(eustas): update non-serializable on call-site
     color_space = static_cast<ColorSpace>(external.color_space);
 
-    JPEGLI_RETURN_IF_ERROR(
+    PDFCORE_RETURN_IF_ERROR(
         WhitePointFromExternal(external.white_point, &white_point));
-    if (external.white_point == JPEGLI_WHITE_POINT_CUSTOM) {
+    if (external.white_point == PDFCORE_WHITE_POINT_CUSTOM) {
       CIExy wp;
       wp.x = external.white_point_xy[0];
       wp.y = external.white_point_xy[1];
-      JPEGLI_RETURN_IF_ERROR(SetWhitePoint(wp));
+      PDFCORE_RETURN_IF_ERROR(SetWhitePoint(wp));
     }
 
-    if (external.color_space == JPEGLI_COLOR_SPACE_RGB ||
-        external.color_space == JPEGLI_COLOR_SPACE_UNKNOWN) {
-      JPEGLI_RETURN_IF_ERROR(
+    if (external.color_space == PDFCORE_COLOR_SPACE_RGB ||
+        external.color_space == PDFCORE_COLOR_SPACE_UNKNOWN) {
+      PDFCORE_RETURN_IF_ERROR(
           PrimariesFromExternal(external.primaries, &primaries));
-      if (external.primaries == JPEGLI_PRIMARIES_CUSTOM) {
+      if (external.primaries == PDFCORE_PRIMARIES_CUSTOM) {
         PrimariesCIExy new_primaries;
         new_primaries.r.x = external.primaries_red_xy[0];
         new_primaries.r.y = external.primaries_red_xy[1];
@@ -611,23 +611,23 @@ struct ColorEncoding {
         new_primaries.g.y = external.primaries_green_xy[1];
         new_primaries.b.x = external.primaries_blue_xy[0];
         new_primaries.b.y = external.primaries_blue_xy[1];
-        JPEGLI_RETURN_IF_ERROR(SetPrimaries(new_primaries));
+        PDFCORE_RETURN_IF_ERROR(SetPrimaries(new_primaries));
       }
     }
     CustomTransferFunction new_tf;
-    if (external.transfer_function == JPEGLI_TRANSFER_FUNCTION_GAMMA) {
-      JPEGLI_RETURN_IF_ERROR(new_tf.SetGamma(external.gamma));
+    if (external.transfer_function == PDFCORE_TRANSFER_FUNCTION_GAMMA) {
+      PDFCORE_RETURN_IF_ERROR(new_tf.SetGamma(external.gamma));
     } else {
       TransferFunction tf_enum;
-      // JPEGLI_TRANSFER_FUNCTION_GAMMA is not handled by this function since
+      // PDFCORE_TRANSFER_FUNCTION_GAMMA is not handled by this function since
       // there's no internal enum value for it.
-      JPEGLI_RETURN_IF_ERROR(ConvertExternalToInternalTransferFunction(
+      PDFCORE_RETURN_IF_ERROR(ConvertExternalToInternalTransferFunction(
           external.transfer_function, &tf_enum));
       new_tf.SetTransferFunction(tf_enum);
     }
     tf = new_tf;
 
-    JPEGLI_RETURN_IF_ERROR(RenderingIntentFromExternal(
+    PDFCORE_RETURN_IF_ERROR(RenderingIntentFromExternal(
         external.rendering_intent, &rendering_intent));
 
     icc.clear();
@@ -637,6 +637,6 @@ struct ColorEncoding {
 };
 
 }  // namespace cms
-}  // namespace jpegli
+}  // namespace pdfcore
 
-#endif  // JPEGLI_LIB_CMS_COLOR_ENCODING_CMS_H_
+#endif  // PDFCORE_LIB_CMS_COLOR_ENCODING_CMS_H_

@@ -11,12 +11,12 @@
 #include "lib/jpegli/common_internal.h"
 #include "lib/jpegli/encode_internal.h"
 
-#if defined(JPEGLI_LIB_JPEGLI_ENTROPY_CODING_INL_H_) == \
+#if defined(PDFCORE_LIB_PDFCORE_ENTROPY_CODING_INL_H_) == \
     defined(HWY_TARGET_TOGGLE)
-#ifdef JPEGLI_LIB_JPEGLI_ENTROPY_CODING_INL_H_
-#undef JPEGLI_LIB_JPEGLI_ENTROPY_CODING_INL_H_
+#ifdef PDFCORE_LIB_PDFCORE_ENTROPY_CODING_INL_H_
+#undef PDFCORE_LIB_PDFCORE_ENTROPY_CODING_INL_H_
 #else
-#define JPEGLI_LIB_JPEGLI_ENTROPY_CODING_INL_H_
+#define PDFCORE_LIB_PDFCORE_ENTROPY_CODING_INL_H_
 #endif
 
 #include <hwy/highway.h>
@@ -25,7 +25,7 @@
 #include "lib/base/compiler_specific.h"
 
 HWY_BEFORE_NAMESPACE();
-namespace jpegli {
+namespace pdfcore {
 namespace HWY_NAMESPACE {
 namespace {
 
@@ -50,7 +50,7 @@ using DI = HWY_FULL(int32_t);
 constexpr DI di;
 
 template <class V>
-JPEGLI_INLINE V NumBits(const V x) {
+PDFCORE_INLINE V NumBits(const V x) {
   // TODO(szabadka) Add faster implementations for some specific architectures.
   const auto b1 = And(x, Set(di, 1));
   const auto b2 = And(x, Set(di, 2));
@@ -77,8 +77,8 @@ HWY_ALIGN constexpr int32_t kIndexes[64] = {
     832, 848, 864, 880, 896, 912, 928, 944, 960, 976, 992, 1008,
 };
 
-JPEGLI_INLINE int CompactBlock(int32_t* JPEGLI_RESTRICT block,
-                               int32_t* JPEGLI_RESTRICT nonzero_idx) {
+PDFCORE_INLINE int CompactBlock(int32_t* PDFCORE_RESTRICT block,
+                               int32_t* PDFCORE_RESTRICT nonzero_idx) {
   const auto zero = Zero(di);
   HWY_ALIGN constexpr int32_t dc_mask_lanes[HWY_LANES(DI)] = {-1};
   const auto dc_mask = MaskFromVec(Load(di, dc_mask_lanes));
@@ -108,10 +108,10 @@ JPEGLI_INLINE int CompactBlock(int32_t* JPEGLI_RESTRICT block,
   return num_nonzeros;
 }
 
-JPEGLI_INLINE void ComputeSymbols(const int num_nonzeros,
-                                  int32_t* JPEGLI_RESTRICT nonzero_idx,
-                                  int32_t* JPEGLI_RESTRICT block,
-                                  int32_t* JPEGLI_RESTRICT symbols) {
+PDFCORE_INLINE void ComputeSymbols(const int num_nonzeros,
+                                  int32_t* PDFCORE_RESTRICT nonzero_idx,
+                                  int32_t* PDFCORE_RESTRICT block,
+                                  int32_t* PDFCORE_RESTRICT symbols) {
   nonzero_idx[-1] = -16;
   const auto one = Set(di, 1);
   const auto offset = Set(di, 16);
@@ -176,7 +176,7 @@ void ComputeTokensForBlock(const T* block, int last_dc, int dc_ctx, int ac_ctx,
       temp = -temp;
       temp2--;
     }
-    int dc_nbits = jpegli::FloorLog2Nonzero<uint32_t>(temp) + 1;
+    int dc_nbits = pdfcore::FloorLog2Nonzero<uint32_t>(temp) + 1;
     int dc_mask = (1 << dc_nbits) - 1;
     *next_token++ = Token(dc_ctx, dc_nbits, temp2 & dc_mask);
   }
@@ -209,7 +209,7 @@ void ComputeTokensForBlock(const T* block, int last_dc, int dc_ctx, int ac_ctx,
       *next_token++ = Token(ac_ctx, 0xf0, 0);
       r -= 16;
     }
-    int ac_nbits = jpegli::FloorLog2Nonzero<uint32_t>(temp) + 1;
+    int ac_nbits = pdfcore::FloorLog2Nonzero<uint32_t>(temp) + 1;
     int ac_mask = (1 << ac_nbits) - 1;
     int symbol = (r << 4u) + ac_nbits;
     *next_token++ = Token(ac_ctx, symbol, temp2 & ac_mask);
@@ -220,6 +220,6 @@ void ComputeTokensForBlock(const T* block, int last_dc, int dc_ctx, int ac_ctx,
 // NOLINTNEXTLINE(google-readability-namespace-comments)
 }  // namespace
 }  // namespace HWY_NAMESPACE
-}  // namespace jpegli
+}  // namespace pdfcore
 HWY_AFTER_NAMESPACE();
-#endif  // JPEGLI_LIB_JPEGLI_ENTROPY_CODING_INL_H_
+#endif  // PDFCORE_LIB_PDFCORE_ENTROPY_CODING_INL_H_

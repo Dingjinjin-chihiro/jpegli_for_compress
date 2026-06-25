@@ -12,7 +12,7 @@
 #include <cstdio>
 #include <string>
 
-namespace jpegli_tools {
+namespace pdfcore_jpegli_tools {
 
 void SpeedStats::NotifyElapsed(double elapsed_seconds) {
   if (elapsed_seconds > 0.0) {
@@ -118,4 +118,4 @@ bool SpeedStats::Print(size_t worker_threads) {
   return true;
 }
 
-}  // namespace jpegli_tools
+}  // namespace pdfcore_jpegli_tools

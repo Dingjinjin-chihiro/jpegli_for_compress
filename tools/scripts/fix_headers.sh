@@ -6,7 +6,7 @@
 # https://developers.google.com/open-source/licenses/bsd
 
 # Helper script to fix includes. Requires clang-tidy 18+.
-# Might need jpegli_{threads_}_exports.h copied to includes/jpegli
+# Might need pdfcore_jpegli_{threads_}_exports.h copied to includes/jpegli
 # Also might require:
 #   `export CPLUS_INCLUDE_PATH=/usr/lib/llvm-16/lib/clang/16/include/`
 

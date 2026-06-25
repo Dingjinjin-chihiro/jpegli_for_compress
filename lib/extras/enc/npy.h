@@ -4,8 +4,8 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
-#ifndef JPEGLI_LIB_EXTRAS_ENC_NPY_H_
-#define JPEGLI_LIB_EXTRAS_ENC_NPY_H_
+#ifndef PDFCORE_LIB_EXTRAS_ENC_NPY_H_
+#define PDFCORE_LIB_EXTRAS_ENC_NPY_H_
 
 // Encodes pixels to numpy array, used for conformance testing.
 
@@ -13,12 +13,12 @@
 
 #include "lib/extras/enc/encode.h"
 
-namespace jpegli {
+namespace pdfcore {
 namespace extras {
 
 std::unique_ptr<Encoder> GetNumPyEncoder();
 
 }  // namespace extras
-}  // namespace jpegli
+}  // namespace pdfcore
 
-#endif  // JPEGLI_LIB_EXTRAS_ENC_NPY_H_
+#endif  // PDFCORE_LIB_EXTRAS_ENC_NPY_H_

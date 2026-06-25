@@ -20,7 +20,7 @@
 #include "lib/jpegli/test_utils.h"
 #include "lib/jpegli/testing.h"
 
-namespace jpegli {
+namespace pdfcore {
 namespace {
 
 constexpr size_t kInitialBufferSize = 1024;
@@ -79,18 +79,18 @@ TEST_P(OutputSuspensionTestParam, PixelData) {
   std::vector<uint8_t> compressed;
   const auto try_catch_block = [&]() -> bool {
     ERROR_HANDLER_SETUP(jpegli);
-    jpegli_create_compress(&cinfo);
+    pdfcore_jpegli_create_compress(&cinfo);
     cinfo.dest = reinterpret_cast<jpeg_destination_mgr*>(&dest);
 
     cinfo.image_width = input.xsize;
     cinfo.image_height = input.ysize;
     cinfo.input_components = input.components;
     cinfo.in_color_space = JCS_RGB;
-    jpegli_set_defaults(&cinfo);
+    pdfcore_jpegli_set_defaults(&cinfo);
     cinfo.comp_info[0].v_samp_factor = config.jparams.v_sampling[0];
-    jpegli_set_progressive_level(&cinfo, 0);
+    pdfcore_jpegli_set_progressive_level(&cinfo, 0);
     cinfo.optimize_coding = FALSE;
-    jpegli_start_compress(&cinfo, TRUE);
+    pdfcore_jpegli_start_compress(&cinfo, TRUE);
 
     size_t stride = cinfo.image_width * cinfo.input_components;
     std::vector<uint8_t> row_bytes(config.lines_batch_size * stride);
@@ -105,7 +105,7 @@ TEST_P(OutputSuspensionTestParam, PixelData) {
       }
       size_t lines_done = 0;
       while (lines_done < num_lines) {
-        lines_done += jpegli_write_scanlines(&cinfo, &rows[lines_done],
+        lines_done += pdfcore_jpegli_write_scanlines(&cinfo, &rows[lines_done],
                                              num_lines - lines_done);
         if (lines_done < num_lines) {
           dest.EmptyTo(&compressed, config.buffer_size);
@@ -113,12 +113,12 @@ TEST_P(OutputSuspensionTestParam, PixelData) {
       }
     }
     dest.EmptyTo(&compressed, kFinalBufferSize);
-    jpegli_finish_compress(&cinfo);
+    pdfcore_jpegli_finish_compress(&cinfo);
     dest.EmptyTo(&compressed);
     return true;
   };
   ASSERT_TRUE(try_catch_block());
-  jpegli_destroy_compress(&cinfo);
+  pdfcore_jpegli_destroy_compress(&cinfo);
   TestImage output;
   DecodeWithLibjpeg(CompressParams(), DecompressParams(), compressed, &output);
   VerifyOutputImage(input, output, 2.5);
@@ -136,19 +136,19 @@ TEST_P(OutputSuspensionTestParam, RawData) {
   std::vector<uint8_t> compressed;
   const auto try_catch_block = [&]() -> bool {
     ERROR_HANDLER_SETUP(jpegli);
-    jpegli_create_compress(&cinfo);
+    pdfcore_jpegli_create_compress(&cinfo);
     cinfo.dest = reinterpret_cast<jpeg_destination_mgr*>(&dest);
     cinfo.image_width = input.xsize;
     cinfo.image_height = input.ysize;
     cinfo.input_components = input.components;
     cinfo.in_color_space = JCS_YCbCr;
-    jpegli_set_defaults(&cinfo);
+    pdfcore_jpegli_set_defaults(&cinfo);
     cinfo.comp_info[0].h_samp_factor = config.jparams.h_sampling[0];
     cinfo.comp_info[0].v_samp_factor = config.jparams.v_sampling[0];
-    jpegli_set_progressive_level(&cinfo, 0);
+    pdfcore_jpegli_set_progressive_level(&cinfo, 0);
     cinfo.optimize_coding = FALSE;
     cinfo.raw_data_in = TRUE;
-    jpegli_start_compress(&cinfo, TRUE);
+    pdfcore_jpegli_start_compress(&cinfo, TRUE);
 
     std::vector<std::vector<uint8_t>> raw_data = input.raw_data;
     size_t max_lines = config.jparams.max_v_sample() * DCTSIZE;
@@ -169,17 +169,17 @@ TEST_P(OutputSuspensionTestParam, RawData) {
               (y0 + i < cheight ? &raw_data[c][(y0 + i) * cwidth] : nullptr);
         }
       }
-      while (jpegli_write_raw_data(&cinfo, data.data(), max_lines) == 0) {
+      while (pdfcore_jpegli_write_raw_data(&cinfo, data.data(), max_lines) == 0) {
         dest.EmptyTo(&compressed, config.buffer_size);
       }
     }
     dest.EmptyTo(&compressed, kFinalBufferSize);
-    jpegli_finish_compress(&cinfo);
+    pdfcore_jpegli_finish_compress(&cinfo);
     dest.EmptyTo(&compressed);
     return true;
   };
   try_catch_block();
-  jpegli_destroy_compress(&cinfo);
+  pdfcore_jpegli_destroy_compress(&cinfo);
   DecompressParams dparams;
   dparams.output_mode = RAW_DATA;
   TestImage output;
@@ -225,9 +225,9 @@ std::string TestDescription(
   return name.str();
 }
 
-JPEGLI_INSTANTIATE_TEST_SUITE_P(OutputSuspensionTest, OutputSuspensionTestParam,
+PDFCORE_INSTANTIATE_TEST_SUITE_P(OutputSuspensionTest, OutputSuspensionTestParam,
                                 testing::ValuesIn(GenerateTests()),
                                 TestDescription);
 
 }  // namespace
-}  // namespace jpegli
+}  // namespace pdfcore

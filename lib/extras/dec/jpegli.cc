@@ -30,7 +30,7 @@
 #include "lib/jpegli/decode.h"
 #include "lib/jpegli/types.h"
 
-namespace jpegli {
+namespace pdfcore {
 namespace extras {
 
 namespace {
@@ -57,7 +57,7 @@ Status ReadICCProfile(jpeg_decompress_struct* const cinfo,
                       std::vector<uint8_t>* const icc) {
   uint8_t* icc_data_ptr;
   unsigned int icc_data_len;
-  if (jpegli_read_icc_profile(cinfo, &icc_data_ptr, &icc_data_len)) {
+  if (pdfcore_jpegli_read_icc_profile(cinfo, &icc_data_ptr, &icc_data_len)) {
     icc->assign(icc_data_ptr, icc_data_ptr + icc_data_len);
     free(icc_data_ptr);
     return true;
@@ -82,39 +82,39 @@ void ReadExif(jpeg_decompress_struct* const cinfo,
   }
 }
 
-JpegliColorSpace ConvertColorSpace(J_COLOR_SPACE colorspace) {
+PdfcoreColorSpace ConvertColorSpace(J_COLOR_SPACE colorspace) {
   switch (colorspace) {
     case JCS_GRAYSCALE:
-      return JPEGLI_COLOR_SPACE_GRAY;
+      return PDFCORE_COLOR_SPACE_GRAY;
     case JCS_RGB:
-      return JPEGLI_COLOR_SPACE_RGB;
+      return PDFCORE_COLOR_SPACE_RGB;
     default:
-      return JPEGLI_COLOR_SPACE_UNKNOWN;
+      return PDFCORE_COLOR_SPACE_UNKNOWN;
   }
 }
 
 void MyErrorExit(j_common_ptr cinfo) {
   jmp_buf* env = static_cast<jmp_buf*>(cinfo->client_data);
   (*cinfo->err->output_message)(cinfo);
-  jpegli_destroy_decompress(reinterpret_cast<j_decompress_ptr>(cinfo));
+  pdfcore_jpegli_destroy_decompress(reinterpret_cast<j_decompress_ptr>(cinfo));
   longjmp(*env, 1);
 }
 
 void MyOutputMessage(j_common_ptr cinfo) {
-  if (JPEGLI_IS_DEBUG_BUILD) {
+  if (PDFCORE_IS_DEBUG_BUILD) {
     char buf[JMSG_LENGTH_MAX + 1];
     (*cinfo->err->format_message)(cinfo, buf);
     buf[JMSG_LENGTH_MAX] = 0;
-    JPEGLI_WARNING("%s", buf);
+    PDFCORE_WARNING("%s", buf);
   }
 }
 
 Status UnmapColors(uint8_t* row, size_t xsize, int components,
                    JSAMPARRAY colormap, size_t num_colors) {
-  JPEGLI_ENSURE(colormap != nullptr);
+  PDFCORE_ENSURE(colormap != nullptr);
   std::vector<uint8_t> tmp(xsize * components);
   for (size_t x = 0; x < xsize; ++x) {
-    JPEGLI_ENSURE(row[x] < num_colors);
+    PDFCORE_ENSURE(row[x] < num_colors);
     for (int c = 0; c < components; ++c) {
       tmp[x * components + c] = colormap[c][row[x]];
     }
@@ -143,7 +143,7 @@ Status DecodeJpeg(const std::vector<uint8_t>& compressed,
     // the fuzzer.
     jpeg_error_mgr jerr;
     jmp_buf env;
-    cinfo.err = jpegli_std_error(&jerr);
+    cinfo.err = pdfcore_jpegli_std_error(&jerr);
     jerr.error_exit = &MyErrorExit;
     jerr.output_message = &MyOutputMessage;
     if (setjmp(env)) {
@@ -151,18 +151,18 @@ Status DecodeJpeg(const std::vector<uint8_t>& compressed,
     }
     cinfo.client_data = static_cast<void*>(&env);
 
-    jpegli_create_decompress(&cinfo);
-    jpegli_mem_src(&cinfo,
+    pdfcore_jpegli_create_decompress(&cinfo);
+    pdfcore_jpegli_mem_src(&cinfo,
                    reinterpret_cast<const unsigned char*>(compressed.data()),
                    compressed.size());
-    jpegli_save_markers(&cinfo, kICCMarker, 0xFFFF);
-    jpegli_save_markers(&cinfo, kExifMarker, 0xFFFF);
+    pdfcore_jpegli_save_markers(&cinfo, kICCMarker, 0xFFFF);
+    pdfcore_jpegli_save_markers(&cinfo, kExifMarker, 0xFFFF);
     const auto failure = [&cinfo](const char* str) -> Status {
-      jpegli_abort_decompress(&cinfo);
-      jpegli_destroy_decompress(&cinfo);
-      return JPEGLI_FAILURE("%s", str);
+      pdfcore_jpegli_abort_decompress(&cinfo);
+      pdfcore_jpegli_destroy_decompress(&cinfo);
+      return PDFCORE_FAILURE("%s", str);
     };
-    jpegli_read_header(&cinfo, TRUE);
+    pdfcore_jpegli_read_header(&cinfo, TRUE);
     // Might cause CPU-zip bomb.
     if (cinfo.arith_code) {
       return failure("arithmetic code JPEGs are not supported");
@@ -187,35 +187,35 @@ Status DecodeJpeg(const std::vector<uint8_t>& compressed,
       // Default to SRGB
       ppf->color_encoding.color_space =
           ConvertColorSpace(cinfo.out_color_space);
-      ppf->color_encoding.white_point = JPEGLI_WHITE_POINT_D65;
-      ppf->color_encoding.primaries = JPEGLI_PRIMARIES_SRGB;
-      ppf->color_encoding.transfer_function = JPEGLI_TRANSFER_FUNCTION_SRGB;
-      ppf->color_encoding.rendering_intent = JPEGLI_RENDERING_INTENT_PERCEPTUAL;
+      ppf->color_encoding.white_point = PDFCORE_WHITE_POINT_D65;
+      ppf->color_encoding.primaries = PDFCORE_PRIMARIES_SRGB;
+      ppf->color_encoding.transfer_function = PDFCORE_TRANSFER_FUNCTION_SRGB;
+      ppf->color_encoding.rendering_intent = PDFCORE_RENDERING_INTENT_PERCEPTUAL;
     }
     ReadExif(&cinfo, &ppf->metadata.exif);
 
     ppf->info.xsize = cinfo.image_width;
     ppf->info.ysize = cinfo.image_height;
-    if (dparams.output_data_type == JPEGLI_TYPE_UINT8) {
+    if (dparams.output_data_type == PDFCORE_TYPE_UINT8) {
       ppf->info.bits_per_sample = 8;
       ppf->info.exponent_bits_per_sample = 0;
-    } else if (dparams.output_data_type == JPEGLI_TYPE_UINT16) {
+    } else if (dparams.output_data_type == PDFCORE_TYPE_UINT16) {
       ppf->info.bits_per_sample = 16;
       ppf->info.exponent_bits_per_sample = 0;
-    } else if (dparams.output_data_type == JPEGLI_TYPE_FLOAT) {
+    } else if (dparams.output_data_type == PDFCORE_TYPE_FLOAT) {
       ppf->info.bits_per_sample = 32;
       ppf->info.exponent_bits_per_sample = 8;
     } else {
       return failure("unsupported data type");
     }
-    ppf->info.uses_original_profile = JPEGLI_TRUE;
+    ppf->info.uses_original_profile = PDFCORE_TRUE;
 
     // No alpha in JPG
     ppf->info.alpha_bits = 0;
     ppf->info.alpha_exponent_bits = 0;
-    ppf->info.orientation = JPEGLI_ORIENT_IDENTITY;
+    ppf->info.orientation = PDFCORE_ORIENT_IDENTITY;
 
-    jpegli_set_output_format(&cinfo, dparams.output_data_type,
+    pdfcore_jpegli_set_output_format(&cinfo, dparams.output_data_type,
                              dparams.output_endianness);
 
     if (dparams.num_colors > 0) {
@@ -225,10 +225,10 @@ Status DecodeJpeg(const std::vector<uint8_t>& compressed,
       cinfo.dither_mode = static_cast<J_DITHER_MODE>(dparams.dither_mode);
     }
 
-    jpegli_start_decompress(&cinfo);
+    pdfcore_jpegli_start_decompress(&cinfo);
 
     ppf->info.num_color_channels = cinfo.out_color_components;
-    const JpegliPixelFormat format{
+    const PdfcorePixelFormat format{
         /*num_channels=*/static_cast<uint32_t>(cinfo.out_color_components),
         dparams.output_data_type,
         dparams.output_endianness,
@@ -237,36 +237,36 @@ Status DecodeJpeg(const std::vector<uint8_t>& compressed,
     ppf->frames.clear();
     // Allocates the frame buffer.
     {
-      JPEGLI_ASSIGN_OR_RETURN(
+      PDFCORE_ASSIGN_OR_RETURN(
           PackedFrame frame,
           PackedFrame::Create(cinfo.image_width, cinfo.image_height, format));
       ppf->frames.emplace_back(std::move(frame));
     }
     const auto& frame = ppf->frames.back();
-    JPEGLI_ENSURE(sizeof(JSAMPLE) * cinfo.out_color_components *
+    PDFCORE_ENSURE(sizeof(JSAMPLE) * cinfo.out_color_components *
                       cinfo.image_width <=
                   frame.color.stride);
-    if (dparams.num_colors > 0) JPEGLI_ENSURE(cinfo.colormap != nullptr);
+    if (dparams.num_colors > 0) PDFCORE_ENSURE(cinfo.colormap != nullptr);
 
     for (size_t y = 0; y < cinfo.image_height; ++y) {
       JSAMPROW rows[] = {reinterpret_cast<JSAMPLE*>(
           static_cast<uint8_t*>(frame.color.pixels()) +
           frame.color.stride * y)};
-      jpegli_read_scanlines(&cinfo, rows, 1);
+      pdfcore_jpegli_read_scanlines(&cinfo, rows, 1);
       if (dparams.num_colors > 0) {
-        JPEGLI_RETURN_IF_ERROR(
+        PDFCORE_RETURN_IF_ERROR(
             UnmapColors(rows[0], cinfo.output_width, cinfo.out_color_components,
                         cinfo.colormap, cinfo.actual_number_of_colors));
       }
     }
 
-    jpegli_finish_decompress(&cinfo);
+    pdfcore_jpegli_finish_decompress(&cinfo);
     return true;
   };
   bool success = try_catch_block();
-  jpegli_destroy_decompress(&cinfo);
+  pdfcore_jpegli_destroy_decompress(&cinfo);
   return success;
 }
 
 }  // namespace extras
-}  // namespace jpegli
+}  // namespace pdfcore

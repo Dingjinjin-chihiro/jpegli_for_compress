@@ -9,42 +9,42 @@ include(jpegli_lists.cmake)
 # Headers for exporting/importing public headers
 include(GenerateExportHeader)
 
-add_library(jpegli_cms
-  ${JPEGLI_INTERNAL_CMS_SOURCES}
+add_library(pdfcore_jpegli_cms
+  ${PDFCORE_INTERNAL_CMS_SOURCES}
 )
-target_compile_options(jpegli_cms PRIVATE "${JPEGLI_INTERNAL_FLAGS}")
-set_target_properties(jpegli_cms PROPERTIES
+target_compile_options(pdfcore_jpegli_cms PRIVATE "${PDFCORE_INTERNAL_FLAGS}")
+set_target_properties(pdfcore_jpegli_cms PROPERTIES
         POSITION_INDEPENDENT_CODE ON
         CXX_VISIBILITY_PRESET hidden
         VISIBILITY_INLINES_HIDDEN 1)
-target_link_libraries(jpegli_cms PUBLIC jpegli_base)
-target_include_directories(jpegli_cms PRIVATE
-  ${JPEGLI_HWY_INCLUDE_DIRS}
+target_link_libraries(pdfcore_jpegli_cms PUBLIC pdfcore_jpegli_base)
+target_include_directories(pdfcore_jpegli_cms PRIVATE
+  ${PDFCORE_HWY_INCLUDE_DIRS}
 )
-generate_export_header(jpegli_cms
-  BASE_NAME JPEGLI_CMS
+generate_export_header(pdfcore_jpegli_cms
+  BASE_NAME PDFCORE_CMS
   EXPORT_FILE_NAME include/jpegli/jpegli_cms_export.h)
-target_compile_definitions(jpegli_cms PUBLIC
-  "$<$<NOT:$<BOOL:${BUILD_SHARED_LIBS}>>:JPEGLI_CMS_STATIC_DEFINE>")
-target_include_directories(jpegli_cms BEFORE PUBLIC
+target_compile_definitions(pdfcore_jpegli_cms PUBLIC
+  "$<$<NOT:$<BOOL:${BUILD_SHARED_LIBS}>>:PDFCORE_CMS_STATIC_DEFINE>")
+target_include_directories(pdfcore_jpegli_cms BEFORE PUBLIC
   "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>")
 
-set(JPEGLI_CMS_LIBRARY_REQUIRES "")
+set(PDFCORE_CMS_LIBRARY_REQUIRES "")
 
-if (JPEGLI_ENABLE_SKCMS)
-  target_link_skcms(jpegli_cms)
+if (PDFCORE_ENABLE_SKCMS)
+  target_link_skcms(pdfcore_jpegli_cms)
 else()
-  target_link_libraries(jpegli_cms PRIVATE lcms2)
-  if (JPEGLI_FORCE_SYSTEM_LCMS2)
-    set(JPEGLI_CMS_LIBRARY_REQUIRES "lcms2")
+  target_link_libraries(pdfcore_jpegli_cms PRIVATE lcms2)
+  if (PDFCORE_FORCE_SYSTEM_LCMS2)
+    set(PDFCORE_CMS_LIBRARY_REQUIRES "lcms2")
   endif()
 endif()
 
-target_link_libraries(jpegli_cms PRIVATE hwy)
+target_link_libraries(pdfcore_jpegli_cms PRIVATE hwy)
 
-set_target_properties(jpegli_cms PROPERTIES
-        VERSION ${JPEGLI_LIBRARY_VERSION}
-        SOVERSION ${JPEGLI_LIBRARY_SOVERSION})
+set_target_properties(pdfcore_jpegli_cms PROPERTIES
+        VERSION ${PDFCORE_LIBRARY_VERSION}
+        SOVERSION ${PDFCORE_LIBRARY_SOVERSION})
 
 # Check whether the linker support excluding libs
 if (MSVC)
@@ -60,21 +60,21 @@ else()
 endif()
 
 if(LINKER_SUPPORT_EXCLUDE_LIBS)
-  set_property(TARGET jpegli_cms APPEND_STRING PROPERTY
+  set_property(TARGET pdfcore_jpegli_cms APPEND_STRING PROPERTY
       LINK_FLAGS " ${LINKER_EXCLUDE_LIBS_FLAG}")
 endif()
 
-install(TARGETS jpegli_cms
+install(TARGETS pdfcore_jpegli_cms
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 if (BUILD_SHARED_LIBS)
-  set(JPEGLI_REQUIRES_TYPE "Requires.private")
-  set(JPEGLI_CMS_PRIVATE_LIBS "-lm ${PKGCONFIG_CXX_LIB}")
+  set(PDFCORE_REQUIRES_TYPE "Requires.private")
+  set(PDFCORE_CMS_PRIVATE_LIBS "-lm ${PKGCONFIG_CXX_LIB}")
 else()
-  set(JPEGLI_REQUIRES_TYPE "Requires")
-  set(JPEGLI_CMS_PRIVATE_LIBS "-lm ${PKGCONFIG_CXX_LIB}")
+  set(PDFCORE_REQUIRES_TYPE "Requires")
+  set(PDFCORE_CMS_PRIVATE_LIBS "-lm ${PKGCONFIG_CXX_LIB}")
 endif()
 
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cms/libjpegli_cms.pc.in"

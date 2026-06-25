@@ -6,7 +6,7 @@
 # Ubuntu focal ships with cmake 3.16.
 cmake_minimum_required(VERSION 3.16...3.27)
 
-project(LIBJPEGLI_DOC LANGUAGES C CXX)
+project(LIBPDFCORE_DOC LANGUAGES C CXX)
 
 find_package(Doxygen OPTIONAL_COMPONENTS dot)
 
@@ -14,7 +14,7 @@ if(DOXYGEN_FOUND AND TARGET Doxygen::dot)
   set(SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../lib")
   set(DOXYGEN_GENERATE_HTML "YES")
   set(DOXYGEN_GENERATE_XML "YES")
-  if(JPEGLI_WARNINGS_AS_ERRORS)
+  if(PDFCORE_WARNINGS_AS_ERRORS)
     set(DOXYGEN_WARN_AS_ERROR "YES")
   endif()
   set(DOXYGEN_QUIET "YES")

@@ -36,7 +36,7 @@
 #include <hwy/highway.h>
 
 HWY_BEFORE_NAMESPACE();
-namespace jpegli {
+namespace pdfcore {
 namespace HWY_NAMESPACE {
 
 // These templates are not found via ADL.
@@ -91,12 +91,12 @@ void FloatToF16(const float* in, hwy::float16_t* out, size_t num) {
 
 // NOLINTNEXTLINE(google-readability-namespace-comments)
 }  // namespace HWY_NAMESPACE
-}  // namespace jpegli
+}  // namespace pdfcore
 HWY_AFTER_NAMESPACE();
 
 #if HWY_ONCE
 
-namespace jpegli {
+namespace pdfcore {
 namespace extras {
 
 namespace {
@@ -124,9 +124,9 @@ namespace {
 
 using StoreFuncType = void(uint32_t value, uint8_t* dest);
 template <StoreFuncType StoreFunc>
-void StoreUintRow(uint32_t* JPEGLI_RESTRICT* rows_u32, size_t num_channels,
+void StoreUintRow(uint32_t* PDFCORE_RESTRICT* rows_u32, size_t num_channels,
                   size_t xsize, size_t bytes_per_sample,
-                  uint8_t* JPEGLI_RESTRICT out) {
+                  uint8_t* PDFCORE_RESTRICT out) {
   for (size_t x = 0; x < xsize; ++x) {
     for (size_t c = 0; c < num_channels; c++) {
       StoreFunc(rows_u32[c][x],
@@ -136,8 +136,8 @@ void StoreUintRow(uint32_t* JPEGLI_RESTRICT* rows_u32, size_t num_channels,
 }
 
 template <void(StoreFunc)(float, uint8_t*)>
-void StoreFloatRow(const float* JPEGLI_RESTRICT* rows_in, size_t num_channels,
-                   size_t xsize, uint8_t* JPEGLI_RESTRICT out) {
+void StoreFloatRow(const float* PDFCORE_RESTRICT* rows_in, size_t num_channels,
+                   size_t xsize, uint8_t* PDFCORE_RESTRICT out) {
   for (size_t x = 0; x < xsize; ++x) {
     for (size_t c = 0; c < num_channels; c++) {
       StoreFunc(rows_in[c][x], out + (num_channels * x + c) * sizeof(float));
@@ -145,7 +145,7 @@ void StoreFloatRow(const float* JPEGLI_RESTRICT* rows_in, size_t num_channels,
   }
 }
 
-void JPEGLI_INLINE Store8(uint32_t value, uint8_t* dest) {
+void PDFCORE_INLINE Store8(uint32_t value, uint8_t* dest) {
   *dest = value & 0xff;
 }
 
@@ -156,44 +156,44 @@ const size_t kConvertMaxChannels = 4;
 
 Status ConvertChannelsToExternal(const ImageF* in_channels[],
                                  size_t num_channels, size_t bits_per_sample,
-                                 bool float_out, JpegliEndianness endianness,
-                                 size_t stride, jpegli::ThreadPool* pool,
+                                 bool float_out, PdfcoreEndianness endianness,
+                                 size_t stride, pdfcore::ThreadPool* pool,
                                  void* out_image, size_t out_size) {
-  JPEGLI_DASSERT(num_channels != 0 && num_channels <= kConvertMaxChannels);
-  JPEGLI_DASSERT(in_channels[0] != nullptr);
-  JPEGLI_ENSURE(float_out ? bits_per_sample == 16 || bits_per_sample == 32
+  PDFCORE_DASSERT(num_channels != 0 && num_channels <= kConvertMaxChannels);
+  PDFCORE_DASSERT(in_channels[0] != nullptr);
+  PDFCORE_ENSURE(float_out ? bits_per_sample == 16 || bits_per_sample == 32
                           : bits_per_sample > 0 && bits_per_sample <= 16);
-  JPEGLI_ENSURE(out_image);
-  JpegliMemoryManager* memory_manager = in_channels[0]->memory_manager();
+  PDFCORE_ENSURE(out_image);
+  PdfcoreMemoryManager* memory_manager = in_channels[0]->memory_manager();
   std::vector<const ImageF*> channels;
   channels.assign(in_channels, in_channels + num_channels);
 
   const size_t bytes_per_channel =
-      DivCeil(bits_per_sample, jpegli::kBitsPerByte);
+      DivCeil(bits_per_sample, pdfcore::kBitsPerByte);
   const size_t bytes_per_pixel = num_channels * bytes_per_channel;
 
   // First channel may not be nullptr.
   size_t xsize = channels[0]->xsize();
   size_t ysize = channels[0]->ysize();
   if (stride < bytes_per_pixel * xsize) {
-    return JPEGLI_FAILURE(
+    return PDFCORE_FAILURE(
         "stride is smaller than scanline width in bytes: %" PRIuS " vs %" PRIuS,
         stride, bytes_per_pixel * xsize);
   }
   if (out_size < (ysize - 1) * stride + bytes_per_pixel * xsize) {
-    return JPEGLI_FAILURE("out_size is too small to store image");
+    return PDFCORE_FAILURE("out_size is too small to store image");
   }
 
   const bool little_endian =
-      endianness == JPEGLI_LITTLE_ENDIAN ||
-      (endianness == JPEGLI_NATIVE_ENDIAN && IsLittleEndian());
+      endianness == PDFCORE_LITTLE_ENDIAN ||
+      (endianness == PDFCORE_NATIVE_ENDIAN && IsLittleEndian());
 
   // Handle the case where a channel is nullptr by creating a single row with
   // ones to use instead.
   ImageF ones;
   for (size_t c = 0; c < num_channels; ++c) {
     if (!channels[c]) {
-      JPEGLI_ASSIGN_OR_RETURN(ones, ImageF::Create(memory_manager, xsize, 1));
+      PDFCORE_ASSIGN_OR_RETURN(ones, ImageF::Create(memory_manager, xsize, 1));
       FillImage(1.0f, &ones);
       break;
     }
@@ -203,21 +203,21 @@ Status ConvertChannelsToExternal(const ImageF* in_channels[],
     if (bits_per_sample == 16) {
       bool swap_endianness = little_endian != IsLittleEndian();
       Plane<hwy::float16_t> f16_cache;
-      JPEGLI_RETURN_IF_ERROR(RunOnPool(
+      PDFCORE_RETURN_IF_ERROR(RunOnPool(
           pool, 0, static_cast<uint32_t>(ysize),
           [&](size_t num_threads) -> Status {
-            JPEGLI_ASSIGN_OR_RETURN(f16_cache, Plane<hwy::float16_t>::Create(
+            PDFCORE_ASSIGN_OR_RETURN(f16_cache, Plane<hwy::float16_t>::Create(
                                                    memory_manager, xsize,
                                                    num_channels * num_threads));
             return true;
           },
           [&](const uint32_t task, const size_t thread) -> Status {
             const int64_t y = task;
-            const float* JPEGLI_RESTRICT row_in[kConvertMaxChannels];
+            const float* PDFCORE_RESTRICT row_in[kConvertMaxChannels];
             for (size_t c = 0; c < num_channels; c++) {
               row_in[c] = channels[c] ? channels[c]->Row(y) : ones.Row(0);
             }
-            hwy::float16_t* JPEGLI_RESTRICT row_f16[kConvertMaxChannels];
+            hwy::float16_t* PDFCORE_RESTRICT row_f16[kConvertMaxChannels];
             for (size_t c = 0; c < num_channels; c++) {
               row_f16[c] = f16_cache.Row(c + thread * num_channels);
               HWY_DYNAMIC_DISPATCH(FloatToF16)
@@ -243,14 +243,14 @@ Status ConvertChannelsToExternal(const ImageF* in_channels[],
           },
           "ConvertF16"));
     } else if (bits_per_sample == 32) {
-      JPEGLI_RETURN_IF_ERROR(RunOnPool(
+      PDFCORE_RETURN_IF_ERROR(RunOnPool(
           pool, 0, static_cast<uint32_t>(ysize),
           [&](size_t num_threads) -> Status { return true; },
           [&](const uint32_t task, const size_t thread) -> Status {
             const int64_t y = task;
             uint8_t* row_out =
                 &(reinterpret_cast<uint8_t*>(out_image))[stride * y];
-            const float* JPEGLI_RESTRICT row_in[kConvertMaxChannels];
+            const float* PDFCORE_RESTRICT row_in[kConvertMaxChannels];
             for (size_t c = 0; c < num_channels; c++) {
               row_in[c] = channels[c] ? channels[c]->Row(y) : ones.Row(0);
             }
@@ -263,17 +263,17 @@ Status ConvertChannelsToExternal(const ImageF* in_channels[],
           },
           "ConvertFloat"));
     } else {
-      return JPEGLI_FAILURE("float other than 16-bit and 32-bit not supported");
+      return PDFCORE_FAILURE("float other than 16-bit and 32-bit not supported");
     }
   } else {
     // Multiplier to convert from floating point 0-1 range to the integer
     // range.
     float mul = (1ull << bits_per_sample) - 1;
     Plane<uint32_t> u32_cache;
-    JPEGLI_RETURN_IF_ERROR(RunOnPool(
+    PDFCORE_RETURN_IF_ERROR(RunOnPool(
         pool, 0, static_cast<uint32_t>(ysize),
         [&](size_t num_threads) -> Status {
-          JPEGLI_ASSIGN_OR_RETURN(
+          PDFCORE_ASSIGN_OR_RETURN(
               u32_cache, Plane<uint32_t>::Create(memory_manager, xsize,
                                                  num_channels * num_threads));
           return true;
@@ -282,11 +282,11 @@ Status ConvertChannelsToExternal(const ImageF* in_channels[],
           const int64_t y = task;
           uint8_t* row_out =
               &(reinterpret_cast<uint8_t*>(out_image))[stride * y];
-          const float* JPEGLI_RESTRICT row_in[kConvertMaxChannels];
+          const float* PDFCORE_RESTRICT row_in[kConvertMaxChannels];
           for (size_t c = 0; c < num_channels; c++) {
             row_in[c] = channels[c] ? channels[c]->Row(y) : ones.Row(0);
           }
-          uint32_t* JPEGLI_RESTRICT row_u32[kConvertMaxChannels];
+          uint32_t* PDFCORE_RESTRICT row_u32[kConvertMaxChannels];
           for (size_t c = 0; c < num_channels; c++) {
             row_u32[c] = u32_cache.Row(c + thread * num_channels);
             // row_u32[] is a per-thread temporary row storage, this isn't
@@ -313,15 +313,15 @@ Status ConvertChannelsToExternal(const ImageF* in_channels[],
 
 namespace {
 
-size_t JpegliDataTypeBytes(JpegliDataType data_type) {
+size_t PdfcoreDataTypeBytes(PdfcoreDataType data_type) {
   switch (data_type) {
-    case JPEGLI_TYPE_UINT8:
+    case PDFCORE_TYPE_UINT8:
       return 1;
-    case JPEGLI_TYPE_UINT16:
+    case PDFCORE_TYPE_UINT16:
       return 2;
-    case JPEGLI_TYPE_FLOAT16:
+    case PDFCORE_TYPE_FLOAT16:
       return 2;
-    case JPEGLI_TYPE_FLOAT:
+    case PDFCORE_TYPE_FLOAT:
       return 4;
     default:
       return 0;
@@ -333,46 +333,46 @@ size_t JpegliDataTypeBytes(JpegliDataType data_type) {
 Status ConvertFromExternalNoSizeCheck(const uint8_t* data, size_t xsize,
                                       size_t ysize, size_t stride,
                                       size_t bits_per_sample,
-                                      JpegliPixelFormat format, size_t c,
+                                      PdfcorePixelFormat format, size_t c,
                                       ThreadPool* pool, ImageF* channel) {
-  if (format.data_type == JPEGLI_TYPE_UINT8) {
-    JPEGLI_RETURN_IF_ERROR(bits_per_sample > 0 && bits_per_sample <= 8);
-  } else if (format.data_type == JPEGLI_TYPE_UINT16) {
-    JPEGLI_RETURN_IF_ERROR(bits_per_sample > 8 && bits_per_sample <= 16);
-  } else if (format.data_type != JPEGLI_TYPE_FLOAT16 &&
-             format.data_type != JPEGLI_TYPE_FLOAT) {
-    return JPEGLI_FAILURE("unsupported pixel format data type %d",
+  if (format.data_type == PDFCORE_TYPE_UINT8) {
+    PDFCORE_RETURN_IF_ERROR(bits_per_sample > 0 && bits_per_sample <= 8);
+  } else if (format.data_type == PDFCORE_TYPE_UINT16) {
+    PDFCORE_RETURN_IF_ERROR(bits_per_sample > 8 && bits_per_sample <= 16);
+  } else if (format.data_type != PDFCORE_TYPE_FLOAT16 &&
+             format.data_type != PDFCORE_TYPE_FLOAT) {
+    return PDFCORE_FAILURE("unsupported pixel format data type %d",
                           format.data_type);
   }
 
-  JPEGLI_ENSURE(channel->xsize() == xsize);
-  JPEGLI_ENSURE(channel->ysize() == ysize);
+  PDFCORE_ENSURE(channel->xsize() == xsize);
+  PDFCORE_ENSURE(channel->ysize() == ysize);
 
-  size_t bytes_per_channel = JpegliDataTypeBytes(format.data_type);
+  size_t bytes_per_channel = PdfcoreDataTypeBytes(format.data_type);
   size_t bytes_per_pixel = format.num_channels * bytes_per_channel;
   size_t pixel_offset = c * bytes_per_channel;
   // Only for uint8/16.
   float scale = 1.0f / ((1ull << bits_per_sample) - 1);
 
   const bool little_endian =
-      format.endianness == JPEGLI_LITTLE_ENDIAN ||
-      (format.endianness == JPEGLI_NATIVE_ENDIAN && IsLittleEndian());
+      format.endianness == PDFCORE_LITTLE_ENDIAN ||
+      (format.endianness == PDFCORE_NATIVE_ENDIAN && IsLittleEndian());
 
   const auto convert_row = [&](const uint32_t task,
                                size_t /*thread*/) -> Status {
     const size_t y = task;
     size_t offset = y * stride + pixel_offset;
-    float* JPEGLI_RESTRICT row_out = channel->Row(y);
+    float* PDFCORE_RESTRICT row_out = channel->Row(y);
     const auto save_value = [&](size_t index, float value) {
       row_out[index] = value;
     };
     if (!LoadFloatRow(data + offset, xsize, bytes_per_pixel, format.data_type,
                       little_endian, scale, save_value)) {
-      return JPEGLI_FAILURE("unsupported pixel format data type");
+      return PDFCORE_FAILURE("unsupported pixel format data type");
     }
     return true;
   };
-  JPEGLI_RETURN_IF_ERROR(RunOnPool(pool, 0, static_cast<uint32_t>(ysize),
+  PDFCORE_RETURN_IF_ERROR(RunOnPool(pool, 0, static_cast<uint32_t>(ysize),
                                    ThreadPool::NoInit, convert_row,
                                    "ConvertExtraChannel"));
 
@@ -381,22 +381,22 @@ Status ConvertFromExternalNoSizeCheck(const uint8_t* data, size_t xsize,
 
 Status ConvertFromExternal(const uint8_t* data, size_t size, size_t xsize,
                            size_t ysize, size_t bits_per_sample,
-                           JpegliPixelFormat format, size_t c, ThreadPool* pool,
+                           PdfcorePixelFormat format, size_t c, ThreadPool* pool,
                            ImageF* channel) {
-  size_t bytes_per_channel = JpegliDataTypeBytes(format.data_type);
+  size_t bytes_per_channel = PdfcoreDataTypeBytes(format.data_type);
   size_t bytes_per_pixel = format.num_channels * bytes_per_channel;
   size_t last_row_size;
   if (!SafeMul(xsize, bytes_per_pixel, last_row_size)) {
-    return JPEGLI_FAILURE("Image dimensions are too large");
+    return PDFCORE_FAILURE("Image dimensions are too large");
   }
   const size_t align = format.align;
   const size_t row_size =
-      (align > 1 ? jpegli::DivCeil(last_row_size, align) * align
+      (align > 1 ? pdfcore::DivCeil(last_row_size, align) * align
                  : last_row_size);
   const size_t bytes_to_read = row_size * (ysize - 1) + last_row_size;
-  if (xsize == 0 || ysize == 0) return JPEGLI_FAILURE("Empty image");
+  if (xsize == 0 || ysize == 0) return PDFCORE_FAILURE("Empty image");
   if (size > 0 && size < bytes_to_read) {
-    return JPEGLI_FAILURE("Buffer size is too small, expected: %" PRIuS
+    return PDFCORE_FAILURE("Buffer size is too small, expected: %" PRIuS
                           " got: %" PRIuS " (Image: %" PRIuS "x%" PRIuS
                           "x%u, bytes_per_channel: %" PRIuS ")",
                           bytes_to_read, size, xsize, ysize,
@@ -405,7 +405,7 @@ Status ConvertFromExternal(const uint8_t* data, size_t size, size_t xsize,
   // Too large buffer is likely an application bug, so also fail for that.
   // Do allow padding to stride in last row though.
   if (size > row_size * ysize) {
-    return JPEGLI_FAILURE("Buffer size is too large");
+    return PDFCORE_FAILURE("Buffer size is too large");
   }
   return ConvertFromExternalNoSizeCheck(
       data, xsize, ysize, row_size, bits_per_sample, format, c, pool, channel);
@@ -416,23 +416,23 @@ Status GetColorEncoding(const PackedPixelFile& ppf,
   if (ppf.primary_color_representation == PackedPixelFile::kIccIsPrimary) {
     const bool is_gray = (ppf.info.num_color_channels == 1);
     IccBytes icc = ppf.icc;
-    if (!color_encoding->SetICC(std::move(icc), JpegliGetDefaultCms())) {
+    if (!color_encoding->SetICC(std::move(icc), PdfcoreGetDefaultCms())) {
       fprintf(stderr, "Warning: error setting ICC profile, assuming SRGB\n");
       *color_encoding = ColorEncoding::SRGB(is_gray);
     } else {
       if (color_encoding->IsCMYK()) {
         // We expect gray or tri-color.
-        return JPEGLI_FAILURE("Embedded ICC is CMYK");
+        return PDFCORE_FAILURE("Embedded ICC is CMYK");
       }
       if (color_encoding->IsGray() != is_gray) {
         // E.g. JPG image has 3 channels, but gray ICC.
-        return JPEGLI_FAILURE("Embedded ICC does not match image color type");
+        return PDFCORE_FAILURE("Embedded ICC does not match image color type");
       }
     }
   } else {
-    JPEGLI_RETURN_IF_ERROR(color_encoding->FromExternal(ppf.color_encoding));
+    PDFCORE_RETURN_IF_ERROR(color_encoding->FromExternal(ppf.color_encoding));
     if (color_encoding->ICC().empty()) {
-      return JPEGLI_FAILURE("Failed to serialize ICC");
+      return PDFCORE_FAILURE("Failed to serialize ICC");
     }
   }
   return true;
@@ -457,41 +457,41 @@ float GetIntensityTarget(const extras::PackedPixelFile& ppf,
 
 Status ConvertPackedPixelFileToImage3F(const extras::PackedPixelFile& ppf,
                                        Image3F* color, ThreadPool* pool) {
-  JPEGLI_RETURN_IF_ERROR(!ppf.frames.empty());
+  PDFCORE_RETURN_IF_ERROR(!ppf.frames.empty());
   const extras::PackedImage& img = ppf.frames[0].color;
   size_t bits_per_sample =
-      ppf.input_bitdepth.type == JPEGLI_BIT_DEPTH_FROM_PIXEL_FORMAT
+      ppf.input_bitdepth.type == PDFCORE_BIT_DEPTH_FROM_PIXEL_FORMAT
           ? extras::PackedImage::BitsPerChannel(img.format.data_type)
           : ppf.info.bits_per_sample;
   for (size_t c = 0; c < ppf.info.num_color_channels; ++c) {
-    JPEGLI_RETURN_IF_ERROR(ConvertFromExternal(
+    PDFCORE_RETURN_IF_ERROR(ConvertFromExternal(
         reinterpret_cast<const uint8_t*>(img.pixels()), img.pixels_size,
         img.xsize, img.ysize, bits_per_sample, img.format, c, pool,
         &color->Plane(c)));
   }
   if (ppf.info.num_color_channels == 1) {
-    JPEGLI_RETURN_IF_ERROR(CopyImageTo(color->Plane(0), &color->Plane(1)));
-    JPEGLI_RETURN_IF_ERROR(CopyImageTo(color->Plane(0), &color->Plane(2)));
+    PDFCORE_RETURN_IF_ERROR(CopyImageTo(color->Plane(0), &color->Plane(1)));
+    PDFCORE_RETURN_IF_ERROR(CopyImageTo(color->Plane(0), &color->Plane(2)));
   }
   return true;
 }
 
 StatusOr<PackedPixelFile> ConvertImage3FToPackedPixelFile(
-    const Image3F& image, const ColorEncoding& c_enc, JpegliPixelFormat format,
+    const Image3F& image, const ColorEncoding& c_enc, PdfcorePixelFormat format,
     ThreadPool* pool) {
   PackedPixelFile ppf{};
   ppf.info.xsize = image.xsize();
   ppf.info.ysize = image.ysize();
   ppf.info.num_color_channels = 3;
-  JPEGLI_RETURN_IF_ERROR(PackedImage::ValidateDataType(format.data_type));
+  PDFCORE_RETURN_IF_ERROR(PackedImage::ValidateDataType(format.data_type));
   ppf.info.bits_per_sample = PackedImage::BitsPerChannel(format.data_type);
-  ppf.info.exponent_bits_per_sample = format.data_type == JPEGLI_TYPE_FLOAT ? 8
-                                      : format.data_type == JPEGLI_TYPE_FLOAT16
+  ppf.info.exponent_bits_per_sample = format.data_type == PDFCORE_TYPE_FLOAT ? 8
+                                      : format.data_type == PDFCORE_TYPE_FLOAT16
                                           ? 5
                                           : 0;
   ppf.color_encoding = c_enc.ToExternal();
   ppf.frames.clear();
-  JPEGLI_ASSIGN_OR_RETURN(
+  PDFCORE_ASSIGN_OR_RETURN(
       PackedFrame frame,
       PackedFrame::Create(image.xsize(), image.ysize(), format));
   const ImageF* channels[3];
@@ -499,7 +499,7 @@ StatusOr<PackedPixelFile> ConvertImage3FToPackedPixelFile(
     channels[c] = &image.Plane(c);
   }
   bool float_samples = ppf.info.exponent_bits_per_sample > 0;
-  JPEGLI_RETURN_IF_ERROR(ConvertChannelsToExternal(
+  PDFCORE_RETURN_IF_ERROR(ConvertChannelsToExternal(
       channels, 3, ppf.info.bits_per_sample, float_samples, format.endianness,
       frame.color.stride, pool, frame.color.pixels(0, 0, 0),
       frame.color.pixels_size));
@@ -508,5 +508,5 @@ StatusOr<PackedPixelFile> ConvertImage3FToPackedPixelFile(
 }
 
 }  // namespace extras
-}  // namespace jpegli
+}  // namespace pdfcore
 #endif  // HWY_ONCE

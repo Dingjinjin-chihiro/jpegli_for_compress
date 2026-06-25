@@ -7,7 +7,7 @@
 # This file is generated, do not modify by manually.
 # Run `tools/scripts/build_cleaner.py --update` to regenerate it.
 
-libjpegli_base_sources = [
+libpdfcore_jpegli_base_sources = [
     "base/bits.h",
     "base/byte_order.h",
     "base/c_callback_support.h",
@@ -33,7 +33,7 @@ libjpegli_base_sources = [
     "base/types.h",
 ]
 
-libjpegli_cms_sources = [
+libpdfcore_jpegli_cms_sources = [
     "cms/cms.h",
     "cms/cms_interface.h",
     "cms/color_encoding.h",
@@ -48,64 +48,64 @@ libjpegli_cms_sources = [
     "cms/transfer_functions.h",
 ]
 
-libjpegli_codec_apng_sources = [
+libpdfcore_jpegli_codec_apng_sources = [
     "extras/dec/apng.h",
     "extras/enc/apng.h",
 ]
 
-libjpegli_codec_exr_sources = [
+libpdfcore_jpegli_codec_exr_sources = [
     "extras/dec/exr.cc",
     "extras/dec/exr.h",
     "extras/enc/exr.cc",
     "extras/enc/exr.h",
 ]
 
-libjpegli_codec_gif_sources = [
+libpdfcore_jpegli_codec_gif_sources = [
     "extras/dec/gif.cc",
     "extras/dec/gif.h",
 ]
 
-libjpegli_codec_jpegli_sources = [
+libpdfcore_jpegli_codec_pdfcore_jpegli_sources = [
     "extras/dec/jpegli.cc",
     "extras/dec/jpegli.h",
     "extras/enc/jpegli.cc",
     "extras/enc/jpegli.h",
 ]
 
-libjpegli_codec_jpg_sources = [
+libpdfcore_jpegli_codec_jpg_sources = [
     "extras/dec/jpg.cc",
     "extras/dec/jpg.h",
     "extras/enc/jpg.cc",
     "extras/enc/jpg.h",
 ]
 
-libjpegli_codec_npy_sources = [
+libpdfcore_jpegli_codec_npy_sources = [
     "extras/enc/npy.cc",
     "extras/enc/npy.h",
 ]
 
-libjpegli_codec_pgx_sources = [
+libpdfcore_jpegli_codec_pgx_sources = [
     "extras/dec/pgx.cc",
     "extras/dec/pgx.h",
     "extras/enc/pgx.cc",
     "extras/enc/pgx.h",
 ]
 
-libjpegli_codec_pnm_sources = [
+libpdfcore_jpegli_codec_pnm_sources = [
     "extras/dec/pnm.cc",
     "extras/dec/pnm.h",
     "extras/enc/pnm.cc",
     "extras/enc/pnm.h",
 ]
 
-libjpegli_extras_for_tools_sources = [
+libpdfcore_jpegli_extras_for_tools_sources = [
     "extras/metrics.cc",
     "extras/metrics.h",
     "extras/packed_image_convert.cc",
     "extras/packed_image_convert.h",
 ]
 
-libjpegli_extras_sources = [
+libpdfcore_jpegli_extras_sources = [
     "extras/alpha_blend.cc",
     "extras/alpha_blend.h",
     "extras/butteraugli.cc",
@@ -145,14 +145,14 @@ libjpegli_extras_sources = [
     "extras/xyb_transform.h",
 ]
 
-libjpegli_jpegli_lib_version = 62
+libpdfcore_jpegli_pdfcore_jpegli_lib_version = 62
 
-libjpegli_jpegli_libjpeg_helper_files = [
+libpdfcore_jpegli_pdfcore_jpegli_libjpeg_helper_files = [
     "jpegli/libjpeg_test_util.cc",
     "jpegli/libjpeg_test_util.h",
 ]
 
-libjpegli_jpegli_sources = [
+libpdfcore_jpegli_pdfcore_jpegli_sources = [
     "jpegli/adaptive_quantization.cc",
     "jpegli/adaptive_quantization.h",
     "jpegli/bit_writer.cc",
@@ -210,7 +210,7 @@ libjpegli_jpegli_sources = [
     "jpegli/upsample.h",
 ]
 
-libjpegli_jpegli_testlib_files = [
+libpdfcore_jpegli_pdfcore_jpegli_testlib_files = [
     "jpegli/fuzztest.h",
     "jpegli/test_params.h",
     "jpegli/test_utils-inl.h",
@@ -218,7 +218,7 @@ libjpegli_jpegli_testlib_files = [
     "jpegli/test_utils.h",
 ]
 
-libjpegli_jpegli_tests = [
+libpdfcore_jpegli_pdfcore_jpegli_tests = [
     "jpegli/decode_api_test.cc",
     "jpegli/encode_api_test.cc",
     "jpegli/error_handling_test.cc",
@@ -229,17 +229,17 @@ libjpegli_jpegli_tests = [
     "jpegli/transcode_api_test.cc",
 ]
 
-libjpegli_jpegli_wrapper_sources = [
+libpdfcore_jpegli_pdfcore_jpegli_wrapper_sources = [
     "jpegli/libjpeg_wrapper.cc",
 ]
 
-libjpegli_major_version = 0
+libpdfcore_jpegli_major_version = 0
 
-libjpegli_minor_version = 12
+libpdfcore_jpegli_minor_version = 12
 
-libjpegli_patch_version = 0
+libpdfcore_jpegli_patch_version = 0
 
-libjpegli_testlib_files = [
+libpdfcore_jpegli_testlib_files = [
     "extras/test_image.cc",
     "extras/test_image.h",
     "extras/test_memory_manager.cc",
@@ -249,7 +249,7 @@ libjpegli_testlib_files = [
     "threads/test_utils.h",
 ]
 
-libjpegli_tests = [
+libpdfcore_jpegli_tests = [
     "cms/tone_mapping_test.cc",
     "cms/transfer_functions_test.cc",
     "extras/butteraugli_test.cc",
@@ -259,7 +259,7 @@ libjpegli_tests = [
     "threads/thread_parallel_runner_test.cc",
 ]
 
-libjpegli_threads_sources = [
+libpdfcore_jpegli_threads_sources = [
     "threads/thread_parallel_runner.cc",
     "threads/thread_parallel_runner.h",
     "threads/thread_parallel_runner_cxx.h",

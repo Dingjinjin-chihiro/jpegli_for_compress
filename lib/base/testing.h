@@ -4,31 +4,31 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
-#ifndef JPEGLI_LIB_BASE_TESTING_H_
-#define JPEGLI_LIB_BASE_TESTING_H_
+#ifndef PDFCORE_LIB_BASE_TESTING_H_
+#define PDFCORE_LIB_BASE_TESTING_H_
 
 // GTest specific macros / wrappers.
 
 #include "gtest/gtest.h"  // IWYU pragma: export
 
-#ifdef JPEGLI_DISABLE_SLOW_TESTS
-#define JPEGLI_SLOW_TEST(T, C) TEST(T, DISABLED_##C)
+#ifdef PDFCORE_DISABLE_SLOW_TESTS
+#define PDFCORE_SLOW_TEST(T, C) TEST(T, DISABLED_##C)
 #else
-#define JPEGLI_SLOW_TEST(T, C) TEST(T, C)
-#endif  // JPEGLI_DISABLE_SLOW_TESTS
+#define PDFCORE_SLOW_TEST(T, C) TEST(T, C)
+#endif  // PDFCORE_DISABLE_SLOW_TESTS
 
 #ifdef THREAD_SANITIZER
-#define JPEGLI_TSAN_SLOW_TEST(T, C) TEST(T, DISABLED_##C)
+#define PDFCORE_TSAN_SLOW_TEST(T, C) TEST(T, DISABLED_##C)
 #else
-#define JPEGLI_TSAN_SLOW_TEST(T, C) TEST(T, C)
+#define PDFCORE_TSAN_SLOW_TEST(T, C) TEST(T, C)
 #endif  // THREAD_SANITIZER
 
 // googletest before 1.10 didn't define INSTANTIATE_TEST_SUITE_P() but instead
 // used INSTANTIATE_TEST_CASE_P which is now deprecated.
 #ifdef INSTANTIATE_TEST_SUITE_P
-#define JPEGLI_GTEST_INSTANTIATE_TEST_SUITE_P INSTANTIATE_TEST_SUITE_P
+#define PDFCORE_GTEST_INSTANTIATE_TEST_SUITE_P INSTANTIATE_TEST_SUITE_P
 #else
-#define JPEGLI_GTEST_INSTANTIATE_TEST_SUITE_P INSTANTIATE_TEST_CASE_P
+#define PDFCORE_GTEST_INSTANTIATE_TEST_SUITE_P INSTANTIATE_TEST_CASE_P
 #endif
 
 // Ensures that we don't make our test bounds too lax, effectively disabling the
@@ -54,13 +54,13 @@
     }                                                                      \
   }
 
-#define JPEGLI_EXPECT_OK(F)    \
+#define PDFCORE_EXPECT_OK(F)    \
   {                            \
     std::stringstream _;       \
     EXPECT_TRUE(F) << _.str(); \
   }
 
-#define JPEGLI_TEST_ASSERT_OK(F) \
+#define PDFCORE_TEST_ASSERT_OK(F) \
   {                              \
     std::stringstream _;         \
     ASSERT_TRUE(F) << _.str();   \
@@ -68,4 +68,4 @@
 
 #define QUIT(M) FAIL() << (M);
 
-#endif  // JPEGLI_LIB_BASE_TESTING_H_
+#endif  // PDFCORE_LIB_BASE_TESTING_H_

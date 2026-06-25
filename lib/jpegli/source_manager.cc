@@ -13,7 +13,7 @@
 #include "lib/jpegli/error.h"
 #include "lib/jpegli/memory_manager.h"
 
-namespace jpegli {
+namespace pdfcore {
 
 void init_mem_source(j_decompress_ptr cinfo) {}
 void init_stdio_source(j_decompress_ptr cinfo) {}
@@ -57,41 +57,41 @@ struct StdioSourceManager {
   }
 };
 
-}  // namespace jpegli
+}  // namespace pdfcore
 
-void jpegli_mem_src(j_decompress_ptr cinfo, const unsigned char* inbuffer,
+void pdfcore_jpegli_mem_src(j_decompress_ptr cinfo, const unsigned char* inbuffer,
                     unsigned long insize /* NOLINT */) {
-  if (cinfo->src && cinfo->src->init_source != jpegli::init_mem_source) {
-    JPEGLI_ERROR("jpegli_mem_src: a different source manager was already set");
+  if (cinfo->src && cinfo->src->init_source != pdfcore::init_mem_source) {
+    PDFCORE_ERROR("pdfcore_jpegli_mem_src: a different source manager was already set");
   }
   if (!cinfo->src) {
-    cinfo->src = jpegli::Allocate<jpeg_source_mgr>(cinfo, 1);
+    cinfo->src = pdfcore::Allocate<jpeg_source_mgr>(cinfo, 1);
   }
   cinfo->src->next_input_byte = inbuffer;
   cinfo->src->bytes_in_buffer = insize;
-  cinfo->src->init_source = jpegli::init_mem_source;
-  cinfo->src->fill_input_buffer = jpegli::EmitFakeEoiMarker;
-  cinfo->src->skip_input_data = jpegli::skip_input_data;
-  cinfo->src->resync_to_restart = jpegli_resync_to_restart;
-  cinfo->src->term_source = jpegli::term_source;
+  cinfo->src->init_source = pdfcore::init_mem_source;
+  cinfo->src->fill_input_buffer = pdfcore::EmitFakeEoiMarker;
+  cinfo->src->skip_input_data = pdfcore::skip_input_data;
+  cinfo->src->resync_to_restart = pdfcore_jpegli_resync_to_restart;
+  cinfo->src->term_source = pdfcore::term_source;
 }
 
-void jpegli_stdio_src(j_decompress_ptr cinfo, FILE* infile) {
-  if (cinfo->src && cinfo->src->init_source != jpegli::init_stdio_source) {
-    JPEGLI_ERROR("jpeg_stdio_src: a different source manager was already set");
+void pdfcore_jpegli_stdio_src(j_decompress_ptr cinfo, FILE* infile) {
+  if (cinfo->src && cinfo->src->init_source != pdfcore::init_stdio_source) {
+    PDFCORE_ERROR("jpeg_stdio_src: a different source manager was already set");
   }
   if (!cinfo->src) {
     cinfo->src = reinterpret_cast<jpeg_source_mgr*>(
-        jpegli::Allocate<jpegli::StdioSourceManager>(cinfo, 1));
+        pdfcore::Allocate<pdfcore::StdioSourceManager>(cinfo, 1));
   }
-  auto* src = reinterpret_cast<jpegli::StdioSourceManager*>(cinfo->src);
+  auto* src = reinterpret_cast<pdfcore::StdioSourceManager*>(cinfo->src);
   src->f = infile;
-  src->buffer = jpegli::Allocate<uint8_t>(cinfo, jpegli::kStdioBufferSize);
+  src->buffer = pdfcore::Allocate<uint8_t>(cinfo, pdfcore::kStdioBufferSize);
   src->pub.next_input_byte = src->buffer;
   src->pub.bytes_in_buffer = 0;
-  src->pub.init_source = jpegli::init_stdio_source;
-  src->pub.fill_input_buffer = jpegli::StdioSourceManager::fill_input_buffer;
-  src->pub.skip_input_data = jpegli::skip_input_data;
-  src->pub.resync_to_restart = jpegli_resync_to_restart;
-  src->pub.term_source = jpegli::term_source;
+  src->pub.init_source = pdfcore::init_stdio_source;
+  src->pub.fill_input_buffer = pdfcore::StdioSourceManager::fill_input_buffer;
+  src->pub.skip_input_data = pdfcore::skip_input_data;
+  src->pub.resync_to_restart = pdfcore_jpegli_resync_to_restart;
+  src->pub.term_source = pdfcore::term_source;
 }

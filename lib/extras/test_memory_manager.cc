@@ -9,16 +9,16 @@
 
 #include "lib/base/memory_manager.h"
 
-namespace jpegli {
+namespace pdfcore {
 namespace test {
 
 namespace {
 void* TestAlloc(void* /* opaque*/, size_t size) { return malloc(size); }
 void TestFree(void* /* opaque*/, void* address) { free(address); }
-JpegliMemoryManager kMemoryManager{nullptr, &TestAlloc, &TestFree};
+PdfcoreMemoryManager kMemoryManager{nullptr, &TestAlloc, &TestFree};
 }  // namespace
 
-JpegliMemoryManager* MemoryManager() { return &kMemoryManager; };
+PdfcoreMemoryManager* MemoryManager() { return &kMemoryManager; };
 
 }  // namespace test
-}  // namespace jpegli
+}  // namespace pdfcore

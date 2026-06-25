@@ -4,15 +4,15 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
-#ifndef JPEGLI_LIB_EXTRAS_SIZE_CONSTRAINTS_H_
-#define JPEGLI_LIB_EXTRAS_SIZE_CONSTRAINTS_H_
+#ifndef PDFCORE_LIB_EXTRAS_SIZE_CONSTRAINTS_H_
+#define PDFCORE_LIB_EXTRAS_SIZE_CONSTRAINTS_H_
 
 #include <cstdint>
 #include <type_traits>
 
 #include "lib/base/status.h"
 
-namespace jpegli {
+namespace pdfcore {
 
 struct SizeConstraints {
   // Upper limit on pixel dimensions/area, enforced by VerifyDimensions
@@ -29,18 +29,18 @@ Status VerifyDimensions(const SizeConstraints* constraints, T xs, T ys) {
   SizeConstraints limit = {};
   if (constraints) limit = *constraints;
 
-  if (xs == 0 || ys == 0) return JPEGLI_FAILURE("Empty image.");
-  if (xs > limit.dec_max_xsize) return JPEGLI_FAILURE("Image too wide.");
-  if (ys > limit.dec_max_ysize) return JPEGLI_FAILURE("Image too tall.");
+  if (xs == 0 || ys == 0) return PDFCORE_FAILURE("Empty image.");
+  if (xs > limit.dec_max_xsize) return PDFCORE_FAILURE("Image too wide.");
+  if (ys > limit.dec_max_ysize) return PDFCORE_FAILURE("Image too tall.");
 
   const uint64_t num_pixels = static_cast<uint64_t>(xs) * ys;
   if (num_pixels > limit.dec_max_pixels) {
-    return JPEGLI_FAILURE("Image too big.");
+    return PDFCORE_FAILURE("Image too big.");
   }
 
   return true;
 }
 
-}  // namespace jpegli
+}  // namespace pdfcore
 
-#endif  // JPEGLI_LIB_EXTRAS_SIZE_CONSTRAINTS_H_
+#endif  // PDFCORE_LIB_EXTRAS_SIZE_CONSTRAINTS_H_

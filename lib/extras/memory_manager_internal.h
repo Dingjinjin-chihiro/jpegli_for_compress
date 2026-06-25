@@ -3,8 +3,8 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-#ifndef JPEGLI_LIB_EXTRAS_MEMORY_MANAGER_INTERNAL_H_
-#define JPEGLI_LIB_EXTRAS_MEMORY_MANAGER_INTERNAL_H_
+#ifndef PDFCORE_LIB_EXTRAS_MEMORY_MANAGER_INTERNAL_H_
+#define PDFCORE_LIB_EXTRAS_MEMORY_MANAGER_INTERNAL_H_
 
 // Memory allocator with support for alignment + misalignment.
 
@@ -16,7 +16,7 @@
 #include "lib/base/memory_manager.h"
 #include "lib/base/status.h"
 
-namespace jpegli {
+namespace pdfcore {
 
 namespace memory_manager_internal {
 
@@ -39,18 +39,18 @@ static_assert((kNumAlignmentGroups & (kNumAlignmentGroups - 1)) == 0,
 // functions which will be initialized with the default ones. If either alloc
 // or free are NULL, then both must be NULL, otherwise this function returns an
 // error.
-Status MemoryManagerInit(JpegliMemoryManager* self,
-                         const JpegliMemoryManager* memory_manager);
+Status MemoryManagerInit(PdfcoreMemoryManager* self,
+                         const PdfcoreMemoryManager* memory_manager);
 
-void* MemoryManagerAlloc(const JpegliMemoryManager* memory_manager,
+void* MemoryManagerAlloc(const PdfcoreMemoryManager* memory_manager,
                          size_t size);
-void MemoryManagerFree(const JpegliMemoryManager* memory_manager,
+void MemoryManagerFree(const PdfcoreMemoryManager* memory_manager,
                        void* address);
 
 // Helper class to be used as a deleter in a unique_ptr<T> call.
 class MemoryManagerDeleteHelper {
  public:
-  explicit MemoryManagerDeleteHelper(const JpegliMemoryManager* memory_manager)
+  explicit MemoryManagerDeleteHelper(const PdfcoreMemoryManager* memory_manager)
       : memory_manager_(memory_manager) {}
 
   // Delete and free the passed pointer using the memory_manager.
@@ -64,7 +64,7 @@ class MemoryManagerDeleteHelper {
   }
 
  private:
-  const JpegliMemoryManager* memory_manager_;
+  const PdfcoreMemoryManager* memory_manager_;
 };
 
 template <typename T>
@@ -73,8 +73,8 @@ using MemoryManagerUniquePtr = std::unique_ptr<T, MemoryManagerDeleteHelper>;
 // Creates a new object T allocating it with the memory allocator into a
 // unique_ptr.
 template <typename T, typename... Args>
-JPEGLI_INLINE MemoryManagerUniquePtr<T> MemoryManagerMakeUnique(
-    const JpegliMemoryManager* memory_manager, Args&&... args) {
+PDFCORE_INLINE MemoryManagerUniquePtr<T> MemoryManagerMakeUnique(
+    const PdfcoreMemoryManager* memory_manager, Args&&... args) {
   T* mem =
       static_cast<T*>(memory_manager->alloc(memory_manager->opaque, sizeof(T)));
   if (!mem) {
@@ -105,7 +105,7 @@ class AlignedMemory {
 
   ~AlignedMemory();
 
-  static StatusOr<AlignedMemory> Create(JpegliMemoryManager* memory_manager,
+  static StatusOr<AlignedMemory> Create(PdfcoreMemoryManager* memory_manager,
                                         size_t size, size_t pre_padding = 0);
 
   explicit operator bool() const noexcept { return (address_ != nullptr); }
@@ -114,18 +114,18 @@ class AlignedMemory {
   T* address() const {
     return reinterpret_cast<T*>(address_);
   }
-  JpegliMemoryManager* memory_manager() const { return memory_manager_; }
+  PdfcoreMemoryManager* memory_manager() const { return memory_manager_; }
 
   // TODO(eustas): we can offer "actually accessible" size; it is 0-2KiB bigger
   //               than requested size, due to generous alignment;
   //               might be useful for resizeable containers (e.g. PaddedBytes)
 
  private:
-  AlignedMemory(JpegliMemoryManager* memory_manager, void* allocation,
+  AlignedMemory(PdfcoreMemoryManager* memory_manager, void* allocation,
                 size_t pre_padding);
 
   void* allocation_;
-  JpegliMemoryManager* memory_manager_;
+  PdfcoreMemoryManager* memory_manager_;
   void* address_;
 };
 
@@ -134,10 +134,10 @@ class AlignedArray {
  public:
   AlignedArray() : size_(0) {}
 
-  static StatusOr<AlignedArray> Create(JpegliMemoryManager* memory_manager,
+  static StatusOr<AlignedArray> Create(PdfcoreMemoryManager* memory_manager,
                                        size_t size) {
     size_t storage_size = size * sizeof(T);
-    JPEGLI_ASSIGN_OR_RETURN(
+    PDFCORE_ASSIGN_OR_RETURN(
         AlignedMemory storage,
         AlignedMemory::Create(memory_manager, storage_size));
     T* items = storage.address<T>();
@@ -175,11 +175,11 @@ class AlignedArray {
   }
 
   T& operator[](const size_t i) {
-    JPEGLI_DASSERT(i < size_);
+    PDFCORE_DASSERT(i < size_);
     return *(storage_.address<T>() + i);
   }
   const T& operator[](const size_t i) const {
-    JPEGLI_DASSERT(i < size_);
+    PDFCORE_DASSERT(i < size_);
     return *(storage_.address<T>() + i);
   }
 
@@ -190,6 +190,6 @@ class AlignedArray {
   AlignedMemory storage_;
 };
 
-}  // namespace jpegli
+}  // namespace pdfcore
 
-#endif  // JPEGLI_LIB_EXTRAS_MEMORY_MANAGER_INTERNAL_H_
+#endif  // PDFCORE_LIB_EXTRAS_MEMORY_MANAGER_INTERNAL_H_

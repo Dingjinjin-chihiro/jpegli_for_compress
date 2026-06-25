@@ -34,7 +34,7 @@
 #include "lib/extras/image_color_transform.h"
 #include "lib/extras/packed_image_convert.h"
 HWY_BEFORE_NAMESPACE();
-namespace jpegli {
+namespace pdfcore {
 namespace HWY_NAMESPACE {
 
 // These templates are not found via ADL.
@@ -48,8 +48,8 @@ StatusOr<double> ComputeDistanceP(const ImageF& distmap,
   if (distmap.xsize() == 0 || distmap.ysize() == 0) {
     return 0.0;
   }
-  JpegliMemoryManager* memory_manager = distmap.memory_manager();
-  JPEGLI_ENSURE(memory_manager != nullptr);
+  PdfcoreMemoryManager* memory_manager = distmap.memory_manager();
+  PDFCORE_ENSURE(memory_manager != nullptr);
   const double onePerPixels = 1.0 / (distmap.ysize() * distmap.xsize());
   if (std::abs(p - 3.0) < 1E-6) {
     double sum1[3] = {0.0};
@@ -62,7 +62,7 @@ StatusOr<double> ComputeDistanceP(const ImageF& distmap,
     using T = float;
 #endif
     const HWY_FULL(T) d;
-    JPEGLI_ASSIGN_OR_RETURN(
+    PDFCORE_ASSIGN_OR_RETURN(
         AlignedMemory sum_totals,
         AlignedMemory::Create(memory_manager, 3 * Lanes(d) * sizeof(T)));
     // Manually aligned storage to avoid asan crash on clang-7 due to
@@ -75,7 +75,7 @@ StatusOr<double> ComputeDistanceP(const ImageF& distmap,
     Store(Zero(d), d, sum_totals2);
 
     for (size_t y = 0; y < distmap.ysize(); ++y) {
-      const float* JPEGLI_RESTRICT row = distmap.ConstRow(y);
+      const float* PDFCORE_RESTRICT row = distmap.ConstRow(y);
 
       auto sums0 = Zero(d);
       auto sums1 = Zero(d);
@@ -125,11 +125,11 @@ StatusOr<double> ComputeDistanceP(const ImageF& distmap,
   } else {
     static std::atomic<uint32_t> once{0};
     if (once.fetch_add(1, std::memory_order_relaxed) == 0) {
-      JPEGLI_WARNING("WARNING: using slow ComputeDistanceP");
+      PDFCORE_WARNING("WARNING: using slow ComputeDistanceP");
     }
     double sum1[3] = {0.0};
     for (size_t y = 0; y < distmap.ysize(); ++y) {
-      const float* JPEGLI_RESTRICT row = distmap.ConstRow(y);
+      const float* PDFCORE_RESTRICT row = distmap.ConstRow(y);
       for (size_t x = 0; x < distmap.xsize(); ++x) {
         double d2 = std::pow(row[x], p);
         sum1[0] += d2;
@@ -148,10 +148,10 @@ StatusOr<double> ComputeDistanceP(const ImageF& distmap,
   }
 }
 
-Status ComputeSumOfSquares(JpegliMemoryManager* memory_manager,
+Status ComputeSumOfSquares(PdfcoreMemoryManager* memory_manager,
                            const extras::PackedPixelFile& a,
                            const extras::PackedPixelFile& b,
-                           const JpegliCmsInterface& cms,
+                           const PdfcoreCmsInterface& cms,
                            double sum_of_squares[3]) {
   sum_of_squares[0] = sum_of_squares[1] = sum_of_squares[2] =
       std::numeric_limits<double>::max();
@@ -161,27 +161,27 @@ Status ComputeSumOfSquares(JpegliMemoryManager* memory_manager,
   // Convert to sRGB - closer to perception than linear.
   ColorEncoding c_desired = ColorEncoding::SRGB(is_gray);
 
-  JPEGLI_ASSIGN_OR_RETURN(Image3F srgb0,
+  PDFCORE_ASSIGN_OR_RETURN(Image3F srgb0,
                           Image3F::Create(memory_manager, xsize, ysize));
-  JPEGLI_RETURN_IF_ERROR(ConvertPackedPixelFileToImage3F(a, &srgb0, nullptr));
-  JPEGLI_ASSIGN_OR_RETURN(Image3F srgb1,
+  PDFCORE_RETURN_IF_ERROR(ConvertPackedPixelFileToImage3F(a, &srgb0, nullptr));
+  PDFCORE_ASSIGN_OR_RETURN(Image3F srgb1,
                           Image3F::Create(memory_manager, xsize, ysize));
-  JPEGLI_RETURN_IF_ERROR(ConvertPackedPixelFileToImage3F(b, &srgb1, nullptr));
+  PDFCORE_RETURN_IF_ERROR(ConvertPackedPixelFileToImage3F(b, &srgb1, nullptr));
 
   ColorEncoding c_enc_a;
   ColorEncoding c_enc_b;
-  JPEGLI_RETURN_IF_ERROR(GetColorEncoding(a, &c_enc_a));
-  JPEGLI_RETURN_IF_ERROR(GetColorEncoding(b, &c_enc_b));
+  PDFCORE_RETURN_IF_ERROR(GetColorEncoding(a, &c_enc_a));
+  PDFCORE_RETURN_IF_ERROR(GetColorEncoding(b, &c_enc_b));
   float intensity_a = GetIntensityTarget(a, c_enc_a);
   float intensity_b = GetIntensityTarget(b, c_enc_b);
 
   if (!c_enc_a.SameColorEncoding(c_desired)) {
-    JPEGLI_RETURN_IF_ERROR(ApplyColorTransform(c_enc_a, intensity_a, srgb0,
+    PDFCORE_RETURN_IF_ERROR(ApplyColorTransform(c_enc_a, intensity_a, srgb0,
                                                nullptr, Rect(srgb0), c_desired,
                                                cms, nullptr, &srgb0));
   }
   if (!c_enc_b.SameColorEncoding(c_desired)) {
-    JPEGLI_RETURN_IF_ERROR(ApplyColorTransform(c_enc_b, intensity_b, srgb1,
+    PDFCORE_RETURN_IF_ERROR(ApplyColorTransform(c_enc_b, intensity_b, srgb1,
                                                nullptr, Rect(srgb1), c_desired,
                                                cms, nullptr, &srgb1));
   }
@@ -193,8 +193,8 @@ Status ComputeSumOfSquares(JpegliMemoryManager* memory_manager,
                            {-0.14713, -0.28886, 0.436},
                            {0.615, -0.51499, -0.10001}};
   for (size_t y = 0; y < ysize; ++y) {
-    const float* JPEGLI_RESTRICT row0[3];
-    const float* JPEGLI_RESTRICT row1[3];
+    const float* PDFCORE_RESTRICT row0[3];
+    const float* PDFCORE_RESTRICT row1[3];
     for (size_t j = 0; j < 3; j++) {
       row0[j] = srgb0.ConstPlaneRow(j, y);
       row1[j] = srgb1.ConstPlaneRow(j, y);
@@ -221,24 +221,24 @@ Status ComputeSumOfSquares(JpegliMemoryManager* memory_manager,
 
 // NOLINTNEXTLINE(google-readability-namespace-comments)
 }  // namespace HWY_NAMESPACE
-}  // namespace jpegli
+}  // namespace pdfcore
 HWY_AFTER_NAMESPACE();
 
 #if HWY_ONCE
-namespace jpegli {
+namespace pdfcore {
 
 namespace {
 Status ComputeButteraugli(const Image3F& ref, const Image3F& actual,
                           const ButteraugliParams& params,
-                          const JpegliCmsInterface& cms, float& score,
+                          const PdfcoreCmsInterface& cms, float& score,
                           ImageF* distmap) {
-  JpegliMemoryManager* memory_manager = ref.memory_manager();
+  PdfcoreMemoryManager* memory_manager = ref.memory_manager();
   std::unique_ptr<ButteraugliComparator> comparator;
-  JPEGLI_ASSIGN_OR_RETURN(comparator, ButteraugliComparator::Make(ref, params));
-  JPEGLI_ASSIGN_OR_RETURN(
+  PDFCORE_ASSIGN_OR_RETURN(comparator, ButteraugliComparator::Make(ref, params));
+  PDFCORE_ASSIGN_OR_RETURN(
       ImageF temp_distmap,
       ImageF::Create(memory_manager, ref.xsize(), ref.ysize()));
-  JPEGLI_ENSURE(comparator->Diffmap(actual, temp_distmap));
+  PDFCORE_ENSURE(comparator->Diffmap(actual, temp_distmap));
   score = ButteraugliScoreFromDiffmap(temp_distmap, &params);
   if (distmap != nullptr) {
     distmap->Swap(temp_distmap);
@@ -248,53 +248,53 @@ Status ComputeButteraugli(const Image3F& ref, const Image3F& actual,
 
 }  // namespace
 
-Status ButteraugliDistance(JpegliMemoryManager* memory_manager,
+Status ButteraugliDistance(PdfcoreMemoryManager* memory_manager,
                            const extras::PackedPixelFile& a,
                            const extras::PackedPixelFile& b,
                            ButteraugliParams params, float& score,
                            ImageF* distmap, ThreadPool* pool,
                            bool ignore_alpha) {
   if (a.xsize() != b.xsize() || a.ysize() != b.ysize()) {
-    return JPEGLI_FAILURE("Images must have the same size for butteraugli.");
+    return PDFCORE_FAILURE("Images must have the same size for butteraugli.");
   }
   if (a.info.num_color_channels != b.info.num_color_channels) {
-    return JPEGLI_FAILURE("Grayscale vs RGB comparison not supported.");
+    return PDFCORE_FAILURE("Grayscale vs RGB comparison not supported.");
   }
   const size_t xsize = a.xsize();
   const size_t ysize = a.ysize();
   const bool is_gray = a.info.num_color_channels == 1;
   ColorEncoding c_desired = ColorEncoding::LinearSRGB(is_gray);
-  const JpegliCmsInterface& cms = *JpegliGetDefaultCms();
+  const PdfcoreCmsInterface& cms = *PdfcoreGetDefaultCms();
 
-  JPEGLI_ASSIGN_OR_RETURN(Image3F rgb0,
+  PDFCORE_ASSIGN_OR_RETURN(Image3F rgb0,
                           Image3F::Create(memory_manager, xsize, ysize));
-  JPEGLI_ENSURE(ConvertPackedPixelFileToImage3F(a, &rgb0, pool));
-  JPEGLI_ASSIGN_OR_RETURN(Image3F rgb1,
+  PDFCORE_ENSURE(ConvertPackedPixelFileToImage3F(a, &rgb0, pool));
+  PDFCORE_ASSIGN_OR_RETURN(Image3F rgb1,
                           Image3F::Create(memory_manager, xsize, ysize));
-  JPEGLI_ENSURE(ConvertPackedPixelFileToImage3F(b, &rgb1, pool));
+  PDFCORE_ENSURE(ConvertPackedPixelFileToImage3F(b, &rgb1, pool));
 
   ColorEncoding c_enc_a;
   ColorEncoding c_enc_b;
-  JPEGLI_ENSURE(GetColorEncoding(a, &c_enc_a));
-  JPEGLI_ENSURE(GetColorEncoding(b, &c_enc_b));
+  PDFCORE_ENSURE(GetColorEncoding(a, &c_enc_a));
+  PDFCORE_ENSURE(GetColorEncoding(b, &c_enc_b));
   float intensity_a = GetIntensityTarget(a, c_enc_a);
   float intensity_b = GetIntensityTarget(b, c_enc_b);
 
   if (!c_enc_a.SameColorEncoding(c_desired)) {
-    JPEGLI_ENSURE(ApplyColorTransform(c_enc_a, intensity_a, rgb0, nullptr,
+    PDFCORE_ENSURE(ApplyColorTransform(c_enc_a, intensity_a, rgb0, nullptr,
                                       Rect(rgb0), c_desired, cms, pool, &rgb0));
   }
   if (!c_enc_b.SameColorEncoding(c_desired)) {
-    JPEGLI_ENSURE(ApplyColorTransform(c_enc_b, intensity_b, rgb1, nullptr,
+    PDFCORE_ENSURE(ApplyColorTransform(c_enc_b, intensity_b, rgb1, nullptr,
                                       Rect(rgb1), c_desired, cms, pool, &rgb1));
   }
 
-  JPEGLI_RETURN_IF_ERROR(
+  PDFCORE_RETURN_IF_ERROR(
       ComputeButteraugli(rgb0, rgb1, params, cms, score, distmap));
   return true;
 }
 
-float ButteraugliDistance(JpegliMemoryManager* memory_manager,
+float ButteraugliDistance(PdfcoreMemoryManager* memory_manager,
                           const extras::PackedPixelFile& a,
                           const extras::PackedPixelFile& b,
                           ButteraugliParams params, ImageF* distmap,
@@ -314,7 +314,7 @@ StatusOr<double> ComputeDistanceP(const ImageF& distmap,
   return HWY_DYNAMIC_DISPATCH(ComputeDistanceP)(distmap, params, p);
 }
 
-StatusOr<double> Butteraugli3Norm(JpegliMemoryManager* memory_manager,
+StatusOr<double> Butteraugli3Norm(PdfcoreMemoryManager* memory_manager,
                                   const extras::PackedPixelFile& a,
                                   const extras::PackedPixelFile& b,
                                   ThreadPool* pool) {
@@ -325,10 +325,10 @@ StatusOr<double> Butteraugli3Norm(JpegliMemoryManager* memory_manager,
 }
 
 HWY_EXPORT(ComputeSumOfSquares);
-double ComputePSNR(JpegliMemoryManager* memory_manager,
+double ComputePSNR(PdfcoreMemoryManager* memory_manager,
                    const extras::PackedPixelFile& a,
                    const extras::PackedPixelFile& b,
-                   const JpegliCmsInterface& cms) {
+                   const PdfcoreCmsInterface& cms) {
   if (a.xsize() != b.xsize() || a.ysize() != b.ysize()) {
     fprintf(stderr, "Images must have the same size for PSNR.");
     return 0.0;
@@ -356,5 +356,5 @@ double ComputePSNR(JpegliMemoryManager* memory_manager,
   return avg_psnr;
 }
 
-}  // namespace jpegli
+}  // namespace pdfcore
 #endif

@@ -5,22 +5,22 @@
 
 # Extra build variables.
 
-jpegli_root_package = "jpegli"
+pdfcore_jpegli_root_package = "jpegli"
 
-libjpegli_deps_exr = ["@openexr//:OpenEXR"]
-libjpegli_deps_gif = ["@giflib//:giflib"]
-libjpegli_deps_gtest = ["@googletest//:gtest_main"]
-libjpegli_deps_hwy = ["@highway//:hwy"]
-libjpegli_deps_hwy_nanobenchmark = ["@highway//:nanobenchmark"]
-libjpegli_deps_hwy_test_util = ["@highway//:hwy_test_util"]
-libjpegli_deps_jpeg = ["@libjpeg_turbo//:jpeg"]
-libjpegli_deps_png = ["@libpng//:png"]
-libjpegli_deps_runfiles = ["@bazel_tools//tools/cpp/runfiles"]
-libjpegli_deps_skcms = ["@skcms//:skcms"]
-libjpegli_deps_testdata = ["//:testdata"]
-libjpegli_deps_webp = ["@libwebp//:webp"]
+libpdfcore_jpegli_deps_exr = ["@openexr//:OpenEXR"]
+libpdfcore_jpegli_deps_gif = ["@giflib//:giflib"]
+libpdfcore_jpegli_deps_gtest = ["@googletest//:gtest_main"]
+libpdfcore_jpegli_deps_hwy = ["@highway//:hwy"]
+libpdfcore_jpegli_deps_hwy_nanobenchmark = ["@highway//:nanobenchmark"]
+libpdfcore_jpegli_deps_hwy_test_util = ["@highway//:hwy_test_util"]
+libpdfcore_jpegli_deps_jpeg = ["@libjpeg_turbo//:jpeg"]
+libpdfcore_jpegli_deps_png = ["@libpng//:png"]
+libpdfcore_jpegli_deps_runfiles = ["@bazel_tools//tools/cpp/runfiles"]
+libpdfcore_jpegli_deps_skcms = ["@skcms//:skcms"]
+libpdfcore_jpegli_deps_testdata = ["//:testdata"]
+libpdfcore_jpegli_deps_webp = ["@libwebp//:webp"]
 
-libjpegli_test_shards = {
+libpdfcore_jpegli_test_shards = {
     "jpegli/decode_api_test": 10,
     "jpegli/encode_api_test": 4,
     "jpegli/input_suspension_test": 6,
@@ -39,7 +39,7 @@ libjpegli_test_shards = {
     "jpegli/render_pipeline/render_pipeline_test": 10,
 }
 
-libjpegli_test_timeouts = {
+libpdfcore_jpegli_test_timeouts = {
     "jpegli/fast_dct_test": "long",
     "jpegli/dct_test": "long",
 }

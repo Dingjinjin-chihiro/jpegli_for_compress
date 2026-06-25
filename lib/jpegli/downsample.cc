@@ -21,7 +21,7 @@
 #include "lib/jpegli/error.h"
 
 HWY_BEFORE_NAMESPACE();
-namespace jpegli {
+namespace pdfcore {
 namespace HWY_NAMESPACE {
 
 // These templates are not found via ADL.
@@ -205,11 +205,11 @@ void Downsample4x4(float* rows_in[MAX_SAMP_FACTOR], size_t len,
 
 // NOLINTNEXTLINE(google-readability-namespace-comments)
 }  // namespace HWY_NAMESPACE
-}  // namespace jpegli
+}  // namespace pdfcore
 HWY_AFTER_NAMESPACE();
 
 #if HWY_ONCE
-namespace jpegli {
+namespace pdfcore {
 
 HWY_EXPORT(Downsample1x2);
 HWY_EXPORT(Downsample1x3);
@@ -279,7 +279,7 @@ void ChooseDownsampleMethods(j_compress_ptr cinfo) {
       }
     }
     if (m->downsample_method[c] == nullptr) {
-      JPEGLI_ERROR("Unsupported downsampling ratio %dx%d", h_factor, v_factor);
+      PDFCORE_ERROR("Unsupported downsampling ratio %dx%d", h_factor, v_factor);
     }
   }
 }
@@ -360,5 +360,5 @@ void ApplyInputSmoothing(j_compress_ptr cinfo) {
   }
 }
 
-}  // namespace jpegli
+}  // namespace pdfcore
 #endif  // HWY_ONCE

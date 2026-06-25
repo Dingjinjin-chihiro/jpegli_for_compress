@@ -59,7 +59,7 @@ cd /home/
 unzip -q pkg.zip
 mkdir build
 cd build
-cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF -DJPEGLI_ENABLE_SJPEG=OFF ..
+cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF -DPDFCORE_ENABLE_SJPEG=OFF ..
 cmake --build . -- -j\$(nproc)
 
 tools/djxl ../testdata/jxl/blending/cropped_traffic_light.jxl test.png

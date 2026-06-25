@@ -3,14 +3,14 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-#ifndef JPEGLI_TOOLS_JNI_ORG_JPEG_JPEGLI_WRAPPER_ENCODER_JNI
-#define JPEGLI_TOOLS_JNI_ORG_JPEG_JPEGLI_WRAPPER_ENCODER_JNI
+#ifndef PDFCORE_TOOLS_JNI_ORG_JPEG_PDFCORE_WRAPPER_ENCODER_JNI
+#define PDFCORE_TOOLS_JNI_ORG_JPEG_PDFCORE_WRAPPER_ENCODER_JNI
 
 #include <jni.h>
 
-namespace org_jpeg_jpegli_wrapper {
+namespace org_jpeg_pdfcore_jpegli_wrapper {
 jint JniRegister(JavaVM* vm);
-}  // namespace org_jpeg_jpegli_wrapper
+}  // namespace org_jpeg_pdfcore_jpegli_wrapper
 
 #ifdef __cplusplus
 extern "C" {
@@ -21,12 +21,12 @@ extern "C" {
  * initialization.
  */
 JNIEXPORT jint JNICALL
-Java_org_jpeg_jpegli_wrapper_Encoder_nativeInit(JNIEnv* env, jobject /*jobj*/);
+Java_org_jpeg_pdfcore_jpegli_wrapper_Encoder_nativeInit(JNIEnv* env, jobject /*jobj*/);
 
 /**
  * Encode image with jpegli.
  */
-JNIEXPORT jint JNICALL Java_org_jpeg_jpegli_wrapper_Encoder_nativeEncode(
+JNIEXPORT jint JNICALL Java_org_jpeg_pdfcore_jpegli_wrapper_Encoder_nativeEncode(
     JNIEnv* env, jobject /*jobj*/, jint width, jint height, jintArray config,
     jintArray input, jobject output);
 
@@ -34,4 +34,4 @@ JNIEXPORT jint JNICALL Java_org_jpeg_jpegli_wrapper_Encoder_nativeEncode(
 }
 #endif
 
-#endif  // JPEGLI_TOOLS_JNI_ORG_JPEG_JPEGLI_WRAPPER_ENCODER_JNI
+#endif  // PDFCORE_TOOLS_JNI_ORG_JPEG_PDFCORE_WRAPPER_ENCODER_JNI

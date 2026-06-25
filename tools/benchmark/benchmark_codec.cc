@@ -19,17 +19,17 @@
 #include "tools/benchmark/benchmark_codec_jpeg.h"
 #include "tools/cmdline.h"
 
-namespace jpegli_tools {
+namespace pdfcore_jpegli_tools {
 
-using ::jpegli::Image3F;
-using ::jpegli::Status;
+using ::pdfcore::Image3F;
+using ::pdfcore::Status;
 
 Status ImageCodec::ParseParameters(const std::string& parameters) {
   params_ = parameters;
   std::vector<std::string> parts = SplitString(parameters, ':');
   for (const auto& part : parts) {
     if (!ParseParam(part)) {
-      return JPEGLI_FAILURE("Invalid parameter %s", part.c_str());
+      return PDFCORE_FAILURE("Invalid parameter %s", part.c_str());
     }
   }
   return true;
@@ -65,7 +65,7 @@ Status ImageCodec::ParseParam(const std::string& param) {
 }
 
 ImageCodecPtr CreateImageCodec(const std::string& description,
-                               JpegliMemoryManager* memory_manager) {
+                               PdfcoreMemoryManager* memory_manager) {
   std::string name = description;
   std::string parameters;
   size_t colon = description.find(':');
@@ -79,13 +79,13 @@ ImageCodecPtr CreateImageCodec(const std::string& description,
   }
   if (!result.get()) {
     fprintf(stderr, "Unknown image codec: %s", name.c_str());
-    JPEGLI_TOOLS_CHECK(false);
+    PDFCORE_TOOLS_CHECK(false);
   }
   result->set_description(description);
   if (!parameters.empty()) {
-    JPEGLI_TOOLS_CHECK(result->ParseParameters(parameters));
+    PDFCORE_TOOLS_CHECK(result->ParseParameters(parameters));
   }
   return result;
 }
 
-}  // namespace jpegli_tools
+}  // namespace pdfcore_jpegli_tools
